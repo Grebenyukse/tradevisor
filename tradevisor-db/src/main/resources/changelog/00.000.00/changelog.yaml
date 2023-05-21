@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0.0.0
+      author: SE-Grebenyuk
+      comment: 'Dummy changeset for rollback only'
+      changes:
+        - tagDatabase:
+            tag: release/0.0.0
