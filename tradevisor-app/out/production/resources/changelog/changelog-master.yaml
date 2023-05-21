@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - preConditions:
+      - dbms:
+          type: postgresql
+
+  - include:
+      file: 00.000.00/changelog.yaml
+      relativeToChangelogFile: true
+
+  - include:
+      file: 01.000.00/changelog.yaml
+      relativeToChangelogFile: true

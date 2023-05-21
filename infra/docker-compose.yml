@@ -1,0 +1,50 @@
+---
+version: '2.0'
+
+networks:
+  inapp_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.0.0/24
+          gateway: 172.19.0.1
+
+services:
+  prometheus:
+    image: docker.io/prom/prometheus:latest
+    command: --config.file=/etc/prometheus/prometheus.yml --log.level=debug
+    networks:
+      - inapp_network
+    hostname: prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: docker.io/grafana/grafana:latest
+    networks:
+      - inapp_network
+    hostname: grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/storage:/var/lib/grafana
+
+  postgres:
+    image: 'postgres:12.10'
+    networks:
+      - inapp_network
+    hostname: postgres
+    container_name: postgres
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c pg_stat_statements.max=10000 -c max_connections=200
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: postgres

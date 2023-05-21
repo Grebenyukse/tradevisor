@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1.0.0
+      author: SE-Grebenyuk
+      comment: 'Related tables from already created not owned by us schema'
+
+  - include:
+      file: 2023-05-20-trv-0-add-create-schema.sql
+      relativeToChangelogFile: true
+
+  - include:
+      file: 2023-05-20-trv-1-add-tickers.sql
+      relativeToChangelogFile: true
+
+  - include:
+      file: 2023-05-20-trv-2-add-market-data.sql
+      relativeToChangelogFile: true
+
+  - include:
+      file: 2023-05-20-trv-3-add-signals.sql
+      relativeToChangelogFile: true
+  - include:
+      file: 2023-05-25-trv-4-add-tinkoff-tables.sql
+      relativeToChangelogFile: true

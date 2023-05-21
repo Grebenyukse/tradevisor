@@ -1,0 +1,81 @@
+server:
+  port: 8000
+
+logging:
+  config: config/logback.xml
+  level:
+    ROOT: debug
+    org.jooq.Constants.org.jooq.Constants: WARN
+    reactor.netty.http.client: INFO
+
+management:
+  server:
+    port: 8000
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState, ping
+        readiness:
+          include: readinessState, db
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+
+spring:
+  sleuth:
+    enabled: true
+  zipkin:
+    base-url: http://localhost:9411
+    enabled: false #включать при работающем локально jaeger-клиенте
+  application:
+    name: tradevisor
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: password
+  liquibase:
+    changeLog: classpath:changelog/changelog-master.yaml
+    enabled: true
+
+app:
+  jobs:
+    calculate:
+      interval: 5s
+      enabled: true
+    calendar:
+      interval: 15s
+      enabled: true
+    control:
+      interval: 10s
+      enabled: true
+    news:
+      interval: 10s
+      enabled: true
+    prices:
+      interval: 5s
+      enabled: true
+    publish:
+      interval: 10s
+      enabled: true
+
+tinkoff:
+  token: ${TINKOFF_INVEST_TOKEN}
+  host: "invest-public-api.tinkoff.ru:443"
+  history-max-depth-days: 1
+
+telegram:
+  chat-id: ${CHAT_ID}
+  chat-token: ${CHAT_TOKEN}
+  base-url: ${BASE_URL}
+
+newsapi:
+  api-key: ${NEWS_API_KEY}
+  url: "https://newsapi.org/v2/top-headlines?category=business"
+  page-size: 50

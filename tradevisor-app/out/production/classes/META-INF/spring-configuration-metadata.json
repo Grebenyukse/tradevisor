@@ -1,0 +1,17 @@
+{
+  "groups": [
+    {
+      "name": "app",
+      "type": "ru.grnk.tradevisor.zcommon.properties.TradevisorProperties",
+      "sourceType": "ru.grnk.tradevisor.zcommon.properties.TradevisorProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "app.jobs",
+      "type": "ru.grnk.tradevisor.zcommon.properties.jobs.JobsProperties",
+      "sourceType": "ru.grnk.tradevisor.zcommon.properties.TradevisorProperties"
+    }
+  ],
+  "hints": []
+}

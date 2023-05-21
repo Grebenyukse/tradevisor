@@ -1,0 +1,21 @@
+server:
+  port: 8000
+
+logging:
+  level:
+    ROOT: info
+    org.jooq.Constants.org.jooq.Constants: WARN
+
+spring:
+  application:
+    name: tradevisor
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_JDBC_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  liquibase:
+    change-log: classpath:changelog/changelog-master.yaml
+    enabled: true
+    contexts: local
+    testRollbackOnUpdate: true

@@ -1,0 +1,229 @@
+openapi: 3.0.1
+info:
+  title: ucp-synapse-gateway-brokerage-get
+  description: Микросервис поиска клиента для процесса открытия брокерского договора
+  version: 1.0.0
+paths:
+  /get:
+    post:
+      parameters:
+        - in: header
+          name: x-trace-id
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 36
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrokerageGetRq'
+      responses:
+        "200":
+          description: OK
+          headers:
+            x-trace-id:
+              schema:
+                description: Уникальный ID запроса
+                type: string
+                minLength: 32
+                maxLength: 36
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerageGetRs'
+components:
+  schemas:
+    BrokerageGetRq:
+      type: object
+      required:
+        - clientId
+        - sourceSystem
+      properties:
+        clientId:
+          type: integer
+          format: int64
+          example: 2938749348900319755
+        sourceSystem:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "BrokerageController.AgreementApplication"
+    BrokerageGetRs:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - SUCCESS
+            - ERROR
+        errors:
+          type: object
+          required:
+            - code
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+        individual:
+          type: object
+          properties:
+            name:
+              $ref: '#/components/schemas/NameDto'
+            phoneNumbers:
+              type: array
+              items:
+                $ref: '#/components/schemas/PhoneNumberDto'
+            electronicAddresses:
+              type: array
+              items:
+                $ref: '#/components/schemas/ElectronicAddressDto'
+            addresses:
+              type: array
+              items:
+                $ref: '#/components/schemas/AddressDto'
+            birthDate:
+              $ref: '#/components/schemas/BirthDateDto'
+            birthPlace:
+              $ref: '#/components/schemas/BirthPlaceDto'
+            identifications:
+              type: array
+              items:
+                $ref: '#/components/schemas/IdentificationDto'
+            deathDate:
+              $ref: '#/components/schemas/DeathDateDto'
+            emigrations:
+              type: array
+              items:
+                $ref: '#/components/schemas/EmigrationDto'
+            partyToPartyGroups:
+              type: array
+              items:
+                $ref: '#/components/schemas/PartyToPartyGroupDto'
+            managerEmployeeInfo:
+              $ref: '#/components/schemas/ManagerEmployeeInfo'
+        personalDataAbsence:
+          type: boolean
+        invalidPassportRf:
+          type: boolean
+        expiredIdentification:
+          type: boolean
+    NameDto:
+      type: object
+      required:
+        - name
+        - surname
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        patronymic:
+          type: string
+          maxLength: 255
+        surname:
+          type: string
+          maxLength: 255
+        updateDateTime:
+          $ref: '#/components/schemas/DateTime'
+    PhoneNumberDto:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          maxLength: 255
+        updateDateTime:
+          $ref: '#/components/schemas/DateTime'
+    ElectronicAddressDto:
+      type: object
+      properties:
+        electronicAddress:
+          type: string
+          maxLength: 255
+        updateDateTime:
+          $ref: '#/components/schemas/DateTime'
+    AddressDto:
+      type: object
+      properties:
+        usageType:
+          type: integer
+          format: int64
+        country:
+          $ref: '#/components/schemas/CountryOksm'
+        regionCode:
+          type: integer
+          format: int64
+        updateDateTime:
+          $ref: '#/components/schemas/DateTime'
+    BirthDateDto:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          $ref: '#/components/schemas/DateTime'
+        updateDateTime:
+          $ref: '#/components/schemas/DateTime'
+    BirthPlaceDto:
+      type: object
+      properties:
+        country:
+          $ref: '#/components/schemas/CountryOksm'
+    IdentificationDto:
+      type: object
+      required:
+        - documentType
+        - documentNumber
+      properties:
+        documentType:
+          type: integer
+          format: int64
+        documentSeries:
+          type: string
+          maxLength: 40
+        documentNumber:
+          type: string
+          maxLength: 40
+        updateDateTime:
+          $ref: '#/components/schemas/DateTime'
+    DeathDateDto:
+      type: object
+      properties:
+        deathFlag:
+          type: boolean
+    EmigrationDto:
+      type: object
+      properties:
+        nationality:
+          $ref: '#/components/schemas/CountryOksm'
+        updateDateTime:
+          $ref: '#/components/schemas/DateTime'
+    PartyToPartyGroupDto:
+      type: object
+      properties:
+        partyGroup:
+          type: integer
+          format: int64
+        updateDateTime:
+          $ref: '#/components/schemas/DateTime'
+    ManagerEmployeeInfo:
+      type: object
+      properties:
+        managerCode:
+          type: string
+          maxLength: 32
+        updateDateTime:
+          $ref: '#/components/schemas/DateTime'
+    DateTime:
+      type: string
+      format: date-time
+      example: "2021-02-11T16:52:17.469480"
+    CountryOksm:
+      type: object
+      properties:
+        oksm:
+          type: string
+# Powered by APIStudio
