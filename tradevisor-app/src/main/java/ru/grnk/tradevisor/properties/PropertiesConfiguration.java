@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import ru.grnk.tradevisor.properties.jobs.CalculateJobProperties;
 import ru.grnk.tradevisor.properties.jobs.CalendarJobProperties;
 import ru.grnk.tradevisor.properties.jobs.ControlJobProperties;
+import ru.grnk.tradevisor.properties.jobs.JobsProperties;
 import ru.grnk.tradevisor.properties.jobs.NewsJobProperties;
 import ru.grnk.tradevisor.properties.jobs.PricesJobProperties;
 import ru.grnk.tradevisor.properties.jobs.PublishJobProperties;
