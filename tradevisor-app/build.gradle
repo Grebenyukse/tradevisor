@@ -3,6 +3,7 @@ plugins {
     id 'io.spring.dependency-management'
     id 'java'
     id 'jacoco'
+    id 'org.jsonschema2dataclass' version '2.1.0'
 }
 
 group 'ru.grnk.tradevisor'
@@ -34,7 +35,11 @@ repositories {
 }
 
 dependencies {
+    implementation project(':tinkoff-api')
     implementation project(":tradevisor-db")
+
+    implementation 'ru.tinkoff.piapi:java-sdk-core:1.4'
+
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
@@ -86,4 +91,40 @@ sourceSets {
             srcDir '../tradevisor-db/src/main/resources'
         }
     }
+}
+
+bootJar {
+    enabled(true)
+}
+
+jar {
+    enabled(false)
+}
+
+generateJsonSchema2DataClass {
+
+    dependencies {
+        implementation 'javax.validation:validation-api:1.1.0.CR2'
+        implementation 'javax.validation:validation-api:2.0.1.Final'
+    }
+
+    jsonSchema2Pojo {
+        targetPackage = 'com.sberbank.bcpcli.notification.core.generated.model'
+        removeOldOutput = true
+        generateBuilders = true
+        includeConstructors = true
+        includeAllPropertiesConstructor = true
+        useLongIntegers = true
+        initializeCollections = false
+        includeJsr303Annotations = true
+        useJodaDates = false
+        useJodaLocalDates = false
+        useJodaLocalTimes = false
+        useBigDecimals = true
+        dateType = 'java.time.LocalDate'
+        formatDates = true
+        formatDateTimes = true
+        includeCopyConstructor = true
+    }
+    generateJsonSchema2DataClass.dependsOn clean
 }

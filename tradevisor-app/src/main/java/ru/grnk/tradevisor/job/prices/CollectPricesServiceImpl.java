@@ -14,6 +14,7 @@ public class CollectPricesServiceImpl implements JobRunnerService {
     @Override
     public void doWork() {
         log.info("collect all prices mf");
+
     }
 
     @Override
