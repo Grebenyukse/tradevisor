@@ -68,3 +68,4 @@ app:
 tinkoff:
   token: "t.vE5f1NuHegNCkdCH1GozOZgMok5e4Fp72bw0rNdTRtNnbRpATPONdJNTYhJyS-nmq4jW4E7xOnPhHAU9jR5W-g"
   host: "invest-public-api.tinkoff.ru:443"
+  history-max-depth-days: 20

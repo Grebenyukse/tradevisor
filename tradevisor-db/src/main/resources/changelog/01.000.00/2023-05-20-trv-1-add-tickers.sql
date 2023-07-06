@@ -4,11 +4,15 @@
 --rollback drop table if exists tradevisor.tickers;
 create table if not exists tradevisor.tickers
 (
-    ticker      varchar primary key,
+    uuid        varchar not null primary key,
+    ticker      varchar not null,
+    figi        varchar not null,
     description varchar,
     market_type varchar,
-    precision   int2,
-    lot         int2,
-    go          int2,
-    expiration  timestamp
+    exchange    varchar,
+    precision   int4,
+    lot         int4,
+    go          int4,
+    expiration  timestamp,
+    currency    varchar
 );

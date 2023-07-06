@@ -8,8 +8,8 @@ import ru.grnk.tradevisor.properties.TradevisorProperties;
 
 @SpringBootApplication(scanBasePackages = "ru.grnk.tradevisor")
 @EnableConfigurationProperties({TradevisorProperties.class})
-public class TradeAdvisorApplication {
+public class TradeVisorApplication {
     public static void main(String[] args) {
-        SpringApplication.run(TradeAdvisorApplication.class, args);
+        SpringApplication.run(TradeVisorApplication.class, args);
     }
 }

@@ -19,3 +19,6 @@ databaseChangeLog:
   - include:
       file: 2023-05-20-trv-3-add-signals.sql
       relativeToChangelogFile: true
+  - include:
+      file: 2023-05-25-trv-4-add-tinkoff-tables.sql
+      relativeToChangelogFile: true

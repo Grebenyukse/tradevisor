@@ -5,12 +5,12 @@
 create table if not exists tradevisor.market_data
 (
     id     serial primary key,
-    ticker varchar   not null references tradevisor.tickers (ticker),
+    instrument_uuid  varchar   not null references tradevisor.tickers (uuid),
     open   real      null,
     high   real      null,
     low    real      null,
     close  real      null,
-    time   timestamp not null
+    time   timestamptz not null
 );
 
-create index if not exists ix_tradevisor_market_data_ticker on tradevisor.market_data (ticker, time);
+create index if not exists ix_tradevisor_market_data_ticker on tradevisor.market_data (instrument_uuid, time);
