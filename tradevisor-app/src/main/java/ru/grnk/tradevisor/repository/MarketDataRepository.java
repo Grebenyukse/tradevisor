@@ -10,6 +10,7 @@ import ru.tinkoff.piapi.contract.v1.Quotation;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Objects;
 
@@ -57,7 +58,7 @@ public class MarketDataRepository {
         return Instant.ofEpochSecond(
                 timestamp.getSeconds(),
                 timestamp.getNanos()
-        ).atOffset(ZoneOffset.of("Europe/Moscow"));
+        ).atZone(ZoneId.of("Europe/Moscow")).toOffsetDateTime();
     }
 
     private static Float floatFrom(Quotation quotation) {

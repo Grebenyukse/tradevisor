@@ -34,13 +34,16 @@ public class CollectPricesServiceImpl implements JobRunnerService {
 
     @Override
     public void doWork() {
-        log.info("collect all prices mf");
+        log.debug("start collecting prices");
         Map<String, String> parameters = parametersRepository.getAllParameters();
         if (!Boolean.parseBoolean(parameters.get(SHARES_TICKER_NAMES_LOADED))) {
+            log.debug("start collecting tickers");
             saveAllShares();
+            log.debug("tickers saved");
         }
         List<Tickers> tickers = tickersRepository.getAllTickers();
         tickers.stream().map(Tickers::getUuid).forEach(this::loadHistoryForTicker);
+        log.debug("historic candles loaded");
     }
 
     @Transactional
@@ -58,9 +61,13 @@ public class CollectPricesServiceImpl implements JobRunnerService {
 
     public void loadHistoryForTicker(String instrumentUuid) {
         var lastTimestamp = marketDataRepository.getLatestTickTime(instrumentUuid).toInstant();
+        if (lastTimestamp.isAfter(Instant.now())) {
+            return;
+        }
         investApi.getMarketDataService()
                 .getCandlesSync(instrumentUuid, lastTimestamp, Instant.now(), CandleInterval.CANDLE_INTERVAL_1_MIN)
-                .stream().filter(HistoricCandle::getIsComplete)
+                .stream()
+                .filter(HistoricCandle::getIsComplete)
                 .forEach(c -> marketDataRepository.saveMarketData(c, instrumentUuid));
     }
 

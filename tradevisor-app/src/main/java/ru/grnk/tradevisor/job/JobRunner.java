@@ -31,6 +31,8 @@ public class JobRunner implements Runnable {
                                 .findFirst()
                                 .orElseThrow()
                                 .doWork();
+                    } catch (Exception e) {
+                        log.error("ошибка исполнения", e);
                     } finally {
                         log.debug("{} завершён", this.getClass().getSimpleName());
                     }
