@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
+import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 import ru.tinkoff.piapi.contract.v1.HistoricCandle;
 import ru.tinkoff.piapi.contract.v1.Quotation;
 
@@ -12,7 +13,9 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.jooq.impl.DSL.max;
 import static ru.grnk.tradevisor.dbmodel.tables.MarketData.MARKET_DATA;
@@ -26,6 +29,16 @@ public class MarketDataRepository {
 
     @Value("${tinkoff.history-max-depth-days}")
     private Integer historyMaxDepthDays;
+
+
+    public List<MarketData> fetchMarketDataForLast(int bars, String instrumentUid) {
+        return dsl.select().from(MARKET_DATA)
+                .where(MARKET_DATA.INSTRUMENT_UUID.eq(instrumentUid))
+                .orderBy(MARKET_DATA.ID.desc())
+                .limit(bars).offset(0)
+                .fetchStreamInto(MarketData.class)
+                .collect(Collectors.toList());
+    }
 
     public OffsetDateTime getLatestTickTime(String instrumentUuid) {
         return dsl.select(max(MARKET_DATA.TIME)).from(MARKET_DATA)

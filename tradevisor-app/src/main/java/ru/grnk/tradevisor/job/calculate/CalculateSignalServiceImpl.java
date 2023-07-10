@@ -3,9 +3,16 @@ package ru.grnk.tradevisor.job.calculate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.job.JobRunnerService;
 import ru.grnk.tradevisor.metrics.Jobs;
+import ru.grnk.tradevisor.model.strategies.TradingDirection;
+import ru.grnk.tradevisor.repository.MarketDataRepository;
+import ru.grnk.tradevisor.repository.SignalsRepository;
 import ru.grnk.tradevisor.repository.TickersRepository;
+import ru.grnk.tradevisor.model.strategies.IStrategy;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -13,6 +20,9 @@ import ru.grnk.tradevisor.repository.TickersRepository;
 public class CalculateSignalServiceImpl implements JobRunnerService {
 
     private final TickersRepository tickersRepository;
+    private final MarketDataRepository marketDataRepository;
+    private final SignalsRepository signalsRepository;
+    private final List<IStrategy> strategies;
 
     @Override
     public void doWork() {
@@ -22,9 +32,16 @@ public class CalculateSignalServiceImpl implements JobRunnerService {
             log.info("нет тикеров ждемс когда появятся");
             return;
         }
-        tickers.stream().forEach(x -> {
-
-        });
+        for (Tickers t : tickers) {
+            var lastTickTime = marketDataRepository.getLatestTickTime(t.getUuid());
+            strategies.forEach(s -> {
+                var candles = marketDataRepository.fetchMarketDataForLast(s.historyDepthBarsBy1m(), t.getUuid());
+                var result = s.calculate(candles);
+                if (result.direction() != TradingDirection.UNKNOWN) {
+                    signalsRepository.saveSignal(result, t.getUuid(), s.getStrategyUniqueName(), lastTickTime);
+                }
+            });
+        }
     }
 
     @Override

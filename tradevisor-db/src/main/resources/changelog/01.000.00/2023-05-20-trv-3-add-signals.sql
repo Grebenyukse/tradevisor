@@ -11,5 +11,11 @@ create table if not exists tradevisor.signals
     direction   smallint, -- 1 long -1 short
     price_open  real,
     stop_loss   real,
-    take_profit real
+    take_profit real,
+    created_at  timestamptz,
+    updated_at  timestamptz,
+    status      varchar --created, expired, executed, cancelled,
 );
+
+alter table tradevisor.signals add constraint signal_on_bar_calculated_once_per_strategy unique
+    (name, instrument_uuid, created_at, direction);
