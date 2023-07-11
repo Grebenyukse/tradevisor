@@ -69,3 +69,8 @@ tinkoff:
   token: "t.vE5f1NuHegNCkdCH1GozOZgMok5e4Fp72bw0rNdTRtNnbRpATPONdJNTYhJyS-nmq4jW4E7xOnPhHAU9jR5W-g"
   host: "invest-public-api.tinkoff.ru:443"
   history-max-depth-days: 1
+
+telegram:
+  chat-id: 253052558
+  chat-token: 5364460446:AAGxpCglqUunPCyEU5ziIMvHOtSedT9Cp_k
+  base-url: https://api.telegram.org/

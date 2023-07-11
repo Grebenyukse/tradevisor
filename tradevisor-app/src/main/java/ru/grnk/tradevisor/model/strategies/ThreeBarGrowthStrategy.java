@@ -6,6 +6,8 @@ import java.util.List;
 
 public class ThreeBarGrowthStrategy implements IStrategy {
 
+    public static final String THREE_BARS_GROWTH_STRATEGY = "THREE_BARS_GROWTH_STRATEGY";
+
     @Override
     public Integer historyDepthBarsBy1m() {
         return 3;
@@ -30,6 +32,6 @@ public class ThreeBarGrowthStrategy implements IStrategy {
 
     @Override
     public String getStrategyUniqueName() {
-        return "THREE_BARS_GROWTH_STRATEGY";
+        return THREE_BARS_GROWTH_STRATEGY;
     }
 }

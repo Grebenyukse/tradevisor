@@ -14,7 +14,7 @@ create table if not exists tradevisor.signals
     take_profit real,
     created_at  timestamptz,
     updated_at  timestamptz,
-    status      varchar --created, expired, executed, cancelled,
+    status      varchar --created, expired, executed, cancelled, published
 );
 
 alter table tradevisor.signals add constraint signal_on_bar_calculated_once_per_strategy unique

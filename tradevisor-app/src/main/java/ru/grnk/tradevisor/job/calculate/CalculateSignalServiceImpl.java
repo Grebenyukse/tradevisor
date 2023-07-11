@@ -29,7 +29,7 @@ public class CalculateSignalServiceImpl implements JobRunnerService {
         log.info("calculate all signals mf");
         var tickers = tickersRepository.getAllTickers();
         if (tickers.isEmpty()) {
-            log.info("нет тикеров ждемс когда появятся");
+            log.info("нет тикеров ждем когда появятся");
             return;
         }
         for (Tickers t : tickers) {

@@ -1,8 +1,6 @@
 package ru.grnk.tradevisor.model.strategies;
 
-import reactor.util.function.Tuple2;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
-import ru.tinkoff.piapi.contract.v1.CandleInterval;
 
 import java.util.List;
 

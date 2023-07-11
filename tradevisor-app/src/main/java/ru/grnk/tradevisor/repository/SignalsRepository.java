@@ -2,10 +2,14 @@ package ru.grnk.tradevisor.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
+import org.springframework.transaction.annotation.Transactional;
+import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 import ru.grnk.tradevisor.model.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.model.strategies.TrvCalculationResult;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static ru.grnk.tradevisor.dbmodel.tables.Signals.SIGNALS;
 
@@ -14,6 +18,23 @@ public class SignalsRepository {
 
     private final DSLContext dsl;
 
+    @Transactional
+    public void updateSignalStatus(Signals signal, TrvSignalStatus status) {
+        dsl.update(SIGNALS).set(SIGNALS.STATUS, status.name())
+                .where(SIGNALS.ID.eq(signal.getId()))
+                .execute();
+    }
+
+    @Transactional
+    public List<Signals> findUnpublishedSignals() {
+        return dsl.select().from(SIGNALS)
+                .where(SIGNALS.STATUS.eq(TrvSignalStatus.CREATED.name()))
+                .orderBy(SIGNALS.CREATED_AT)
+                .fetchStreamInto(Signals.class)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
     public void saveSignal(TrvCalculationResult trvCalculationResult,
                            String instrumentUid,
                            String strategyName,
