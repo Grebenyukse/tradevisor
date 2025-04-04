@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.zcommon.job.publish;
+package ru.grnk.tradevisor.fnotify.publish;
 
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 import ru.grnk.tradevisor.zcommon.telegram.BotMessage;

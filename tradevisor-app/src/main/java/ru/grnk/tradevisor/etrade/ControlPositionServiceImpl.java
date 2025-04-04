@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.zcommon.job.calendar;
+package ru.grnk.tradevisor.etrade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,15 +9,15 @@ import ru.grnk.tradevisor.zcommon.metrics.Jobs;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CollectCalendarServiceImpl implements JobRunnerService {
+public class ControlPositionServiceImpl implements JobRunnerService {
 
     @Override
     public void doWork() {
-        log.info("collect all calendars mf");
+        log.info("control all positions mf");
     }
 
     @Override
     public Jobs getJobType() {
-        return Jobs.COLLECT_CALENDAR_JOB;
+        return Jobs.CONTROL_POSITION_JOB;
     }
 }

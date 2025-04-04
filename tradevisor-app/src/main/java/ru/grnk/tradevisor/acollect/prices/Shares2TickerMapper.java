@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.zcommon.job.prices;
+package ru.grnk.tradevisor.acollect.prices;
 
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.tinkoff.piapi.contract.v1.Share;

@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.zcommon.job.prices;
+package ru.grnk.tradevisor.acollect.prices;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

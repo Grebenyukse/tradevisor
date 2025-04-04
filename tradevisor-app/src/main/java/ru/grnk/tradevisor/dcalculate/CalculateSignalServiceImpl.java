@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.zcommon.job.calculate;
+package ru.grnk.tradevisor.dcalculate;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

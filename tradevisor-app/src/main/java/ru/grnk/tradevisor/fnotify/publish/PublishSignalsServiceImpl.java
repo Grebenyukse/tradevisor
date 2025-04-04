@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.zcommon.job.publish;
+package ru.grnk.tradevisor.fnotify.publish;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
