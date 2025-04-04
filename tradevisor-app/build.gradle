@@ -36,9 +36,9 @@ repositories {
 
 dependencies {
     implementation project(':tinkoff-api')
-    implementation project(":tradevisor-db")
+    implementation project(':tradevisor-db')
 
-    implementation 'ru.tinkoff.piapi:java-sdk-core:1.4'
+    implementation 'ru.tinkoff.piapi:java-sdk-core:1.5'
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
@@ -53,6 +53,7 @@ dependencies {
 
     implementation 'net.logstash.logback:logstash-logback-encoder:7.0.1'
     implementation 'commons-io:commons-io:2.11.0'
+    implementation 'io.github.cdimascio:dotenv-java:2.3.2'
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     compileOnly 'org.projectlombok:lombok'
@@ -85,14 +86,6 @@ dependencies {
 
 test {
     useJUnitPlatform()
-}
-
-sourceSets {
-    main {
-        resources {
-            srcDir '../tradevisor-db/src/main/resources'
-        }
-    }
 }
 
 bootJar {

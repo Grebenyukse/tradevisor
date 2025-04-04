@@ -2,6 +2,7 @@ package ru.grnk.tradevisor.zcommon.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 import ru.grnk.tradevisor.zcommon.model.signals.TrvSignalStatus;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 
 import static ru.grnk.tradevisor.dbmodel.tables.Signals.SIGNALS;
 
+@Repository
 @RequiredArgsConstructor
 public class SignalsRepository {
 

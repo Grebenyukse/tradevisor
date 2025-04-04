@@ -1,4 +1,2 @@
 rootProject.name = 'tradevisor'
-include ('tradevisor-db', 'tradevisor-app')
-include 'tinkoff-api'
-
+include ':tradevisor-app', ':tradevisor-db', 'tinkoff-api'
