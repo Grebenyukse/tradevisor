@@ -3,7 +3,7 @@ package ru.grnk.tradevisor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import ru.grnk.tradevisor.properties.TradevisorProperties;
+import ru.grnk.tradevisor.zcommon.properties.TradevisorProperties;
 
 
 @SpringBootApplication(scanBasePackages = "ru.grnk.tradevisor")
