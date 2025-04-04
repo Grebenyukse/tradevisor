@@ -56,8 +56,25 @@ tasks.register<Zip>("liquibaseChangelogArchive") {
 tasks.getByName("build").finalizedBy("liquibaseChangelogArchive")
 
 liquibaseJooq {
-    changelogDirectory =
-        "${project(":tradevisor-db").projectDir}/src/main/resources/changelog/changelog-master.yaml"
+    val osName = System.getProperty("os.name").toLowerCase()
+    val projectDir = project(":tradevisor-db").projectDir
+
+    // Формируем исходный путь
+    val rawPath = projectDir.resolve("src/main/resources/changelog/changelog-master.yaml")
+
+    // Обрабатываем путь для Windows
+    val changelogPath = if (osName.contains("win")) {
+        rawPath.toString()
+                .replaceFirst("^[A-Za-z]:".toRegex(), "") // Удаляем префикс диска
+                .replace("\\", "/") // Нормализуем разделители
+    } else {
+        rawPath.toString()
+    }
+
+    logger.lifecycle("Processed changelog path: $changelogPath")
+    logger.lifecycle("File exists: ${File(changelogPath).exists()}")
+
+    changelogDirectory = changelogPath
     schemas = listOf("tradevisor")
     outputPackage = "ru.grnk.tradevisor.dbmodel"
 }
