@@ -45,37 +45,62 @@ spring:
     enabled: true
 
 app:
-  jobs:
-    calculate:
-      interval: 5s
-      enabled: true
+  collect:
+    aiscore:
+      cron: 1 * * * * *
     calendar:
-      interval: 15s
-      enabled: true
-    control:
-      interval: 10s
-      enabled: true
+      economic-event:
+        enabled: true
+        cron: 1 * * * * *
+      dividends:
+        enabled: true
+        cron: 1 * * * * *
+      expiration:
+        enabled: true
+        cron: 1 * * * * *
+      holidays:
+        enabled: true
+        cron: 1 * * * * *
     news:
-      interval: 10s
       enabled: true
+      cron: 1 * * * * *
     prices:
-      interval: 5s
-      enabled: true
-    publish:
-      interval: 10s
-      enabled: true
-
-tinkoff:
-  token: ${TINKOFF_INVEST_TOKEN}
-  host: "invest-public-api.tinkoff.ru:443"
-  history-max-depth-days: 1
-
-telegram:
-  chat-id: ${CHAT_ID}
-  chat-token: ${CHAT_TOKEN}
-  base-url: ${BASE_URL}
-
-newsapi:
-  api-key: ${NEWS_API_KEY}
-  url: "https://newsapi.org/v2/top-headlines?category=business"
-  page-size: 50
+      crypto:
+        enabled: true
+        cron: 1 * * * * *
+      micex:
+        enabled: true
+        cron: 1 * * * * *
+  calculate:
+    strategy-one:
+      cron: 1 * * * * *
+      enabled: false
+  trade:
+    limits: 1
+    enabled: false
+  notification:
+    enabled: true
+    cron: 1 * * * * *
+  integration:
+    tinkoff:
+      token: ${TINKOFF_INVEST_TOKEN}
+      host: "invest-public-api.tinkoff.ru:443"
+      history-max-depth-days: 1
+    proxyapi:
+      key: ${PROXY_API_KEY}
+      url: https://api.proxyapi.ru/deepseek/chat/completions
+    deepseek:
+      url: https://api.deepseek.com/v1/chat/completions
+      key: ${DEEPSEEK_KEY}
+    gigachat:
+      client-id: ${GIGACHAT_CLIENT_ID}
+      client-secret: ${GIGACHAT_CLIENT_SECRET}
+      url: https://gigachat.devices.sberbank.ru/api/v1/chat/completions
+    telegram:
+      chat-id: ${CHAT_ID}
+      chat-token: ${CHAT_TOKEN}
+      base-url: ${BASE_URL}
+    newsapi:
+      api-key: ${NEWS_API_KEY}
+      url: "https://newsapi.org/v2/top-headlines?category=business"
+      page-size: 50

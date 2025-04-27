@@ -2,12 +2,11 @@ package ru.grnk.tradevisor.acollect.prices;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.grnk.tradevisor.zcommon.job.parameters.ParametersRepository;
+import ru.grnk.tradevisor.zcommon.repository.ParametersRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
-import ru.grnk.tradevisor.zcommon.job.JobRunnerService;
-import ru.grnk.tradevisor.zcommon.metrics.Jobs;
 import ru.grnk.tradevisor.zcommon.repository.MarketDataRepository;
 import ru.grnk.tradevisor.zcommon.repository.TickersRepository;
 import ru.tinkoff.piapi.contract.v1.CandleInterval;
@@ -23,7 +22,7 @@ import java.util.Map;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CollectPricesServiceImpl implements JobRunnerService {
+public class CollectPricesServiceImpl {
 
     public static final String SHARES_TICKER_NAMES_LOADED = "shares_ticker_names_loaded";
     private final InvestApi investApi;
@@ -32,7 +31,7 @@ public class CollectPricesServiceImpl implements JobRunnerService {
     private final MarketDataRepository marketDataRepository;
 
 
-    @Override
+    @Scheduled(cron = "app.collect.prices.micex.cron")
     public void doWork() {
         log.debug("start collecting prices");
         Map<String, String> parameters = parametersRepository.getAllParameters();
@@ -71,8 +70,4 @@ public class CollectPricesServiceImpl implements JobRunnerService {
                 .forEach(c -> marketDataRepository.saveMarketData(c, instrumentUuid));
     }
 
-    @Override
-    public Jobs getJobType() {
-        return Jobs.COLLECT_PRICES_JOB;
-    }
 }

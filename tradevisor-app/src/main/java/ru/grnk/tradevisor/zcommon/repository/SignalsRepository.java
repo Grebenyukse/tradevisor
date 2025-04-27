@@ -5,8 +5,8 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
-import ru.grnk.tradevisor.zcommon.model.signals.TrvSignalStatus;
-import ru.grnk.tradevisor.zcommon.model.strategies.TrvCalculationResult;
+import ru.grnk.tradevisor.bcalculate.signals.TrvSignalStatus;
+import ru.grnk.tradevisor.bcalculate.strategies.TrvCalculationResult;
 
 import java.time.OffsetDateTime;
 import java.util.List;

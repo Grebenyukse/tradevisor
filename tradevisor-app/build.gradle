@@ -37,9 +37,12 @@ repositories {
 dependencies {
     implementation project(':tinkoff-api')
     implementation project(':tradevisor-db')
-
+    implementation("chat.giga:gigachat-java:0.1.7")
     implementation 'ru.tinkoff.piapi:java-sdk-core:1.5'
-
+    implementation 'org.jsoup:jsoup:1.15.3'
+    implementation 'org.seleniumhq.selenium:selenium-java:4.11.0'
+    implementation 'io.github.bonigarcia:webdrivermanager:5.6.3'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.3'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
