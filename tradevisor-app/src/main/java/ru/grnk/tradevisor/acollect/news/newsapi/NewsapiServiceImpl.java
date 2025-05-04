@@ -11,7 +11,6 @@ import ru.grnk.tradevisor.acollect.news.NewsCollector;
 import ru.grnk.tradevisor.acollect.news.dto.NewsApiArticle;
 import ru.grnk.tradevisor.acollect.news.dto.NewsApiResponse;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.News;
-import ru.grnk.tradevisor.zcommon.metrics.Jobs;
 import ru.grnk.tradevisor.zcommon.repository.NewsRepository;
 
 import java.time.OffsetDateTime;
@@ -46,9 +45,6 @@ public class NewsapiServiceImpl implements NewsCollector {
         return "newsapi";
     }
 
-    public Jobs getJobType() {
-        return Jobs.COLLECT_NEWS_JOB;
-    }
 
     public void collectEconomicNews() {
        collectEconomicNews(1);

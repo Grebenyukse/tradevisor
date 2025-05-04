@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.acollect.aiscore;
+package ru.grnk.tradevisor.acollect.aiscore.dto;
 
 public record AiScoreEntity(
         java.sql.Date requestDate,

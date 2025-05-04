@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -11,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import ru.grnk.tradevisor.eintegration.ai.AskAiModel;
+import ru.grnk.tradevisor.zcommon.properties.TradevisorProperties;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,18 +22,16 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(value = "app.integration.deepseek.enabled")
 public class AskDeepseekService implements AskAiModel {
     private final RestTemplate restTemplate;
-
-    @Value("${collect.ai.deepseek.url}")
-    private String url;
-
-    @Value("${collect.ai.deepseek.key}")
-    private String key;
+    private final TradevisorProperties trvProperties;
 
     @Override
     @SneakyThrows
     public String ask(String prompt, Integer attempts) {
+        var url = trvProperties.integration().deepseek().url();
+        var key = trvProperties.integration().deepseek().key();
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -62,6 +62,11 @@ public class AskDeepseekService implements AskAiModel {
                 throw e;
             }
         }
+    }
+
+    @Override
+    public String source() {
+        return "deepseek";
     }
 
 }

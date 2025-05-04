@@ -3,6 +3,8 @@ package ru.grnk.tradevisor.acollect.aiscore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.grnk.tradevisor.acollect.aiscore.dto.AiScoreEntity;
+import ru.grnk.tradevisor.acollect.aiscore.dto.AiScoreResponse;
 
 import java.sql.Date;
 import java.time.Instant;

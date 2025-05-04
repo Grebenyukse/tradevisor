@@ -47,29 +47,30 @@ spring:
 app:
   collect:
     aiscore:
+      enabled: true
       cron: 1 * * * * *
     calendar:
       economic-event:
-        enabled: true
+        enabled: false
         cron: 1 * * * * *
       dividends:
-        enabled: true
+        enabled: false
         cron: 1 * * * * *
       expiration:
-        enabled: true
+        enabled: false
         cron: 1 * * * * *
       holidays:
-        enabled: true
+        enabled: false
         cron: 1 * * * * *
     news:
-      enabled: true
+      enabled: false
       cron: 1 * * * * *
     prices:
       crypto:
-        enabled: true
+        enabled: false
         cron: 1 * * * * *
       micex:
-        enabled: true
+        enabled: false
         cron: 1 * * * * *
   calculate:
     strategy-one:
@@ -79,28 +80,33 @@ app:
     limits: 1
     enabled: false
   notification:
-    enabled: true
+    enabled: false
     cron: 1 * * * * *
   integration:
     tinkoff:
+      enabled: false
       token: ${TINKOFF_INVEST_TOKEN}
       host: "invest-public-api.tinkoff.ru:443"
       history-max-depth-days: 1
     proxyapi:
+      enabled: false
       key: ${PROXY_API_KEY}
       url: https://api.proxyapi.ru/deepseek/chat/completions
     deepseek:
+      enabled: false
       url: https://api.deepseek.com/v1/chat/completions
       key: ${DEEPSEEK_KEY}
     gigachat:
+      enabled: false
       client-id: ${GIGACHAT_CLIENT_ID}
       client-secret: ${GIGACHAT_CLIENT_SECRET}
-      url: https://gigachat.devices.sberbank.ru/api/v1/chat/completions
     telegram:
+      enabled: false
       chat-id: ${CHAT_ID}
       chat-token: ${CHAT_TOKEN}
       base-url: ${BASE_URL}
     newsapi:
+      enabled: false
       api-key: ${NEWS_API_KEY}
       url: "https://newsapi.org/v2/top-headlines?category=business"
       page-size: 50
