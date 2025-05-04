@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.acollect.calendar.ai;
+package ru.grnk.tradevisor.acollect.calendar.dto;
 
 import java.util.ArrayList;
 

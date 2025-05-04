@@ -5,5 +5,7 @@ import java.util.List;
 public interface TrvCollector <T> {
     List<T> collect();
 
-    String source();
+    default String source() {
+        return "trvAiModel";
+    };
 }

@@ -52,7 +52,7 @@ public class AskGigachatService implements AskAiModel {
                     .map(x -> readValue(x, String.class))
                     .orElseThrow();
         } catch (Exception e) {
-            log.error("ошибка обращения к ai модели deepseek");
+            log.error("ошибка обращения к ai модели gigachat");
             if (attempts > 0) {
                 Thread.sleep(1000L);
                 return ask(prompt, --attempts);
