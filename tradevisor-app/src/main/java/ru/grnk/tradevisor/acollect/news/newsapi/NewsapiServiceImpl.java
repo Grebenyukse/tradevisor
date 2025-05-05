@@ -2,7 +2,6 @@ package ru.grnk.tradevisor.acollect.news.newsapi;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -11,6 +10,7 @@ import ru.grnk.tradevisor.acollect.news.NewsCollector;
 import ru.grnk.tradevisor.acollect.news.dto.NewsApiArticle;
 import ru.grnk.tradevisor.acollect.news.dto.NewsApiResponse;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.News;
+import ru.grnk.tradevisor.zcommon.properties.TradevisorProperties;
 import ru.grnk.tradevisor.zcommon.repository.NewsRepository;
 
 import java.time.OffsetDateTime;
@@ -22,17 +22,9 @@ import static ru.grnk.tradevisor.zcommon.util.ObjectIdHasher.calcHash;
 @RequiredArgsConstructor
 @Service
 public class NewsapiServiceImpl implements NewsCollector {
-    @Value("${collect.news.newsapi.api-key}")
-    private String apiKey;
-
-    @Value("${collect.news.newsapi.url}")
-    private String baseUrl;
-
-    @Value("${collect.news.newsapi.page-size}")
-    private Integer pageSize;
-
     private final NewsRepository newsRepository;
     private final RestTemplate restTemplate;
+    private final TradevisorProperties trvProperties;
 
     @Override
     public List<NewsApiResponse> collect() {
@@ -50,6 +42,9 @@ public class NewsapiServiceImpl implements NewsCollector {
        collectEconomicNews(1);
     }
     public void collectEconomicNews(int page) {
+        var apiKey = trvProperties.integration().newsapi().apiKey();
+        var pageSize = trvProperties.integration().newsapi().pageSize();
+        var baseUrl = trvProperties.integration().newsapi().url();
         try {
             UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl)
                     .queryParam("apiKey", apiKey)

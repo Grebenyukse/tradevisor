@@ -31,7 +31,7 @@ public class CollectPricesServiceImpl {
     private final MarketDataRepository marketDataRepository;
 
 
-    @Scheduled(cron = "app.collect.prices.micex.cron")
+    @Scheduled(cron = "${app.collect.prices.micex.cron}")
     public void doWork() {
         log.debug("start collecting prices");
         Map<String, String> parameters = parametersRepository.getAllParameters();

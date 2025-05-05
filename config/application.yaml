@@ -50,18 +50,15 @@ app:
       enabled: true
       cron: 1 * * * * *
     calendar:
+      cron: 1 * * * * *
       economic-event:
         enabled: false
-        cron: 1 * * * * *
       dividends:
         enabled: false
-        cron: 1 * * * * *
       expiration:
         enabled: false
-        cron: 1 * * * * *
       holidays:
         enabled: false
-        cron: 1 * * * * *
     news:
       enabled: false
       cron: 1 * * * * *
@@ -84,7 +81,7 @@ app:
     cron: 1 * * * * *
   integration:
     tinkoff:
-      enabled: false
+      enabled: true
       token: ${TINKOFF_INVEST_TOKEN}
       host: "invest-public-api.tinkoff.ru:443"
       history-max-depth-days: 1
@@ -97,7 +94,7 @@ app:
       url: https://api.deepseek.com/v1/chat/completions
       key: ${DEEPSEEK_KEY}
     gigachat:
-      enabled: false
+      enabled: true
       client-id: ${GIGACHAT_CLIENT_ID}
       client-secret: ${GIGACHAT_CLIENT_SECRET}
     telegram:

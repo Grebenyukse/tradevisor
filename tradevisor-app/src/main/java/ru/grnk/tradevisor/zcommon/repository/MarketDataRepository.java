@@ -3,9 +3,9 @@ package ru.grnk.tradevisor.zcommon.repository;
 import com.google.protobuf.Timestamp;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
+import ru.grnk.tradevisor.zcommon.properties.TradevisorProperties;
 import ru.tinkoff.piapi.contract.v1.HistoricCandle;
 import ru.tinkoff.piapi.contract.v1.Quotation;
 
@@ -25,10 +25,7 @@ import static ru.tinkoff.piapi.core.utils.MapperUtils.quotationToBigDecimal;
 public class MarketDataRepository {
 
     private final DSLContext dsl;
-
-    @Value("${tinkoff.history-max-depth-days}")
-    private Integer historyMaxDepthDays;
-
+    private final TradevisorProperties trvProperties;
 
     public List<MarketData> fetchMarketDataForLast(int bars, String instrumentUid) {
         return dsl.select().from(MARKET_DATA)
@@ -40,6 +37,7 @@ public class MarketDataRepository {
     }
 
     public OffsetDateTime getLatestTickTime(String instrumentUuid) {
+        var historyMaxDepthDays = trvProperties.integration().tinkoff().historyMaxDepthDays();
         return dsl.select(max(MARKET_DATA.TIME)).from(MARKET_DATA)
                 .where(MARKET_DATA.INSTRUMENT_UUID.eq(instrumentUuid))
                 .fetchOptionalInto(OffsetDateTime.class)

@@ -49,7 +49,6 @@ public class AskGigachatService implements AskAiModel {
                     .findFirst()
                     .map(Choice::message)
                     .map(ChoiceMessage::content)
-                    .map(x -> readValue(x, String.class))
                     .orElseThrow();
         } catch (Exception e) {
             log.error("ошибка обращения к ai модели gigachat");

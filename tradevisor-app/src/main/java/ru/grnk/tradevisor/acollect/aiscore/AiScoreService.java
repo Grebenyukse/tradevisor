@@ -1,6 +1,7 @@
 package ru.grnk.tradevisor.acollect.aiscore;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static ru.grnk.tradevisor.zcommon.util.ObjectMapperUtils.readValue;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "app.collect.aiscore.enabled")
@@ -45,13 +46,17 @@ public class AiScoreService {
     @Scheduled(cron = "${app.collect.aiscore.cron}")
     public void doWork() {
         var date = java.sql.Date.valueOf(LocalDate.now());
-        var aiScores = aiScoreCollectors.stream()
-                .map(x -> Pair.of(x.ask(TRV_AI_PROMPT, 3), x.source()))
-                .flatMap(c -> Arrays.stream(readValue(c.getLeft(), AiScoreResponse[].class))
-                        .map(x -> new AiScoreEntity(date, x.score(), x.ticker(), c.getRight()))
-                )
-                .collect(Collectors.toList());
-        aiScoreRepository.saveAiScore(aiScores);
+        try {
+            var aiScores = aiScoreCollectors.stream()
+                    .map(x -> Pair.of(x.ask(TRV_AI_PROMPT, 3), x.source()))
+                    .flatMap(c -> Arrays.stream(readValue(c.getLeft(), AiScoreResponse[].class))
+                            .map(x -> new AiScoreEntity(date, x.score(), x.ticker(), c.getRight()))
+                    )
+                    .collect(Collectors.toList());
+            aiScoreRepository.saveAiScore(aiScores);
+        } catch (Exception e) {
+            log.error("ошибка скоринга ", e);
+        }
     };
 
 }

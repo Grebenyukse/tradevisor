@@ -1,8 +1,9 @@
 package ru.grnk.tradevisor.zcommon.properties;
 
 public record TrvCalendarProperties(
+        String cron,
         TrvJobProperties economicEvent,
-        TrvJobProperties dividendsProperties,
+        TrvJobProperties dividends,
         TrvJobProperties expiration,
         TrvJobProperties holidays
 ) {
