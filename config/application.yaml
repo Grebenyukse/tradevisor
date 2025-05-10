@@ -45,34 +45,29 @@ spring:
     enabled: true
 
 app:
-  collect:
-    aiscore:
-      enabled: true
+  collect:                    # сбор информации для анализа
+    events:                   # события, влияющие на ценную бумагу
+      cron: 1 * * * * *       # период сбора информации
+      calendar:               # запланированные события в будущем
+        economic: false       # макроэкономика и прочие
+        reports: true         # отчеты эмитентов по стндартам
+        dividends: true       # выплата дивидендов
+        expiration: false     # экспирация
+        holidays: false
+      news:
+        public: false
+        ai: false
+    forecast:
       cron: 1 * * * * *
-    calendar:
-      cron: 1 * * * * *
-      economic-event:
-        enabled: false
-      dividends:
-        enabled: false
-      expiration:
-        enabled: false
-      holidays:
-        enabled: false
-    news:
-      enabled: false
-      cron: 1 * * * * *
+      aiscore: false
+      analysts: false
     prices:
-      crypto:
-        enabled: false
-        cron: 1 * * * * *
-      micex:
-        enabled: false
-        cron: 1 * * * * *
-  calculate:
-    strategy-one:
       cron: 1 * * * * *
-      enabled: false
+      crypto: false
+      micex: false
+  calculate:
+    cron: 1 * * * * *
+    strategy-one: false
   trade:
     limits: 1
     enabled: false

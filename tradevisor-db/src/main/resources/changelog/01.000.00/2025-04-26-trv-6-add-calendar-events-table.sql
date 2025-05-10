@@ -13,11 +13,10 @@ create table if not exists tradevisor.economic_events (
         'futures', 'ipo', 'economic'
     )),
     source varchar(50) not null,
-    impact varchar(10),
+    impact int,
     description text,
     country varchar(3),
-    symbol varchar(10),
-    event_type varchar(50),
+    ticker_uid varchar(10),
     created_at timestamp with time zone default now()
 );
 

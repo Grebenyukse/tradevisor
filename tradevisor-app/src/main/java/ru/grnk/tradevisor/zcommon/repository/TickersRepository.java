@@ -17,6 +17,15 @@ public class TickersRepository {
 
     private final DSLContext dsl;
 
+    public Tickers findTickerByUid(String uuid) {
+        return dsl.select().from(TICKERS)
+                .where(TICKERS.UUID.eq(uuid))
+                .fetchInto(Tickers.class)
+                .stream()
+                .findFirst()
+                .orElseThrow();
+    };
+
     public List<Tickers> getAllTickers() {
         return dsl.select().from(TICKERS)
                 .fetchStreamInto(Tickers.class)
