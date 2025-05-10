@@ -39,18 +39,14 @@ dependencies {
     implementation project(':tinkoff-api')
     implementation project(':tradevisor-db')
     implementation("chat.giga:gigachat-java:0.1.7")
-//    implementation 'ru.tinkoff.piapi:java-sdk-core:1.5'
+    implementation ('io.netty:netty-all:4.1.100.Final') {
+        exclude group: 'io.netty', module: 'netty-transport-epoll'
+    }
     implementation 'com.github.RussianInvestments:invest-api-java-sdk:1.30'
-    implementation 'org.jsoup:jsoup:1.15.3'
-    implementation 'org.seleniumhq.selenium:selenium-java:4.11.0'
-    implementation 'io.github.bonigarcia:webdrivermanager:5.6.3'
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.3'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
     implementation "org.springframework.boot:spring-boot-autoconfigure"
     implementation 'org.telegram:telegrambots:6.7.0'
@@ -75,14 +71,8 @@ dependencies {
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'io.projectreactor:reactor-test'
-    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
-    testImplementation 'com.squareup.okhttp3:mockwebserver:4.10.0-RC1'
-    testImplementation 'com.squareup.okhttp3:okhttp:4.10.0-RC1'
-    testImplementation 'org.mock-server:mockserver-netty:3.10.8'
-    testImplementation 'org.mock-server:mockserver-client-java:3.10.8'
     implementation 'org.liquibase:liquibase-core:4.3.1'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'

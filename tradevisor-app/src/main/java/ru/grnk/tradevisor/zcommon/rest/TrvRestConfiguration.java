@@ -18,4 +18,5 @@ public class TrvRestConfiguration {
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
     }
+
 }

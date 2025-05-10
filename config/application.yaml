@@ -55,7 +55,7 @@ app:
         expiration: false     # экспирация
         holidays: false
       news:
-        public: false
+        media: false
         ai: false
     forecast:
       cron: 1 * * * * *

@@ -16,7 +16,7 @@ public class CalendarService {
     private final List<CalendarCollector> loaders;
     private final CalendarRepository calendarRepository;
 
-    @Scheduled(cron = "${app.collect.calendar.cron}")
+    @Scheduled(cron = "${app.collect.events.cron}")
     public void updateCalendar() {
         try {
             loaders.stream()

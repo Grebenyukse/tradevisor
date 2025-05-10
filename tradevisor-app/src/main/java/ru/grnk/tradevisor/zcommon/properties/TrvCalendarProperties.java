@@ -1,12 +1,12 @@
 package ru.grnk.tradevisor.zcommon.properties;
 
 public record TrvCalendarProperties(
-        TrvJobProperties economic,
+        Boolean economic,
 
-        TrvJobProperties reports,
-        TrvJobProperties dividends,
+        Boolean reports,
+        Boolean dividends,
 
-        TrvJobProperties expiration,
-        TrvJobProperties holidays
+        Boolean expiration,
+        Boolean holidays
 ) {
 }

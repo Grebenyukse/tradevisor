@@ -40,7 +40,7 @@ public class ReportsCollectorImpl implements CalendarCollector {
                         .impact(3)
                         .country("ru")
                         .source("t-инвестиции API")
-                        .ticker(x.getInstrumentId())
+                        .tickerUid(x.getInstrumentId())
                         .title("report")
                         .description("отчетность по инструменту")
                         .build()))
