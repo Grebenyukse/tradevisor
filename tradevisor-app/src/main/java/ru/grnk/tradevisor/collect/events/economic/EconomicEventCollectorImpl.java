@@ -5,9 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.TrvSource;
-import ru.grnk.tradevisor.collect.events.dto.EventCategory;
-import ru.grnk.tradevisor.collect.events.dto.EventImpact;
-import ru.grnk.tradevisor.collect.events.dto.TickerEvent;
+import ru.grnk.tradevisor.collect.events.EventCategory;
+import ru.grnk.tradevisor.collect.events.EventImpact;
+import ru.grnk.tradevisor.collect.events.TickerEvent;
 import ru.grnk.tradevisor.collect.events.EventCollector;
 import ru.grnk.tradevisor.integration.ai.AskAiModel;
 
@@ -49,7 +49,7 @@ public class EconomicEventCollectorImpl implements EventCollector {
                                 .category(EventCategory.ECONOMIC)
                                 .impact(EventImpact.HIGH)
                                 .source(TrvSource.AI)
-                                .tickerUid(y)
+                                .instrumentUid(y)
                                 .content(x.title() + " " + x.description())
                                 .build()))
                 .collect(Collectors.toList());

@@ -6,9 +6,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.TrvSource;
 import ru.grnk.tradevisor.collect.events.EventCollector;
-import ru.grnk.tradevisor.collect.events.dto.EventCategory;
-import ru.grnk.tradevisor.collect.events.dto.EventImpact;
-import ru.grnk.tradevisor.collect.events.dto.TickerEvent;
+import ru.grnk.tradevisor.collect.events.EventCategory;
+import ru.grnk.tradevisor.collect.events.EventImpact;
+import ru.grnk.tradevisor.collect.events.TickerEvent;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.tinkoff.piapi.core.InvestApi;
@@ -42,7 +42,7 @@ public class ExpirationCollectorImpl implements EventCollector {
                         .category(EventCategory.EXPIRATION)
                         .impact(EventImpact.HIGH)
                         .source(TrvSource.TINKOFF_API)
-                        .tickerUid(x.getInstrumentId())
+                        .instrumentUid(x.getInstrumentId())
                         .content("report" + " " + "отчетность по инструменту")
                         .build()))
                 .collect(Collectors.toList());

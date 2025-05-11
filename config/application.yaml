@@ -48,7 +48,7 @@ app:
   collect:                    # сбор информации для анализа
     ai-score:
       cron: 1 * * * * *
-      enabled: true
+      enabled: false
     events:                   # события, влияющие на ценную бумагу
       cron: 1 * * * * *       # период сбора информации
       dividends: true       # выплата дивидендов

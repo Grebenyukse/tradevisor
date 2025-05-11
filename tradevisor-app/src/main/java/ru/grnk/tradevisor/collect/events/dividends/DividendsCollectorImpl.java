@@ -5,9 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.TrvSource;
-import ru.grnk.tradevisor.collect.events.dto.EventCategory;
-import ru.grnk.tradevisor.collect.events.dto.EventImpact;
-import ru.grnk.tradevisor.collect.events.dto.TickerEvent;
+import ru.grnk.tradevisor.collect.events.EventCategory;
+import ru.grnk.tradevisor.collect.events.EventImpact;
+import ru.grnk.tradevisor.collect.events.TickerEvent;
 import ru.grnk.tradevisor.collect.events.EventCollector;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
@@ -23,7 +23,7 @@ import static ru.grnk.tradevisor.common.util.ObjectIdHasher.calcHash;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = "app.collect.events.calendar.dividends")
+@ConditionalOnProperty(value = "app.collect.events.dividends")
 public class DividendsCollectorImpl implements EventCollector {
 
     private final InvestApi investApi;
@@ -40,7 +40,7 @@ public class DividendsCollectorImpl implements EventCollector {
                         .category(EventCategory.DIVIDENDS)
                         .impact(EventImpact.HIGH)
                         .source(TrvSource.TINKOFF_API)
-                        .tickerUid(x.getInstrumentId())
+                        .instrumentUid(x.getInstrumentId())
                         .content("отчетность по стандарту МСФО")
                         .build()))
                 .collect(Collectors.toList());

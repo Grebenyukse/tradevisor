@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.collect.events.dto;
+package ru.grnk.tradevisor.collect.events;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +18,6 @@ public class TickerEvent {
     private EventCategory category;     // категория события (дивиденды, новости, отчет и тд...)
     private EventImpact impact;         // влияние на инструмент
     private TrvSource source;           // tinkof-api, newsapi, micex, deepseek ...
-    private String tickerUid;           // tickers.uuid
+    private String instrumentUid;       // tickers.uuid
     private String content;             // содержание события
 }

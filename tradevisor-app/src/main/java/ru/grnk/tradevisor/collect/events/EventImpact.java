@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.collect.events.dto;
+package ru.grnk.tradevisor.collect.events;
 
 public enum EventImpact {
     LOW,

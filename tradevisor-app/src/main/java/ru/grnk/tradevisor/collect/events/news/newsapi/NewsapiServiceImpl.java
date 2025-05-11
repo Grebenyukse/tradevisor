@@ -8,8 +8,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import ru.grnk.tradevisor.collect.TrvSource;
 import ru.grnk.tradevisor.collect.events.EventsRepository;
-import ru.grnk.tradevisor.collect.events.dto.EventCategory;
-import ru.grnk.tradevisor.collect.events.dto.TickerEvent;
+import ru.grnk.tradevisor.collect.events.EventCategory;
+import ru.grnk.tradevisor.collect.events.TickerEvent;
 import ru.grnk.tradevisor.collect.events.news.NewsCollector;
 import ru.grnk.tradevisor.collect.events.news.dto.NewsApiArticle;
 import ru.grnk.tradevisor.collect.events.news.dto.NewsApiResponse;
@@ -69,7 +69,7 @@ public class NewsapiServiceImpl implements NewsCollector {
                 .impact(null)
                 .content(apiArticle.getTitle() + " " + apiArticle.getDescription() + " " + apiArticle.getUrl())
                 .eventDate(OffsetDateTime.parse(apiArticle.getPublishedAt()))
-                .tickerUid(null)
+                .instrumentUid(null)
                 .build();
     }
 }
