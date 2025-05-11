@@ -24,11 +24,8 @@ databaseChangeLog:
       relativeToChangelogFile: true
 
   - include:
-      file: 2025-04-20-trv-5-add-news-table.sql
+      file: 2025-04-20-trv-5-add-events-table.sql
       relativeToChangelogFile: true
   - include:
-      file: 2025-04-26-trv-6-add-calendar-events-table.sql
-      relativeToChangelogFile: true
-  - include:
-      file: 2025-04-27-trv-7-add-ai-score-table.sql
+      file: 2025-04-27-trv-6-add-ai-score-table.sql
       relativeToChangelogFile: true

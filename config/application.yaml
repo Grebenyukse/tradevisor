@@ -46,21 +46,16 @@ spring:
 
 app:
   collect:                    # сбор информации для анализа
+    ai-score:
+      cron: 1 * * * * *
+      enabled: true
     events:                   # события, влияющие на ценную бумагу
       cron: 1 * * * * *       # период сбора информации
-      calendar:               # запланированные события в будущем
-        economic: false       # макроэкономика и прочие
-        reports: true         # отчеты эмитентов по стндартам
-        dividends: true       # выплата дивидендов
-        expiration: false     # экспирация
-        holidays: false
-      news:
-        media: false
-        ai: false
-    forecast:
-      cron: 1 * * * * *
-      aiscore: false
-      analysts: false
+      dividends: true       # выплата дивидендов
+      economic: false       # макроэкономика и прочие
+      expiration: false     # экспирация
+      reports: false
+      news: false
     prices:
       cron: 1 * * * * *
       crypto: false
