@@ -10,6 +10,7 @@ import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.tinkoff.piapi.contract.v1.CandleInterval;
+import ru.tinkoff.piapi.contract.v1.Future;
 import ru.tinkoff.piapi.contract.v1.HistoricCandle;
 import ru.tinkoff.piapi.contract.v1.Share;
 import ru.tinkoff.piapi.core.InvestApi;
@@ -38,6 +39,7 @@ public class CollectPricesServiceImpl {
         if (!Boolean.parseBoolean(parameters.get(SHARES_TICKER_NAMES_LOADED))) {
             log.debug("start collecting tickers");
             saveAllShares();
+            saveAllFutures();
             log.debug("tickers saved");
         }
         List<Tickers> tickers = tickersRepository.getAllTickers();
@@ -52,6 +54,19 @@ public class CollectPricesServiceImpl {
                 .filter(Share::getShortEnabledFlag)
                 .filter(Share::getApiTradeAvailableFlag)
                 .filter(Share::getBuyAvailableFlag)
+                .filter(s -> !s.getForQualInvestorFlag())
+                .map(Shares2TickerMapper::from)
+                .forEach(tickersRepository::saveInstrument);
+        parametersRepository.setValue(SHARES_TICKER_NAMES_LOADED, "true");
+    }
+
+    @Transactional
+    public void saveAllFutures() {
+        var shares = investApi.getInstrumentsService().getAllFuturesSync();
+        shares.stream()
+                .filter(Future::getShortEnabledFlag)
+                .filter(Future::getApiTradeAvailableFlag)
+                .filter(Future::getBuyAvailableFlag)
                 .filter(s -> !s.getForQualInvestorFlag())
                 .map(Shares2TickerMapper::from)
                 .forEach(tickersRepository::saveInstrument);

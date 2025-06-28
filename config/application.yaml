@@ -51,21 +51,22 @@ app:
       enabled: false
     events:                   # события, влияющие на ценную бумагу
       cron: 1 * * * * *       # период сбора информации
-      dividends: true       # выплата дивидендов
-      economic: false       # макроэкономика и прочие
-      expiration: false     # экспирация
+      dividends: false        # выплата дивидендов
+      economic: false         # макроэкономика и прочие
+      expiration: false       # экспирация
       reports: false
       news: false
     prices:
       cron: 1 * * * * *
       crypto: false
-      micex: false
+      micex: true
   calculate:
     cron: 1 * * * * *
-    strategy-one: false
+    strategy-one: true
   trade:
     limits: 1
-    enabled: false
+    cron: 1 * * * * *
+    enabled: true
   notification:
     enabled: false
     cron: 1 * * * * *
@@ -84,7 +85,7 @@ app:
       url: https://api.deepseek.com/v1/chat/completions
       key: ${DEEPSEEK_KEY}
     gigachat:
-      enabled: true
+      enabled: false
       client-id: ${GIGACHAT_CLIENT_ID}
       client-secret: ${GIGACHAT_CLIENT_SECRET}
     telegram:
