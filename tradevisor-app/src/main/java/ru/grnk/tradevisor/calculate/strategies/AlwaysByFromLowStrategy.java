@@ -6,7 +6,7 @@ import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 import java.util.List;
 
 @Component
-public class AlwaysByFromLowStrategy implements IStrategy {
+public class  AlwaysByFromLowStrategy implements IStrategy {
 
     public static final String ALWAYS_BUY_ON_LOW_STRATEGY = "ALWAYS_BUY_ON_LOW_STRATEGY";
 

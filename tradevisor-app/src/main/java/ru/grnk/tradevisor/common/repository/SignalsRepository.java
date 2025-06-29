@@ -37,6 +37,20 @@ public class SignalsRepository {
     }
 
     @Transactional
+    public List<Signals> findPublishedSignals() {
+        return dsl.select().from(SIGNALS)
+                .where(SIGNALS.STATUS.in(TrvSignalStatus.CREATED.name(), TrvSignalStatus.PUBLISHED.name()))
+                .orderBy(SIGNALS.CREATED_AT)
+                .fetchStreamInto(Signals.class)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void cancelExpiredSignals(List<Integer> ids) {
+        dsl.delete(SIGNALS).where(SIGNALS.ID.in(ids)).execute();
+    }
+
+    @Transactional
     public void saveSignal(TrvCalculationResult trvCalculationResult,
                            String instrumentUid,
                            String strategyName,
