@@ -2,6 +2,7 @@ package ru.grnk.tradevisor.trade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
@@ -25,6 +26,7 @@ public class ControlPositionServiceImpl implements TradeService {
     private final SignalsRepository signalsRepository;
     private final InvestApi investApi;
 
+    @Scheduled(cron = "${app.trade.cron}")
     @Override
     public void doWork() {
 

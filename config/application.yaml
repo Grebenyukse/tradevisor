@@ -64,8 +64,8 @@ app:
     cron: 1 * * * * *
     strategy-one: true
   trade:
-    limits: 1
     cron: 1 * * * * *
+    limits: 1
     enabled: true
   notification:
     enabled: false
@@ -98,3 +98,7 @@ app:
       api-key: ${NEWS_API_KEY}
       url: "https://newsapi.org/v2/top-headlines?category=business"
       page-size: 50
+    finam:
+      enabled: true
+      secret: ${FINAM_API_KEY}
+      url: https://api.finam.ru/v1
