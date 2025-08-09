@@ -2,6 +2,7 @@ package ru.grnk.tradevisor.collect.prices;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,16 +24,15 @@ import java.util.Map;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CollectPricesServiceImpl {
+@ConditionalOnProperty(name = "app.collect.prices.tinkoff", havingValue = "true")
+public class TinkoffPricesServiceImpl {
 
     public static final String SHARES_TICKER_NAMES_LOADED = "shares_ticker_names_loaded";
-    private final InvestApi investApi;
     private final TickersRepository tickersRepository;
     private final ParametersRepository parametersRepository;
     private final MarketDataRepository marketDataRepository;
 
 
-    @Scheduled(cron = "${app.collect.prices.cron}")
     public void doWork() {
         log.debug("start collecting prices");
         Map<String, String> parameters = parametersRepository.getAllParameters();
@@ -43,46 +43,35 @@ public class CollectPricesServiceImpl {
             log.debug("tickers saved");
         }
         List<Tickers> tickers = tickersRepository.getAllTickers();
-        tickers.stream().map(Tickers::getUuid).forEach(this::loadHistoryForTicker);
         log.debug("historic candles loaded");
     }
 
     @Transactional
     public void saveAllShares() {
-        var shares = investApi.getInstrumentsService().getAllSharesSync();
-        shares.stream()
-                .filter(Share::getShortEnabledFlag)
-                .filter(Share::getApiTradeAvailableFlag)
-                .filter(Share::getBuyAvailableFlag)
-                .filter(s -> !s.getForQualInvestorFlag())
-                .map(Shares2TickerMapper::from)
-                .forEach(tickersRepository::saveInstrument);
-        parametersRepository.setValue(SHARES_TICKER_NAMES_LOADED, "true");
+//        var shares = investApi.getInstrumentsService().getAllSharesSync();
+//        shares.stream()
+//                .filter(Share::getShortEnabledFlag)
+//                .filter(Share::getApiTradeAvailableFlag)
+//                .filter(Share::getBuyAvailableFlag)
+//                .filter(s -> !s.getForQualInvestorFlag())
+//                .map(Shares2TickerMapper::from)
+//                .forEach(tickersRepository::saveInstrument);
+//        parametersRepository.setValue(SHARES_TICKER_NAMES_LOADED, "true");
     }
 
     @Transactional
     public void saveAllFutures() {
-        var shares = investApi.getInstrumentsService().getAllFuturesSync();
-        shares.stream()
-                .filter(Future::getShortEnabledFlag)
-                .filter(Future::getApiTradeAvailableFlag)
-                .filter(Future::getBuyAvailableFlag)
-                .filter(s -> !s.getForQualInvestorFlag())
-                .map(Shares2TickerMapper::from)
-                .forEach(tickersRepository::saveInstrument);
-        parametersRepository.setValue(SHARES_TICKER_NAMES_LOADED, "true");
+//        var shares = investApi.getInstrumentsService().getAllFuturesSync();
+//        shares.stream()
+//                .filter(Future::getShortEnabledFlag)
+//                .filter(Future::getApiTradeAvailableFlag)
+//                .filter(Future::getBuyAvailableFlag)
+//                .filter(s -> !s.getForQualInvestorFlag())
+//                .map(Shares2TickerMapper::from)
+//                .forEach(tickersRepository::saveInstrument);
+//        parametersRepository.setValue(SHARES_TICKER_NAMES_LOADED, "true");
     }
 
-    public void loadHistoryForTicker(String instrumentUuid) {
-        var lastTimestamp = marketDataRepository.getLatestTickTime(instrumentUuid).toInstant();
-        if (lastTimestamp.isAfter(Instant.now())) {
-            return;
-        }
-        investApi.getMarketDataService()
-                .getCandlesSync(instrumentUuid, lastTimestamp, Instant.now(), CandleInterval.CANDLE_INTERVAL_1_MIN)
-                .stream()
-                .filter(HistoricCandle::getIsComplete)
-                .forEach(c -> marketDataRepository.saveMarketData(c, instrumentUuid));
-    }
+
 
 }

@@ -58,15 +58,15 @@ app:
       news: false
     prices:
       cron: 1 * * * * *
-      crypto: false
-      micex: true
+      finam: true
+      tinkoff: false
   calculate:
     cron: 1 * * * * *
-    strategy-one: true
+    strategy-one: false
   trade:
     cron: 1 * * * * *
     limits: 1
-    enabled: true
+    enabled: false
   notification:
     enabled: false
     cron: 1 * * * * *
@@ -102,3 +102,6 @@ app:
       enabled: true
       secret: ${FINAM_API_KEY}
       url: https://api.finam.ru/v1
+      host: api.finam.ru
+      port: 443
+      account-id: ${FINAM_ACCOUNT_KEY}

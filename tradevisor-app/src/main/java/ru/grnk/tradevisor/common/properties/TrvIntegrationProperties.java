@@ -6,6 +6,7 @@ public record TrvIntegrationProperties(
         TrvDeepseekProperties deepseek,
         TrvGigachatProperties gigachat,
         TrvTelegramProperties telegram,
-        TrvNewsapiProperties newsapi
+        TrvNewsapiProperties newsapi,
+        TrvFinamProperties finam
 ) {
 }

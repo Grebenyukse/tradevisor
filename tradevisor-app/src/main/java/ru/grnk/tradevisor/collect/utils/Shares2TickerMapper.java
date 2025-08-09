@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.collect.prices;
+package ru.grnk.tradevisor.collect.utils;
 
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.tinkoff.piapi.contract.v1.Future;

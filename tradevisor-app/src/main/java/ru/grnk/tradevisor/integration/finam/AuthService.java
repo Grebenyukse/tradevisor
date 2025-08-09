@@ -27,51 +27,51 @@ public class AuthService {
      private final AtomicReference<String> token  = new AtomicReference<>();
      private final AtomicReference<String> accountId  = new AtomicReference<>();
 
-    private String getFinamToken() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<FinamTokenRq> request = new HttpEntity<>(
-                new FinamTokenRq(finamProperties.secret()), headers);
-        var res = restTemplate.postForEntity(finamProperties.url() + GET_TOKEN_URI, request, FinamTokenRs.class);
-        var tokenValue = Objects.requireNonNull(res.getBody()).token();
-        token.set(tokenValue);
-        return tokenValue;
-    }
+//    private String getFinamToken() {
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        HttpEntity<FinamTokenRq> request = new HttpEntity<>(
+//                new FinamTokenRq(finamProperties.secret()), headers);
+//        var res = restTemplate.postForEntity(finamProperties.url() + GET_TOKEN_URI, request, FinamTokenRs.class);
+//        var tokenValue = Objects.requireNonNull(res.getBody()).token();
+//        token.set(tokenValue);
+//        return tokenValue;
+//    }
 
-    public String getTokenDetails() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<FinamTokenDetailsRq> request = new HttpEntity<>(
-                new FinamTokenDetailsRq(token.get()), headers);
-        var res = restTemplate.postForEntity(finamProperties.url() + GET_TOKEN_DETAILS_URI, request, FinamTokenDetailsRs.class);
-        var accountIdValue = Objects.requireNonNull(res.getBody()).account_ids().stream().findFirst().orElseThrow();
-        accountId.set(accountIdValue);
-        return accountIdValue;
-    }
+//    public String getTokenDetails() {
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        HttpEntity<FinamTokenDetailsRq> request = new HttpEntity<>(
+//                new FinamTokenDetailsRq(token.get()), headers);
+//        var res = restTemplate.postForEntity(finamProperties.url() + GET_TOKEN_DETAILS_URI, request, FinamTokenDetailsRs.class);
+//        var accountIdValue = Objects.requireNonNull(res.getBody()).account_ids().stream().findFirst().orElseThrow();
+//        accountId.set(accountIdValue);
+//        return accountIdValue;
+//    }
 
-    public FinamGetAccountRs getAccount() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", token.get());
-        var res = restTemplate.getForEntity(
-                finamProperties.url() + GET_ACCOUNT_URI.replace("{account_id}", accountId.get()),
-                FinamGetAccountRs.class,
-                headers
-                );
-        return res.getBody();
-    }
+//    public FinamGetAccountRs getAccount() {
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.set("Authorization", token.get());
+//        var res = restTemplate.getForEntity(
+//                finamProperties.url() + GET_ACCOUNT_URI.replace("{account_id}", accountId.get()),
+//                FinamGetAccountRs.class,
+//                headers
+//                );
+//        return res.getBody();
+//    }
 
-    public FinamGetTradesRs() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", token.get());
-        var res = restTemplate.getForEntity(
-                finamProperties.url() + GET_TRADES_URI.replace("{account_id}", accountId.get()),
-                FinamGetTradesRs.class,
-                headers
-        );
-        return res.body();
-    }
+//    public FinamGetTradesRs() {
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.set("Authorization", token.get());
+//        var res = restTemplate.getForEntity(
+//                finamProperties.url() + GET_TRADES_URI.replace("{account_id}", accountId.get()),
+//                FinamGetTradesRs.class,
+//                headers
+//        );
+//        return res.body();
+//    }
      private AtomicReference<String> token  = new AtomicReference<>();
 
 //    private String getFinamToken() {
