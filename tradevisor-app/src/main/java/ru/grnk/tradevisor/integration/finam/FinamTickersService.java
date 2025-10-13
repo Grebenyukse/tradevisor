@@ -5,7 +5,7 @@ import grpc.tradeapi.v1.assets.AssetsServiceGrpc;
 import grpc.tradeapi.v1.auth.AuthServiceGrpc;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jvnet.hk2.annotations.Service;
+import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
 import ru.grnk.tradevisor.integration.finam.repository.FinamMetainfoRepository;

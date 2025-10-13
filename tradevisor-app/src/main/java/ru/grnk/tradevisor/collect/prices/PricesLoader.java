@@ -5,4 +5,6 @@ public interface PricesLoader {
     void loadPrices(String tickerUid);
 
     String getProvider();
+
+    void initTickers();
 }

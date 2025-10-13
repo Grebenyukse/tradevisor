@@ -1,5 +1,5 @@
 server:
-  port: 8000
+  port: 8001
 
 logging:
   config: config/logback.xml
@@ -10,7 +10,7 @@ logging:
 
 management:
   server:
-    port: 8000
+    port: 8002
   endpoint:
     health:
       show-details: always
@@ -59,7 +59,7 @@ app:
     prices:
       cron: 1 * * * * *
       finam: true
-      tinkoff: false
+      tinkoff: true
   calculate:
     cron: 1 * * * * *
     strategy-one: false

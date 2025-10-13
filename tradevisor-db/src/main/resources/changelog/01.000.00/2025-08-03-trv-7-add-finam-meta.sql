@@ -5,7 +5,7 @@
 create table if not exists tradevisor.finam_exchanges(
     id serial primary key,
     name varchar(100),
-    mic varchar(100),
+    mic varchar(100) unique,
     is_active bool
 );
 

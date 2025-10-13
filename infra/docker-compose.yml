@@ -40,7 +40,7 @@ services:
       - inapp_network
     hostname: postgres
     container_name: postgres
-    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c pg_stat_statements.max=10000 -c max_connections=200
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c pg_stat_statements.max=10000 -c max_connections=200 -c wal_level=logical
     ports:
       - "5432:5432"
     environment:

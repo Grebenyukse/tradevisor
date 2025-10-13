@@ -1,14 +1,17 @@
 package ru.grnk.tradevisor.common.repository;
 
 import com.google.protobuf.Timestamp;
+import com.google.type.Decimal;
+import grpc.tradeapi.v1.marketdata.Bar;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
+import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 import ru.tinkoff.piapi.contract.v1.HistoricCandle;
 import ru.tinkoff.piapi.contract.v1.Quotation;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -64,6 +67,27 @@ public class MarketDataRepository {
                 .execute();
     }
 
+    // finam trade api
+    public void saveMarketData(Bar bar, String instrument_uid) {
+        dsl.insertInto(MARKET_DATA, MARKET_DATA.INSTRUMENT_UUID,
+                        MARKET_DATA.OPEN,
+                        MARKET_DATA.HIGH,
+                        MARKET_DATA.LOW,
+                        MARKET_DATA.CLOSE,
+                        MARKET_DATA.TIME
+                )
+                .values(
+                        instrument_uid,
+                        floatFrom(bar.getOpen()),
+                        floatFrom(bar.getHigh()),
+                        floatFrom(bar.getLow()),
+                        floatFrom(bar.getClose()),
+                        timeFrom(bar.getTimestamp())
+                )
+                .onConflictDoNothing()
+                .execute();
+    }
+
     private static OffsetDateTime timeFrom(Timestamp timestamp) {
         return Instant.ofEpochSecond(
                 timestamp.getSeconds(),
@@ -73,6 +97,17 @@ public class MarketDataRepository {
 
     private static Float floatFrom(Quotation quotation) {
         return Objects.requireNonNull(quotationToBigDecimal(quotation)).floatValue();
+    }
+
+    public static float floatFrom(Decimal decimal) {
+        if (decimal == null) {
+            return 0.0f;
+        }
+        String s = decimal.getValue();
+        if (s == null || s.isBlank()) {
+            return 0.0f;
+        }
+        return new BigDecimal(s).floatValue();
     }
 
 }

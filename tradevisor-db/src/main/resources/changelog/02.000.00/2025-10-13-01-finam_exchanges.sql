@@ -1,0 +1,45 @@
+--liquibase formatted sql
+
+--changeset SE-Grebenyuk:02.000.00/TVR-1/load-init-data
+--preconditions onFail:MARK_RAN
+--precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM tradevisor.finam_exchanges
+INSERT INTO tradevisor.finam_exchanges ("name",mic,is_active) VALUES
+	 ('SPB OTC issues','_SPBZ',NULL),
+	 ('Synthetic Composite Index','_SCI',NULL),
+	 ('Eurobonds OTC issues','_EURB',NULL),
+	 ('OTC Options Crypto','_CRYP',NULL),
+	 ('TOKYO STOCK EXCHANGE','XTKS',NULL),
+	 ('SHENZHEN STOCK EXCHANGE','XSHE',NULL),
+	 ('MOEX OTC issues','_MMBZ',NULL),
+	 ('EURONEXT - EURONEXT PARIS','XPAR',NULL),
+	 ('NEW YORK STOCK EXCHANGE, INC.','XNYS',NULL),
+	 ('NEW YORK MERCANTILE EXCHANGE','XNYM',NULL);
+INSERT INTO tradevisor.finam_exchanges ("name",mic,is_active) VALUES
+	 ('NASDAQ/NGS (GLOBAL SELECT MARKET)','XNGS',NULL),
+	 ('NASDAQ CAPITAL MARKET','XNCM',NULL),
+	 ('NASDAQ - ALL MARKETS','XNAS',NULL),
+	 ('LONDON STOCK EXCHANGE - MTF','XLOM',NULL),
+	 ('SHANGHAI STOCK EXCHANGE','XSHG',NULL),
+	 ('HONG KONG EXCHANGES AND CLEARING LTD','XHKG',NULL),
+	 ('TRADEGATE EXCHANGE - FREIVERKEHR','XGAT',NULL),
+	 ('XETRA','XETR',NULL),
+	 ('CHICAGO MERCANTILE EXCHANGE','XCME',NULL),
+	 ('COMMODITIES EXCHANGE CENTER','XCEC',NULL);
+INSERT INTO tradevisor.finam_exchanges ("name",mic,is_active) VALUES
+	 ('CHICAGO BOARD OF TRADE','XCBT',NULL),
+	 ('EURONEXT - EURONEXT BRUSSELS','XBRU',NULL),
+	 ('EURONEXT - EURONEXT AMSTERDAM','XAMS',NULL),
+	 ('NON-PROFIT PARTNERSHIP FOR THE DEVELOPMENT OF FINANCIAL MARKET RTS','RUSX',NULL),
+	 ('OTC PINK MARKETPLACE','PINX',NULL),
+	 ('Сredit Mutual Funds','_CMF',NULL),
+	 ('MOSCOW EXCHANGE - DERIVATIVES MARKET','RTSX',NULL),
+	 ('MOSCOW EXCHANGE - ALL MARKETS','MISX',NULL),
+	 ('NYSE MKT LLC','XASE',NULL),
+	 ('BOLSA DE MADRID','XMAD',NULL);
+INSERT INTO tradevisor.finam_exchanges ("name",mic,is_active) VALUES
+	 ('NTPRO','_NPRO',NULL),
+	 ('LONDON STOCK EXCHANGE','XLON',NULL),
+	 ('NASDAQ/NMS (GLOBAL MARKET)','XNMS',NULL),
+	 ('Treasuries OTC issues','_TRES',NULL),
+	 ('CBOE BZX U.S. EQUITIES EXCHANGE','BATS',NULL),
+	 ('NYSE ARCA','ARCX',NULL);

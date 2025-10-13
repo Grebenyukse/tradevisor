@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
-import ru.grnk.tradevisor.integration.finam.AuthService;
 
 @Configuration
 @RequiredArgsConstructor
@@ -49,8 +48,5 @@ public class FinamGrpcConfig {
     public OrdersServiceGrpc.OrdersServiceBlockingStub ordersServiceBlockingStub(ManagedChannel managedChannel) {
         return OrdersServiceGrpc.newBlockingStub(managedChannel);
     }
-
-
-
 
 }

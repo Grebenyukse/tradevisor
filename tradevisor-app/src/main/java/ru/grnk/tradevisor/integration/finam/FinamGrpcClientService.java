@@ -2,7 +2,6 @@ package ru.grnk.tradevisor.integration.finam;
 
 import com.google.protobuf.Timestamp;
 import com.google.type.Interval;
-import grpc.tradeapi.v1.accounts.AccountsServiceGrpc;
 import grpc.tradeapi.v1.assets.AssetsRequest;
 import grpc.tradeapi.v1.assets.AssetsServiceGrpc;
 import grpc.tradeapi.v1.assets.ExchangesRequest;
@@ -11,36 +10,33 @@ import grpc.tradeapi.v1.auth.AuthServiceGrpc;
 import grpc.tradeapi.v1.marketdata.BarsRequest;
 import grpc.tradeapi.v1.marketdata.MarketDataServiceGrpc;
 import grpc.tradeapi.v1.marketdata.TimeFrame;
-import grpc.tradeapi.v1.orders.OrdersServiceGrpc;
-import liquibase.pro.packaged.B;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.glassfish.grizzly.http.util.TimeStamp;
-import org.jvnet.hk2.annotations.Service;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.prices.PricesLoader;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
+import ru.grnk.tradevisor.common.repository.FinamTickersRepository;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
-import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.integration.finam.repository.FinamMetainfoRepository;
 
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(value = "app.collect.prices.finam")
 public class FinamGrpcClientService implements PricesLoader {
 
     private final TradevisorProperties properties;
-    private final AccountsServiceGrpc.AccountsServiceBlockingStub accountsServiceBlockingStub;
     private final AssetsServiceGrpc.AssetsServiceBlockingStub assetsServiceBlockingStub;
     private final AuthServiceGrpc.AuthServiceBlockingStub authServiceBlockingStub;
     private final MarketDataServiceGrpc.MarketDataServiceBlockingStub marketDataServiceBlockingStub;
-    private final OrdersServiceGrpc.OrdersServiceBlockingStub ordersServiceBlockingStub;
     private  final FinamMetainfoRepository finamMetainfoRepository;
-    private final TickersRepository tickersRepository;
     private final MarketDataRepository marketDataRepository;
+    private final FinamTickersRepository finamTickersRepository;
 
     public void initTickers() {
         initExchanges();
@@ -64,8 +60,10 @@ public class FinamGrpcClientService implements PricesLoader {
         return new BearerToken(authRs.getToken());
     }
 
-    public void loadHistoryForSymbol(String symbol) {
-        TrvFinamProperties finamProperties = properties.integration().finam();
+    public void loadHistoryForSymbol(String tickerUid) {
+        var ticker = finamTickersRepository.findFinamTickerByUuid(tickerUid);
+        var symbol = ticker.getTicker() + "@" + ticker.getMic();
+        log.debug("load prices for {}", symbol);
         var bearer = getBearer();
         var startTime = findStartTime(symbol);
         var endTime = convertToTimestamp(ZonedDateTime.now());
@@ -82,32 +80,7 @@ public class FinamGrpcClientService implements PricesLoader {
                         .setSymbol(symbol)
                         .setTimeframe(TimeFrame.TIME_FRAME_M5)
                         .build());
-        // persist marketData
-        marketDataRs.getBarsList().stream().forEach(b -> {});
-    }
-
-    public void loadMarketData(List<String> symbols) {
-        TrvFinamProperties finamProperties = properties.integration().finam();
-        var bearer = getBearer();
-        for (var symbol : symbols) {
-            var startTime = findStartTime(symbol);
-            var endTime = convertToTimestamp(ZonedDateTime.now());
-            if ((endTime.getSeconds() - startTime.getSeconds())/60 < 5) {
-                return;
-            }
-            var marketDataRs = marketDataServiceBlockingStub
-                    .withCallCredentials(bearer)
-                    .bars(BarsRequest.newBuilder()
-                            .setInterval(Interval.newBuilder()
-                                    .setStartTime(startTime)
-                                    .setEndTime(endTime)
-                                    .build())
-                            .setSymbol(symbol)
-                            .setTimeframe(TimeFrame.TIME_FRAME_M5)
-                            .build());
-            // persist marketData
-            marketDataRs.getBarsList().stream().forEach(b -> {});
-        }
+        marketDataRs.getBarsList().stream().forEach(b -> marketDataRepository.saveMarketData(b, tickerUid));
     }
 
     private Timestamp convertToTimestamp(ZonedDateTime zonedDateTime) {
@@ -118,16 +91,22 @@ public class FinamGrpcClientService implements PricesLoader {
                 .build();
     }
 
-    private Timestamp findStartTime(String symbol) {
+    private Timestamp convertToTimestamp(OffsetDateTime offsetDateTime) {
+        var instant = offsetDateTime.toInstant();
+        return com.google.protobuf.Timestamp.newBuilder()
+                .setSeconds(instant.getEpochSecond())
+                .setNanos(instant.getNano())
+                .build();
+    }
+
+    private Timestamp  findStartTime(String symbol) {
         var res = marketDataRepository.getLatestTickTime(symbol);
-        return res;
+        return convertToTimestamp(res);
     }
 
     @Override
     public void loadPrices(String tickerUid) {
-        String ticker = finamMetainfoRepository.findTickerByUid(tickerUid);
-        loadHistoryForSymbol(ticker);
-        log.info("load prices");
+        loadHistoryForSymbol(tickerUid);
     }
 
     @Override
