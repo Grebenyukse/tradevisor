@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.notify.publish;
+package ru.grnk.tradevisor.notify;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -7,7 +7,7 @@ import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.integration.telegram.out.BotMsgSender;
-import ru.grnk.tradevisor.notify.publish.plot.PlotService;
+import ru.grnk.tradevisor.notify.plot.PlotService;
 
 @Component
 @RequiredArgsConstructor

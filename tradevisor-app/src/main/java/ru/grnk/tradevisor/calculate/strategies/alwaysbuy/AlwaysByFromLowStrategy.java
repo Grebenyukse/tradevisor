@@ -1,6 +1,9 @@
-package ru.grnk.tradevisor.calculate.strategies;
+package ru.grnk.tradevisor.calculate.strategies.alwaysbuy;
 
 import org.springframework.stereotype.Component;
+import ru.grnk.tradevisor.calculate.strategies.IStrategy;
+import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
+import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 
 import java.util.List;

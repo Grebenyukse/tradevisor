@@ -1,5 +1,6 @@
 package ru.grnk.tradevisor.calculate.strategies;
 
+import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 
 import java.util.List;

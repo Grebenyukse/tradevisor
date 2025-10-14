@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
-import ru.grnk.tradevisor.calculate.strategies.TradingDirection;
+import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
@@ -16,14 +16,13 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CalculateSignalServiceImpl implements CalculateSignalService {
+public class CalculateSignalServiceImpl {
 
     private final TickersRepository tickersRepository;
     private final MarketDataRepository marketDataRepository;
     private final SignalsRepository signalsRepository;
     private final List<IStrategy> strategies;
 
-    @Override
     @Scheduled(cron = "${app.calculate.cron}")
     public void doWork() {
         log.info("calculate all signals mf");

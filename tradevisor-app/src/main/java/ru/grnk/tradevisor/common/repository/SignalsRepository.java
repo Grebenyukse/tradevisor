@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
-import ru.grnk.tradevisor.calculate.strategies.TrvCalculationResult;
+import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 
 import java.time.OffsetDateTime;
 import java.util.List;

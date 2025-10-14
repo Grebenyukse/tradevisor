@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.calculate.strategies;
+package ru.grnk.tradevisor.calculate.strategies.dto;
 
 
 public record TrvCalculationResult(

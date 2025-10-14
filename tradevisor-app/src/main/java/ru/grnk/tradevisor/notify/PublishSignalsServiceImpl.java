@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.notify.publish;
+package ru.grnk.tradevisor.notify;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
