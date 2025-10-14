@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface IStrategy {
 
-    Integer historyDepthBarsBy1m();
+    Integer barsRequiredToCalcStrategy();
 
     TrvCalculationResult calculate(List<MarketData> candles);
 

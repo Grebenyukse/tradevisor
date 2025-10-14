@@ -1,5 +1,7 @@
 package ru.grnk.tradevisor.calculate.strategies.threebarsgrowth;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
@@ -7,12 +9,14 @@ import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 
 import java.util.List;
 
+@Component
+@ConditionalOnProperty(value = "app.calculate.three-bars-growth")
 public class ThreeBarGrowthStrategy implements IStrategy {
 
     public static final String THREE_BARS_GROWTH_STRATEGY = "THREE_BARS_GROWTH_STRATEGY";
 
     @Override
-    public Integer historyDepthBarsBy1m() {
+    public Integer barsRequiredToCalcStrategy() {
         return 3;
     }
 

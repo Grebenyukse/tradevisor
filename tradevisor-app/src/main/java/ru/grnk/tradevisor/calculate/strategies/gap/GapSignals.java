@@ -1,26 +1,44 @@
 package ru.grnk.tradevisor.calculate.strategies.gap;
 
-import ru.grnk.tradevisor.calculate.strategies.dto.Marker;
-import ru.grnk.tradevisor.calculate.strategies.dto.OhlcRecord;
-import ru.grnk.tradevisor.calculate.strategies.dto.RenderData;
-import ru.grnk.tradevisor.calculate.strategies.dto.SignalResult;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+import ru.grnk.tradevisor.calculate.strategies.IStrategy;
+import ru.grnk.tradevisor.calculate.strategies.dto.*;
+import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class GapSignals {
+@Component
+@ConditionalOnProperty(value = "app.calculate.gap")
+public class GapSignals implements IStrategy {
+
+    @Override
+    public Integer barsRequiredToCalcStrategy() {
+        return 100;
+    }
+
+    @Override
+    public TrvCalculationResult calculate(List<MarketData> candles) {
+        return null;
+    }
+
+    @Override
+    public String getStrategyUniqueName() {
+        return "gap";
+    }
 
     public static Optional<RenderData> getGapSignals(List<OhlcRecord> data, boolean render) {
         if (data.size() < 20) {
             return Optional.empty();
         }
 
-        List<OhlcRecord> OhlcRecord = data.subList(0, Math.min(100, data.size()));
-        System.out.println("check for gap in " + OhlcRecord.get(0).ticker());
+        List<OhlcRecord> ohlcRecord = data.subList(0, Math.min(100, data.size()));
+        System.out.println("check for gap in " + ohlcRecord.get(0).ticker());
 
-        double rangeSize = OhlcRecord.stream().mapToDouble(OhlcRecord::high).max().orElse(0) -
-                OhlcRecord.stream().mapToDouble(OhlcRecord::low).min().orElse(0);
+        double rangeSize = ohlcRecord.stream().mapToDouble(OhlcRecord::high).max().orElse(0) -
+                ohlcRecord.stream().mapToDouble(OhlcRecord::low).min().orElse(0);
         double minGapSize = rangeSize * 0.1;
 
         Double supremum = null;
@@ -31,16 +49,16 @@ public class GapSignals {
         List<Marker> markersTuplesInfimum = new ArrayList<>();
         List<Marker> markersTuplesSupremum = new ArrayList<>();
 
-        for (int i = 0; i < OhlcRecord.size() - 1; i++) {
-            double gap = OhlcRecord.get(i).open() - OhlcRecord.get(i + 1).close();
+        for (int i = 0; i < ohlcRecord.size() - 1; i++) {
+            double gap = ohlcRecord.get(i).open() - ohlcRecord.get(i + 1).close();
             if (Math.abs(gap) > minGapSize) {
                 if (gap > 0) {
-                    supremum = OhlcRecord.get(i).open();
-                    infimum = OhlcRecord.get(i + 1).close();
+                    supremum = ohlcRecord.get(i).open();
+                    infimum = ohlcRecord.get(i + 1).close();
                     trend = 1;
                 } else {
-                    supremum = OhlcRecord.get(i + 1).close();
-                    infimum = OhlcRecord.get(i).open();
+                    supremum = ohlcRecord.get(i + 1).close();
+                    infimum = ohlcRecord.get(i).open();
                     trend = -1;
                 }
                 gapBar = i;
@@ -58,15 +76,15 @@ public class GapSignals {
 
         for (int j = 0; j < gapBar - 1; j++) {
             if (trend == -1) {
-                if (OhlcRecord.get(j).high() - supremum > omega) {
+                if (ohlcRecord.get(j).high() - supremum > omega) {
                     gapIsBroken = true;
-                    markersTuplesSupremum.add(new Marker(j, OhlcRecord.get(j).high(), "black"));
+                    markersTuplesSupremum.add(new Marker(j, ohlcRecord.get(j).high(), "black"));
                 }
             }
             if (trend == 1) {
-                if (infimum - OhlcRecord.get(j).low() > omega) {
+                if (infimum - ohlcRecord.get(j).low() > omega) {
                     gapIsBroken = true;
-                    markersTuplesInfimum.add(new Marker(j, OhlcRecord.get(j).low(), "black"));
+                    markersTuplesInfimum.add(new Marker(j, ohlcRecord.get(j).low(), "black"));
                 }
             }
         }
@@ -81,17 +99,17 @@ public class GapSignals {
 
         while (k < gapBar) {
             if (trend == -1) {
-                if (supremum - OhlcRecord.get(k).high() < sigma) {
+                if (supremum - ohlcRecord.get(k).high() < sigma) {
                     supremumTouches++;
                     k += 2;
-                    markersTuplesSupremum.add(new Marker(k, OhlcRecord.get(k).high(), "black"));
+                    markersTuplesSupremum.add(new Marker(k, ohlcRecord.get(k).high(), "black"));
                 }
             }
             if (trend == 1) {
-                if (OhlcRecord.get(k).low() - infimum < sigma) {
+                if (ohlcRecord.get(k).low() - infimum < sigma) {
                     infimumTouches++;
                     k += 2;
-                    markersTuplesInfimum.add(new Marker(k, OhlcRecord.get(k).low(), "black"));
+                    markersTuplesInfimum.add(new Marker(k, ohlcRecord.get(k).low(), "black"));
                 }
             }
             k++;
@@ -122,8 +140,8 @@ public class GapSignals {
                     "." + positionInfo;
 
             SignalResult resultDf = new SignalResult(
-                    OhlcRecord.get(0).ticker(),
-                    OhlcRecord.get(gapBar).datetime(),
+                    ohlcRecord.get(0).ticker(),
+                    ohlcRecord.get(gapBar).datetime(),
                     "Gap touch",
                     trend,
                     supremumTouches > 1 ? supremumTouches : infimumTouches,
@@ -149,9 +167,7 @@ public class GapSignals {
                 ));
             }
 
-            return Optional.of(new RenderData(
-                    null, null, null, null, null, null, null, null, null, null
-            ));
+            return Optional.empty();
         }
 
         return Optional.empty();

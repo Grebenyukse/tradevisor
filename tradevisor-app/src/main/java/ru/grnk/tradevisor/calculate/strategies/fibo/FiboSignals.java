@@ -1,13 +1,35 @@
 package ru.grnk.tradevisor.calculate.strategies.fibo;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+import ru.grnk.tradevisor.calculate.strategies.IStrategy;
 import ru.grnk.tradevisor.calculate.strategies.dto.Marker;
 import ru.grnk.tradevisor.calculate.strategies.dto.OhlcRecord;
 import ru.grnk.tradevisor.calculate.strategies.dto.SignalResult;
+import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
+import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 
 import java.util.*;
 import java.util.stream.IntStream;
 
-public class FiboSignals {
+@Component
+@ConditionalOnProperty(value = "app.calculate.fibo")
+public class FiboSignals implements IStrategy {
+
+    @Override
+    public Integer barsRequiredToCalcStrategy() {
+        return 100;
+    }
+
+    @Override
+    public TrvCalculationResult calculate(List<MarketData> candles) {
+        return null;
+    }
+
+    @Override
+    public String getStrategyUniqueName() {
+        return "fibo";
+    }
 
     public static SignalResult getFiboSignals(List<OhlcRecord> data, boolean render) {
         List<OhlcRecord> tickerData = data.size() > 100 ? data.subList(0, 100) : data;
