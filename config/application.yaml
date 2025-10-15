@@ -71,7 +71,7 @@ app:
     limits: 1
     enabled: false
   notification:
-    enabled: false
+    enabled: true
     cron: 1 * * * * *
   integration:
     tinkoff:

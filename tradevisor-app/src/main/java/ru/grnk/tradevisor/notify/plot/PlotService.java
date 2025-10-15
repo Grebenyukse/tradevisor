@@ -2,6 +2,7 @@ package ru.grnk.tradevisor.notify.plot;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
@@ -14,15 +15,24 @@ import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlotService {
@@ -30,66 +40,103 @@ public class PlotService {
     private final PlotRepository repository;
     private final TickersRepository tickersRepository;
 
+
+    @SneakyThrows
+    public byte[] getCandlestickChartAsBytes(String uuid, int width, int height) {
+        List<PlotRecord> data = repository.getTickerPlotInfo(uuid);
+        JFreeChart chart = createCandlestickChart(uuid, data);
+        BufferedImage image = chart.createBufferedImage(width, height);
+        return bufferedImageToByteArray(image, "png");
+    }
+
     @SneakyThrows
     public void saveCandlestickChartToFile(String uuid, int width, int height) {
-        var outputDir = "C:\\Users\\grebe\\IdeaProjects\\tradevisor";
+        String outputDir = "C:\\Users\\grebe\\IdeaProjects\\tradevisor\\tradevisor-app\\src\\main\\resources\\images";
         List<PlotRecord> data = repository.getTickerPlotInfo(uuid);
-        Tickers ticker  = tickersRepository.findTickerByUid(uuid);
-        if (data.isEmpty()) {
-            throw new IllegalArgumentException("No market data found for uuid: " + uuid);
-        }
-
-        OHLCDataset dataset = buildDataset(data);
-
-        JFreeChart chart = ChartFactory.createCandlestickChart(
-                ticker.getTicker() + " " + detectInterval(data),
-                "Time",
-                "Price",
-                dataset,
-                true);
-
-        // Настройка цветов
-        XYPlot plot = chart.getXYPlot();
-        CandlestickRenderer renderer = (CandlestickRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, Color.BLACK);
-        renderer.setUpPaint(Color.GREEN);      // рост
-        renderer.setDownPaint(Color.RED);      // падение
-        renderer.setDrawVolume(false);
-        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
-
-        double min = Double.MAX_VALUE;
-        double max = Double.MIN_VALUE;
-
-        for (PlotRecord r : data) {
-            if (r.low() < min) min = r.low();
-            if (r.high() > max) max = r.high();
-        }
-
-        double padding = (max - min) * 0.1;
-        if (padding == 0) padding = 0.1;
-
-        rangeAxis.setRange(min - padding, max + padding);
-        // Ось времени
-        DateAxis domain = (DateAxis) plot.getDomainAxis();
-        domain.setDateFormatOverride(new java.text.SimpleDateFormat("HH:mm"));
-        domain.setAutoRange(true);
-
-        // Создаём директорию, если её нет
+        Tickers tickerInfo = tickersRepository.findTickerByUid(uuid);
+        JFreeChart chart = createCandlestickChart(uuid, data);
+        BufferedImage image = chart.createBufferedImage(width, height);
         File dir = new File(outputDir);
         if (!dir.exists()) {
             dir.mkdirs();
         }
-
-        // Формируем имя файла
         String timestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(java.time.LocalDateTime.now());
-        String fileName = String.format("%s/%s_%s_candlestick.png", outputDir, uuid, timestamp);
+        String fileName = String.format("%s/%s_%s_candlestick.png", outputDir, tickerInfo.getTicker(), timestamp);
         File outputFile = new File(fileName);
-
-        // Сохраняем изображение
-        var res = ImageIO.write(chart.createBufferedImage(width, height), "png", outputFile);
-
-        System.out.println("График сохранён: " + outputFile.getAbsolutePath());
+        try (ImageOutputStream ios = ImageIO.createImageOutputStream(outputFile)) {
+            Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("png");
+            if (!writers.hasNext()) {
+                throw new IOException("Не найден ImageWriter для формата 'png'");
+            }
+            ImageWriter writer = writers.next();
+            writer.setOutput(ios);
+            ImageWriteParam param = writer.getDefaultWriteParam();
+            if (param.canWriteCompressed()) {
+                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                param.setCompressionQuality(0.95f);
+            }
+            writer.write(null, new IIOImage(image, null, null), param);
+            writer.dispose();
+        }
+        log.info("График сохранён: {}", outputFile.getAbsolutePath());
     }
+
+    private JFreeChart createCandlestickChart(String ticker, List<PlotRecord> data) {
+        if (data.isEmpty()) {
+            throw new IllegalArgumentException("No market data found for ticker: " + ticker);
+        }
+        String interval = detectInterval(data);
+        OHLCDataset dataset = buildDataset(data);
+        JFreeChart chart = ChartFactory.createCandlestickChart(
+                ticker + " – " + interval + " Candlestick Chart",
+                "Time",
+                "Price",
+                dataset,
+                true);
+        XYPlot plot = chart.getXYPlot();
+        CandlestickRenderer renderer = (CandlestickRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, Color.BLACK);
+        renderer.setUpPaint(Color.GREEN);
+        renderer.setDownPaint(Color.RED);
+        renderer.setDrawVolume(false);
+        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+        double min = data.stream().mapToDouble(PlotRecord::low).min().orElse(0);
+        double max = data.stream().mapToDouble(PlotRecord::high).max().orElse(1);
+        double padding = (max - min) * 0.01;
+        if (padding == 0) padding = 0.01;
+        rangeAxis.setRange(min - padding, max + padding);
+        DateAxis domain = (DateAxis) plot.getDomainAxis();
+        domain.setDateFormatOverride(new java.text.SimpleDateFormat("HH:mm"));
+        domain.setAutoRange(true);
+        return chart;
+    }
+
+    private byte[] bufferedImageToByteArray(BufferedImage image, String format) throws IOException {
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName(format);
+        if (!writers.hasNext()) {
+            throw new IOException("Не найден ImageWriter для формата '" + format + "'");
+        }
+
+        ImageWriter writer = writers.next();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ImageOutputStream ios = ImageIO.createImageOutputStream(baos)) {
+            writer.setOutput(ios);
+            ImageWriteParam param = writer.getDefaultWriteParam();
+
+            if (param.canWriteCompressed()) {
+                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                param.setCompressionQuality(0.95f);
+            }
+
+            writer.write(null, new IIOImage(image, null, null), param);
+        } finally {
+            writer.dispose();
+        }
+
+        return baos.toByteArray();
+    }
+
+
 
     private OHLCDataset buildDataset(List<PlotRecord> rows) {
         int n = rows.size();
@@ -110,7 +157,6 @@ public class PlotService {
             closes[i]   = r.close();
             volumes[i]  = 0.0;
         }
-
         return new DefaultHighLowDataset(
                 rows.get(0).ticker(),
                 dates,

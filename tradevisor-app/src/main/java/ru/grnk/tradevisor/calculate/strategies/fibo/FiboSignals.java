@@ -3,10 +3,7 @@ package ru.grnk.tradevisor.calculate.strategies.fibo;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
-import ru.grnk.tradevisor.calculate.strategies.dto.Marker;
-import ru.grnk.tradevisor.calculate.strategies.dto.OhlcRecord;
-import ru.grnk.tradevisor.calculate.strategies.dto.SignalResult;
-import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
+import ru.grnk.tradevisor.calculate.strategies.dto.*;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 
 import java.util.*;
@@ -23,7 +20,8 @@ public class FiboSignals implements IStrategy {
 
     @Override
     public TrvCalculationResult calculate(List<MarketData> candles) {
-        return null;
+        return new TrvCalculationResult(
+                TradingDirection.UNKNOWN, null, null, null, null);
     }
 
     @Override

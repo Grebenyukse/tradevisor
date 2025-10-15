@@ -21,7 +21,8 @@ public class GapSignals implements IStrategy {
 
     @Override
     public TrvCalculationResult calculate(List<MarketData> candles) {
-        return null;
+        return new TrvCalculationResult(
+                TradingDirection.UNKNOWN, null, null, null, null);
     }
 
     @Override

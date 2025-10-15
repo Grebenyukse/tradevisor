@@ -22,11 +22,11 @@ public class ThreeBarGrowthStrategy implements IStrategy {
 
     @Override
     public TrvCalculationResult calculate(List<MarketData> candles) {
-        if (candles.get(0).getHigh() > candles.get(2).getHigh()) {
+        if (candles.get(0).getHigh() > candles.get(2).getHigh() || true) {
             return new TrvCalculationResult(
                     TradingDirection.LONG,
                     candles.get(0).getLow(),
-                    candles.get(3).getLow(),
+                    candles.get(2).getLow(),
                     candles.get(0).getHigh(),
                     1
             );
