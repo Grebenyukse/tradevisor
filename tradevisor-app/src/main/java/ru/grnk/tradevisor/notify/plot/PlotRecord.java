@@ -1,15 +1,14 @@
 package ru.grnk.tradevisor.notify.plot;
 
-import java.time.OffsetDateTime;
+import java.util.List;
 
 public record PlotRecord(
-        Float open,
-        Float high,
-        Float low,
-        Float close,
+        List<OHLCData> data,
+        HorizontalLineDto stopLoss,
+        HorizontalLineDto takeProfit,
+        HorizontalLineDto priceOpen,
         String ticker,
-        String figi,
         String uuid,
-        OffsetDateTime time
+        Short direction
 ) {
 }
