@@ -35,7 +35,7 @@ public class FiboSignals implements IStrategy {
             return null;
         }
         int supremumBar = 0;
-        double supremum = tickerData.get(0).high();
+        Float supremum = tickerData.get(0).high();
         for (int i = 1; i < tickerData.size(); i++) {
             if (tickerData.get(i).high() > supremum) {
                 supremum = tickerData.get(i).high();
@@ -43,7 +43,7 @@ public class FiboSignals implements IStrategy {
             }
         }
         int infimumBar = 0;
-        double infimum = tickerData.get(0).low();
+        Float infimum = tickerData.get(0).low();
         for (int i = 1; i < tickerData.size(); i++) {
             if (tickerData.get(i).low() < infimum) {
                 infimum = tickerData.get(i).low();
@@ -56,7 +56,7 @@ public class FiboSignals implements IStrategy {
         int leftEBar = Math.max(supremumBar, infimumBar);
         int rightEBar = Math.min(supremumBar, infimumBar);
 
-        double leftExtremum, rightExtremum;
+        Float leftExtremum, rightExtremum;
         int trend;
 
         if (leftEBar == supremumBar) {
@@ -69,9 +69,9 @@ public class FiboSignals implements IStrategy {
             trend = 1;
         }
 
-        double rangeSize = supremum - infimum;
+        Float rangeSize = supremum - infimum;
 
-        double fibo382, fibo618;
+        Float fibo382, fibo618;
         if (trend == 1) {
             fibo382 = rightExtremum - 0.382 * rangeSize;
             fibo618 = rightExtremum - 0.618 * rangeSize;
@@ -84,8 +84,8 @@ public class FiboSignals implements IStrategy {
         boolean isbroken618 = false;
         int touches382 = 0;
         int touches681 = 0;
-        double sigma = rangeSize * 0.03; // погрешность определения сигнала 3%
-        double alpha = rangeSize * 0.01; // погрешность определения пробоя 1%
+        Float sigma = rangeSize * 0.03; // погрешность определения сигнала 3%
+        Float alpha = rangeSize * 0.01; // погрешность определения пробоя 1%
 
         List<Marker> markersTouples382 = new ArrayList<>();
         List<Marker> markersTouples618 = new ArrayList<>();
@@ -144,10 +144,10 @@ public class FiboSignals implements IStrategy {
             j++;
         }
 
-        double stopLoss = trend == 1 ? infimum : supremum;
-        double takeProfit = fibo618;
+        Float stopLoss = trend == 1 ? infimum : supremum;
+        Float takeProfit = fibo618;
         List<Marker> markers = null;
-        Double priceOpen = null;
+        Float priceOpen = null;
 
         if ((!isbroken382) && (touches382 >= 2)) {
             markers = new ArrayList<>(markersTouples382);
@@ -191,8 +191,8 @@ public class FiboSignals implements IStrategy {
         return null;
     }
 
-    private static String getPositionInfo(Double priceOpen, double takeProfit, double stopLoss) {
-        double tpToSl = Math.abs((priceOpen - takeProfit) / (priceOpen - stopLoss));
+    private static String getPositionInfo(Float priceOpen, Float takeProfit, Float stopLoss) {
+        Float tpToSl = Math.abs((priceOpen - takeProfit) / (priceOpen - stopLoss));
         return "\r\n PriceOpen:" + String.format("%.4f", priceOpen) +
                 ". \r\n SL:" + String.format("%.4f", stopLoss) +
                 ". \r\n TP:" + String.format("%.4f", takeProfit) +

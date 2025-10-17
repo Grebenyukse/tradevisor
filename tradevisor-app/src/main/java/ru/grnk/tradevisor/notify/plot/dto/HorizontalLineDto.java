@@ -6,8 +6,8 @@ import java.time.OffsetDateTime;
 
 @Builder
 public record HorizontalLineDto(
-        double fromPrice,
-        double toPrice,
+        Float fromPrice,
+        Float toPrice,
         OffsetDateTime fromUtc,
         OffsetDateTime toUtc,
         String style,

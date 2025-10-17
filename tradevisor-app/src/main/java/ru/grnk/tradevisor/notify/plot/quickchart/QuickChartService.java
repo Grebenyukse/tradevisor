@@ -139,10 +139,10 @@ public class QuickChartService {
 
     }
 
-    private static double roundDoubleValueToPrecision(double value, Integer precision) {
+    private static Float roundDoubleValueToPrecision(float value, Integer precision) {
         return BigDecimal.valueOf(value)
                 .setScale(precision, RoundingMode.HALF_UP)
-                .doubleValue();
+                .floatValue();
     }
 
     private byte[] download(String chartUrl) {

@@ -8,9 +8,9 @@ import java.util.List;
 @Builder
 public record TrvCalculationResult(
         TradingDirection direction,
-        Double priceOpen,
-        Double stopLoss,
-        Double takeProfit,
+        Float priceOpen,
+        Float stopLoss,
+        Float takeProfit,
         Integer lots,
         List<HorizontalLineDto> lines) {
 }

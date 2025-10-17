@@ -5,9 +5,9 @@ import java.util.Date;
 public record OhlcRecord(
          String ticker,
          Date datetime,
-         double open,
-         double high,
-         double low,
-         double close
+         Float open,
+         Float high,
+         Float low,
+         Float close
 ) {
 }

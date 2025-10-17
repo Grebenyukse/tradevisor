@@ -39,25 +39,28 @@ public class GapSignals implements IStrategy {
             return Optional.empty();
         }
         List<MarketData> ohlcRecord = data.subList(0, Math.min(100, data.size()));
-        double rangeSize = ohlcRecord.stream()
-                .mapToDouble(MarketData::getHigh).max().orElse(0) - ohlcRecord.stream().mapToDouble(MarketData::getLow).min().orElse(0);
-        double minGapSize = rangeSize * 0.1;
-        Double supremum = null;
-        Double infimum = null;
+        float rangeSize = (float) ohlcRecord.stream()
+                .mapToDouble(MarketData::getHigh)
+                .max()
+                .orElse(0)
+                - (float) ohlcRecord.stream().mapToDouble(MarketData::getLow).min().orElse(0);
+        Float minGapSize = rangeSize * 0.1f;
+        Float supremum = null;
+        Float infimum = null;
         Integer gapBar = null;
         int trend = 0;
         List<Marker> markersTuplesInfimum = new ArrayList<>();
         List<Marker> markersTuplesSupremum = new ArrayList<>();
         for (int i = 0; i < ohlcRecord.size() - 1; i++) {
-            double gap = ohlcRecord.get(i).getOpen() - ohlcRecord.get(i + 1).getClose();
+            Float gap = ohlcRecord.get(i).getOpen() - ohlcRecord.get(i + 1).getClose();
             if (Math.abs(gap) > minGapSize) {
                 if (gap > 0) {
-                    supremum = Double.valueOf(ohlcRecord.get(i).getOpen());
-                    infimum = Double.valueOf(ohlcRecord.get(i + 1).getClose());
+                    supremum =ohlcRecord.get(i).getOpen();
+                    infimum = ohlcRecord.get(i + 1).getClose();
                     trend = 1;
                 } else {
-                    supremum = Double.valueOf(ohlcRecord.get(i + 1).getClose());
-                    infimum = Double.valueOf(ohlcRecord.get(i).getOpen());
+                    supremum = ohlcRecord.get(i + 1).getClose();
+                    infimum = ohlcRecord.get(i).getOpen();
                     trend = -1;
                 }
                 gapBar = i;
@@ -68,8 +71,8 @@ public class GapSignals implements IStrategy {
             return Optional.empty();
         }
         boolean gapIsBroken = false;
-        double sigma = rangeSize * 0.03;
-        double omega = rangeSize * 0.01;
+        Float sigma = rangeSize * 0.03f;
+        Float omega = rangeSize * 0.01f;
         for (int j = 0; j < gapBar - 1; j++) {
             if (trend == -1) {
                 if (ohlcRecord.get(j).getHigh() - supremum > omega) {
@@ -112,9 +115,9 @@ public class GapSignals implements IStrategy {
         }
 
         if (supremumTouches > 1 || infimumTouches > 1) {
-            Double takeProfit = null;
-            Double stopLoss = null;
-            Double priceOpen = null;
+            Float takeProfit = null;
+            Float stopLoss = null;
+            Float priceOpen = null;
 
             if (supremumTouches > 1) {
                 takeProfit = supremum;

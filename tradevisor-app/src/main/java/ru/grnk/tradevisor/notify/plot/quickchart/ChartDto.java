@@ -35,7 +35,7 @@ public class ChartDto {
                 Integer borderWidth,
                 Integer pointRadius
         ) {
-            @Builder public static  record Dataset(long x, Double y, Double o, Double h, Double l, Double c){}
+            @Builder public static  record Dataset(long x, Float y, Float o, Float h, Float l, Float c){}
             @Builder public static record OhlcColor(String up, String down, String unchanged) {}
         }
     }

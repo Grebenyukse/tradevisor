@@ -4,8 +4,8 @@ import java.time.OffsetDateTime;
 
 public record OHLCData(
         OffsetDateTime date,
-        double open,
-        double high,
-        double low,
-        double close) {
+        Float open,
+        Float high,
+        Float low,
+        Float close) {
 }
