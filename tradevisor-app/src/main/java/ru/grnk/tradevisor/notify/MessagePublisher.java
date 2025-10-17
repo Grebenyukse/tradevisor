@@ -19,7 +19,7 @@ public class MessagePublisher {
 
     @Transactional
     public void publishMessage(Signals signal) {
-        plotService.saveCandlestickChartToFile(signal, true);
+        byte[] image = plotService.saveCandlestickChartToFile(signal, true);
         var botMessage = MapSignal2Message.from(signal);
         botMsgSender.sendMessage(botMessage);
         signalsRepository.updateSignalStatus(signal, TrvSignalStatus.PUBLISHED);

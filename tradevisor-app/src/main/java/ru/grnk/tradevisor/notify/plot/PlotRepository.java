@@ -4,11 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 import ru.grnk.tradevisor.dbmodel.tables.MarketData;
-import ru.grnk.tradevisor.dbmodel.tables.Signals;
 import ru.grnk.tradevisor.dbmodel.tables.Tickers;
+import ru.grnk.tradevisor.notify.plot.dto.OHLCData;
+import ru.grnk.tradevisor.notify.plot.dto.PlotRecord;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Repository

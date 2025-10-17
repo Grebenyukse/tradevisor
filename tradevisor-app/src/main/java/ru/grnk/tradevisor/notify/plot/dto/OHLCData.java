@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.notify.plot;
+package ru.grnk.tradevisor.notify.plot.dto;
 
 import java.time.OffsetDateTime;
 
