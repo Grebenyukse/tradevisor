@@ -30,30 +30,27 @@ public class PlotService {
         List<MarketData> md = marketDataRepository.fetchMarketDataForLast(100, signal.getInstrumentUuid());
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();
         Tickers ticker = tickersRepository.findTickerByUid(signal.getInstrumentUuid());
-        HorizontalLineDto stopLoss = new HorizontalLineDto(
-                signal.getStopLoss(),
-                ohlcData.get(0).date(),
-                ohlcData.get(ohlcData.size()-1).date(),
-                "bold",
-                "stop loss mf",
-                "red"
-        );
-        HorizontalLineDto takeProfit = new HorizontalLineDto(
-                signal.getStopLoss(),
-                ohlcData.get(0).date(),
-                ohlcData.get(ohlcData.size()-1).date(),
-                "bold",
-                "stop loss mf",
-                "green"
-        );
-        HorizontalLineDto priceOpen = new HorizontalLineDto(
-                signal.getStopLoss(),
-                ohlcData.get(0).date(),
-                ohlcData.get(ohlcData.size()-1).date(),
-                "dashed",
-                "price open",
-                "blue"
-        );
+        HorizontalLineDto stopLoss = HorizontalLineDto.builder()
+                .fromUtc(ohlcData.get(0).date())
+                .toUtc(ohlcData.get(ohlcData.size()-1).date())
+                .color("red")
+                .fromPrice(signal.getStopLoss())
+                .toPrice(signal.getStopLoss())
+                .build();
+        HorizontalLineDto takeProfit = HorizontalLineDto.builder()
+                .fromUtc(ohlcData.get(0).date())
+                .toUtc(ohlcData.get(ohlcData.size()-1).date())
+                .color("green")
+                .fromPrice(signal.getTakeProfit())
+                .toPrice(signal.getTakeProfit())
+                .build();
+        HorizontalLineDto priceOpen = HorizontalLineDto.builder()
+                .fromUtc(ohlcData.get(0).date())
+                .toUtc(ohlcData.get(ohlcData.size()-1).date())
+                .color("yellow")
+                .fromPrice(signal.getPriceOpen())
+                .toPrice(signal.getPriceOpen())
+                .build();
         PlotRecord plotRecord = new PlotRecord(
             ohlcData, stopLoss, takeProfit, priceOpen, ticker.getTicker(), ticker.getUuid(), signal.getDirection()
         );

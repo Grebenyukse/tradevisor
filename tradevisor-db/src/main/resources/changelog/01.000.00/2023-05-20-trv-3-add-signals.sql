@@ -19,5 +19,6 @@ create table if not exists tradevisor.signals
                          -- { name: gap, from_price: .., to_price:.., from_date:.., to_date:.. }
 );
 
+alter table tradevisor.signals drop constraint if exists signal_on_bar_calculated_once_per_strategy;
 alter table tradevisor.signals add constraint signal_on_bar_calculated_once_per_strategy unique
     (name, instrument_uuid, created_at, direction);

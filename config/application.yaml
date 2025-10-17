@@ -58,8 +58,8 @@ app:
       news: false
     prices:
       cron: 1 * * * * *
-      finam: true
-      tinkoff: true
+      finam: false
+      tinkoff: false
   calculate:
     cron: 1 * * * * *
     fibo: true
@@ -69,7 +69,7 @@ app:
     limits: 1
     enabled: false
   notification:
-    enabled: true
+    enabled: false
     cron: 1 * * * * *
   integration:
     tinkoff:
