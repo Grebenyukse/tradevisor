@@ -21,7 +21,7 @@ public class FiboSignals implements IStrategy {
     @Override
     public TrvCalculationResult calculate(List<MarketData> candles) {
         return new TrvCalculationResult(
-                TradingDirection.UNKNOWN, null, null, null, null);
+                TradingDirection.UNKNOWN, null, null, null, null, List.of());
     }
 
     @Override

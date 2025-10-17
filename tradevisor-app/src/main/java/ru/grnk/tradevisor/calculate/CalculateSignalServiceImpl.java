@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
+import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
@@ -35,7 +36,7 @@ public class CalculateSignalServiceImpl {
             var lastTickTime = marketDataRepository.getLatestTickTime(t.getUuid());
             strategies.forEach(s -> {
                 var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getUuid());
-                var result = s.calculate(candles);
+                TrvCalculationResult result = s.calculate(candles);
                 if (result.direction() != TradingDirection.UNKNOWN) {
                     signalsRepository.saveSignal(result, t.getUuid(), s.getStrategyUniqueName(), lastTickTime);
                 }

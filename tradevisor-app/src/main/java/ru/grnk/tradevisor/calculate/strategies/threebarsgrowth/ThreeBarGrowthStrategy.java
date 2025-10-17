@@ -28,11 +28,12 @@ public class ThreeBarGrowthStrategy implements IStrategy {
                     candles.get(0).getLow(),
                     candles.get(2).getLow(),
                     candles.get(0).getHigh(),
-                    1
+                    1,
+                    List.of()
             );
         } else {
             return new TrvCalculationResult(
-                    TradingDirection.UNKNOWN, null, null, null, null);
+                    TradingDirection.UNKNOWN, null, null, null, null, List.of());
         }
     }
 

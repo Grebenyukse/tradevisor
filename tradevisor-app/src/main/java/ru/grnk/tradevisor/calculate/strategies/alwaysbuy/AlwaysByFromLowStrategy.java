@@ -28,11 +28,12 @@ public class  AlwaysByFromLowStrategy implements IStrategy {
                     candles.get(1).getLow(),
                     null,
                     candles.get(1).getLow() + 0.5f, // фиксированный TP
-                    1
+                    1,
+                    List.of()
             );
         } else {
             return new TrvCalculationResult(
-                    TradingDirection.UNKNOWN, null, null, null, null);
+                    TradingDirection.UNKNOWN, null, null, null, null, List.of());
         }
     }
 
