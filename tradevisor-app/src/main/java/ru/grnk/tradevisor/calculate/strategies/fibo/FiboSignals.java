@@ -3,9 +3,13 @@ package ru.grnk.tradevisor.calculate.strategies.fibo;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
-import ru.grnk.tradevisor.calculate.strategies.dto.*;
+import ru.grnk.tradevisor.calculate.strategies.dto.Marker;
+import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
+import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
+import ru.grnk.tradevisor.notify.plot.dto.HorizontalLineDto;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -13,15 +17,24 @@ import java.util.stream.IntStream;
 @ConditionalOnProperty(value = "app.calculate.fibo")
 public class FiboSignals implements IStrategy {
 
+    private static final int MIN_DATA_SIZE = 20;
+    private static final int DEFAULT_BARS_REQUIRED = 100;
+    private static final double FIBO_382_LEVEL = 0.382;
+    private static final double FIBO_618_LEVEL = 0.618;
+    private static final double SIGMA_MULTIPLIER = 0.03;
+    private static final double ALPHA_MULTIPLIER = 0.01;
+    private static final int TOUCH_SKIP_INTERVAL = 2;
+    private static final int MIN_TOUCHES = 2;
+
     @Override
     public Integer barsRequiredToCalcStrategy() {
-        return 100;
+        return DEFAULT_BARS_REQUIRED;
     }
 
     @Override
     public TrvCalculationResult calculate(List<MarketData> candles) {
-        return new TrvCalculationResult(
-                TradingDirection.UNKNOWN, null, null, null, null, List.of());
+        return getFiboSignals(candles).orElse(new TrvCalculationResult(
+                TradingDirection.UNKNOWN, null, null, null, null, List.of()));
     }
 
     @Override
@@ -29,166 +42,247 @@ public class FiboSignals implements IStrategy {
         return "fibo";
     }
 
-    public static SignalResult getFiboSignals(List<OhlcRecord> data, boolean render) {
-        List<OhlcRecord> tickerData = data.size() > 100 ? data.subList(0, 100) : data;
-        if (tickerData.size() < 20) {
-            return null;
-        }
-        int supremumBar = 0;
-        Float supremum = tickerData.get(0).high();
-        for (int i = 1; i < tickerData.size(); i++) {
-            if (tickerData.get(i).high() > supremum) {
-                supremum = tickerData.get(i).high();
-                supremumBar = i;
-            }
-        }
-        int infimumBar = 0;
-        Float infimum = tickerData.get(0).low();
-        for (int i = 1; i < tickerData.size(); i++) {
-            if (tickerData.get(i).low() < infimum) {
-                infimum = tickerData.get(i).low();
-                infimumBar = i;
-            }
-        }
-        if (supremumBar == infimumBar) {
-            return null;
-        }
-        int leftEBar = Math.max(supremumBar, infimumBar);
-        int rightEBar = Math.min(supremumBar, infimumBar);
+    public static Optional<TrvCalculationResult> getFiboSignals(List<MarketData> data) {
+        List<MarketData> tickerData = data.size() > DEFAULT_BARS_REQUIRED ?
+                data.subList(0, DEFAULT_BARS_REQUIRED) : data;
 
-        Float leftExtremum, rightExtremum;
-        int trend;
+        if (tickerData.size() < MIN_DATA_SIZE) {
+            return Optional.empty();
+        }
 
-        if (leftEBar == supremumBar) {
-            leftExtremum = supremum;
-            rightExtremum = infimum;
-            trend = -1;
+        ExtremumResult extremums = findExtremums(tickerData);
+        if (extremums.leftEBar() == extremums.rightEBar()) {
+            return Optional.empty();
+        }
+
+        FiboLevels fiboLevels = calculateFiboLevels(extremums, tickerData);
+        LevelAnalysisResult levelAnalysis = analyzeLevels(tickerData, extremums, fiboLevels);
+
+        return generateSignal(tickerData, extremums, fiboLevels, levelAnalysis);
+    }
+
+    private static ExtremumResult findExtremums(List<MarketData> tickerData) {
+        // Находим максимум
+        Extremum supremum = IntStream.range(0, tickerData.size())
+                .mapToObj(i -> new Extremum(tickerData.get(i).getHigh(), i))
+                .max(Comparator.comparing(Extremum::value))
+                .orElse(new Extremum(tickerData.get(0).getHigh(), 0));
+
+        // Находим минимум
+        Extremum infimum = IntStream.range(0, tickerData.size())
+                .mapToObj(i -> new Extremum(tickerData.get(i).getLow(), i))
+                .min(Comparator.comparing(Extremum::value))
+                .orElse(new Extremum(tickerData.get(0).getLow(), 0));
+
+        int leftEBar = Math.max(supremum.index(), infimum.index());
+        int rightEBar = Math.min(supremum.index(), infimum.index());
+
+        int trend = leftEBar == supremum.index() ? -1 : 1;
+        float leftExtremum = leftEBar == supremum.index() ? supremum.value() : infimum.value();
+        float rightExtremum = rightEBar == infimum.index() ? infimum.value() : supremum.value();
+
+        return new ExtremumResult(supremum, infimum, leftEBar, rightEBar, trend, leftExtremum, rightExtremum);
+    }
+
+    private static FiboLevels calculateFiboLevels(ExtremumResult extremums, List<MarketData> tickerData) {
+        float rangeSize = extremums.supremum().value() - extremums.infimum().value();
+        float fibo382, fibo618;
+
+        if (extremums.trend() == 1) {
+            fibo382 = extremums.rightExtremum() - (float)(FIBO_382_LEVEL * rangeSize);
+            fibo618 = extremums.rightExtremum() - (float)(FIBO_618_LEVEL * rangeSize);
         } else {
-            leftExtremum = infimum;
-            rightExtremum = supremum;
-            trend = 1;
+            fibo382 = extremums.rightExtremum() + (float)(FIBO_382_LEVEL * rangeSize);
+            fibo618 = extremums.rightExtremum() + (float)(FIBO_618_LEVEL * rangeSize);
         }
 
-        Float rangeSize = supremum - infimum;
+        float sigma = rangeSize * (float)SIGMA_MULTIPLIER;
+        float alpha = rangeSize * (float)ALPHA_MULTIPLIER;
 
-        Float fibo382, fibo618;
+        return new FiboLevels(fibo382, fibo618, rangeSize, sigma, alpha);
+    }
+
+    private static LevelAnalysisResult analyzeLevels(
+            List<MarketData> tickerData,
+            ExtremumResult extremums,
+            FiboLevels fiboLevels) {
+
+        LevelCheckResult level382 = checkLevel(tickerData, extremums, fiboLevels, fiboLevels.fibo382(), true);
+        LevelCheckResult level618 = checkLevel(tickerData, extremums, fiboLevels, fiboLevels.fibo618(), false);
+
+        TouchCountResult touches382 = countTouches(tickerData, extremums, fiboLevels, fiboLevels.fibo382(), true);
+        TouchCountResult touches618 = countTouches(tickerData, extremums, fiboLevels, fiboLevels.fibo618(), false);
+
+        return new LevelAnalysisResult(
+                level382.isBroken(), level618.isBroken(),
+                touches382.touches(), touches618.touches(),
+                touches382.markers(), touches618.markers()
+        );
+    }
+
+    private static LevelCheckResult checkLevel(
+            List<MarketData> tickerData,
+            ExtremumResult extremums,
+            FiboLevels fiboLevels,
+            float levelValue,
+            boolean is382Level) {
+
+        List<Marker> markers = new ArrayList<>();
+        boolean isBroken = IntStream.range(0, extremums.rightEBar())
+                .anyMatch(i -> {
+                    boolean broken = isLevelBroken(tickerData.get(i), extremums.trend(), levelValue, fiboLevels.alpha());
+                    if (broken) {
+                        float markerValue = extremums.trend() == 1 ?
+                                tickerData.get(i).getLow() : tickerData.get(i).getHigh();
+                        markers.add(new Marker(i, markerValue, "black"));
+                    }
+                    return broken;
+                });
+
+        return new LevelCheckResult(isBroken, markers);
+    }
+
+    private static boolean isLevelBroken(MarketData data, int trend, float levelValue, float alpha) {
         if (trend == 1) {
-            fibo382 = rightExtremum - 0.382 * rangeSize;
-            fibo618 = rightExtremum - 0.618 * rangeSize;
+            return data.getLow() < levelValue - alpha;
         } else {
-            fibo382 = rightExtremum + 0.382 * rangeSize;
-            fibo618 = rightExtremum + 0.618 * rangeSize;
+            return data.getHigh() > levelValue + alpha;
         }
+    }
 
-        boolean isbroken382 = false;
-        boolean isbroken618 = false;
-        int touches382 = 0;
-        int touches681 = 0;
-        Float sigma = rangeSize * 0.03; // погрешность определения сигнала 3%
-        Float alpha = rangeSize * 0.01; // погрешность определения пробоя 1%
+    private static TouchCountResult countTouches(
+            List<MarketData> tickerData,
+            ExtremumResult extremums,
+            FiboLevels fiboLevels,
+            float levelValue,
+            boolean is382Level) {
 
-        List<Marker> markersTouples382 = new ArrayList<>();
-        List<Marker> markersTouples618 = new ArrayList<>();
+        List<Marker> markers = new ArrayList<>();
+        int touches = 0;
 
-        // Проверяем, пробиты ли уровни Фибоначчи
-        for (int i = 0; i < rightEBar; i++) {
-            if (trend == 1) {
-                if (tickerData.get(i).low() < fibo382 - alpha) {
-                    isbroken382 = true;
-                    markersTouples382.add(new Marker(i, tickerData.get(i).low(), "black"));
-                }
-                if (tickerData.get(i).low() < fibo618 - alpha) {
-                    isbroken618 = true;
-                    markersTouples618.add(new Marker(i, tickerData.get(i).low(), "black"));
-                }
-            }
-            if (trend == -1) {
-                if (tickerData.get(i).high() > fibo382 + alpha) {
-                    isbroken382 = true;
-                    markersTouples382.add(new Marker(i, tickerData.get(i).high(), "black"));
-                }
-                if (tickerData.get(i).high() > fibo618 + alpha) {
-                    isbroken618 = true;
-                    markersTouples618.add(new Marker(i, tickerData.get(i).high(), "black"));
+        for (int j = 0; j < extremums.rightEBar(); j++) {
+            boolean touched = isLevelTouched(tickerData.get(j), extremums.trend(), levelValue, fiboLevels.sigma());
+            if (touched) {
+                touches++;
+                j += TOUCH_SKIP_INTERVAL;
+                if (j < tickerData.size()) {
+                    markers.add(new Marker(j, levelValue, "black"));
                 }
             }
         }
 
-        // Подсчитываем касания
-        int j = 0;
-        while (j < rightEBar) {
-            if (trend == 1) {
-                if (tickerData.get(j).low() - fibo382 < sigma) {
-                    touches382++;
-                    j += 2;
-                    markersTouples382.add(new Marker(j, fibo382, "black"));
-                }
-                if (tickerData.get(j).low() - fibo618 < sigma) {
-                    touches681++;
-                    j += 2;
-                    markersTouples618.add(new Marker(j, fibo618, "black"));
-                }
-            }
-            if (trend == -1) {
-                if (fibo382 - tickerData.get(j).high() < sigma) {
-                    touches382++;
-                    j += 2;
-                    markersTouples382.add(new Marker(j, fibo382, "black"));
-                }
-                if (fibo618 - tickerData.get(j).high() < sigma) {
-                    touches681++;
-                    j += 2;
-                    markersTouples618.add(new Marker(j, fibo618, "black"));
-                }
-            }
-            j++;
+        return new TouchCountResult(touches, markers);
+    }
+
+    private static boolean isLevelTouched(MarketData data, int trend, float levelValue, float sigma) {
+        if (trend == 1) {
+            return Math.abs(data.getLow() - levelValue) < sigma;
+        } else {
+            return Math.abs(levelValue - data.getHigh()) < sigma;
+        }
+    }
+
+    private static Optional<TrvCalculationResult> generateSignal(
+            List<MarketData> tickerData,
+            ExtremumResult extremums,
+            FiboLevels fiboLevels,
+            LevelAnalysisResult analysis) {
+
+        float stopLoss = extremums.trend() == 1 ? extremums.infimum().value() : extremums.supremum().value();
+        float takeProfit = fiboLevels.fibo618();
+
+        // Проверяем сигнал по уровню 38.2
+        if (!analysis.isBroken382() && analysis.touches382() >= MIN_TOUCHES) {
+            float priceOpen = (stopLoss + fiboLevels.fibo382()) / 2;
+
+            List<HorizontalLineDto> lines = createHorizontalLines(
+                    tickerData, extremums, fiboLevels, analysis.markers382());
+
+            return Optional.of(TrvCalculationResult.builder()
+                    .direction(TradingDirection.from(extremums.trend()))
+                    .priceOpen(priceOpen)
+                    .stopLoss(stopLoss)
+                    .takeProfit(takeProfit)
+                    .lots(analysis.touches382())
+                    .lines(lines)
+                    .build());
         }
 
-        Float stopLoss = trend == 1 ? infimum : supremum;
-        Float takeProfit = fibo618;
-        List<Marker> markers = null;
-        Float priceOpen = null;
+        // Проверяем сигнал по уровню 61.8
+        if (!analysis.isBroken618() && analysis.touches618() >= MIN_TOUCHES) {
+            float priceOpen = fiboLevels.fibo382();
 
-        if ((!isbroken382) && (touches382 >= 2)) {
-            markers = new ArrayList<>(markersTouples382);
-            priceOpen = (stopLoss + fibo382) / 2;
-            String description = "touches:" + touches382 + "." + getPositionInfo(priceOpen, takeProfit, stopLoss);
-            return new SignalResult(
-                    tickerData.get(0).ticker(),
-                    tickerData.get(rightEBar).datetime(),
-                    "Fibo touch 38.2",
-                    trend,
-                    touches382,
-                    description
-            );
+            List<HorizontalLineDto> lines = createHorizontalLines(
+                    tickerData, extremums, fiboLevels, analysis.markers618());
+
+            return Optional.of(TrvCalculationResult.builder()
+                    .direction(TradingDirection.from(extremums.trend()))
+                    .priceOpen(priceOpen)
+                    .stopLoss(stopLoss)
+                    .takeProfit(takeProfit)
+                    .lots(analysis.touches618())
+                    .lines(lines)
+                    .build());
         }
 
-        if ((!isbroken618) && (touches681 >= 2)) {
-            markers = new ArrayList<>(markersTouples618);
-            priceOpen = fibo382;
-            String description = "touches:" + touches681 + getPositionInfo(priceOpen, takeProfit, stopLoss);
-            return new SignalResult(
-                    tickerData.get(0).ticker(),
-                    tickerData.get(rightEBar).datetime(),
-                    "Fibo touch 61.8",
-                    trend,
-                    touches681,
-                    description
-            );
-        }
+        return Optional.empty();
+    }
 
-        if (render) {
-            if (((!isbroken382) && (touches382 >= 2)) || ((!isbroken618) && (touches681 >= 2))) {
-                List<Integer> fiboXaxe = IntStream.rangeClosed(rightEBar, leftEBar)
-                        .boxed()
-                        .collect(ArrayList::new, (list, item) -> list.add(item), ArrayList::addAll);
+    private static List<HorizontalLineDto> createHorizontalLines(
+            List<MarketData> tickerData,
+            ExtremumResult extremums,
+            FiboLevels fiboLevels,
+            List<Marker> markers) {
 
-                return null; // В Java мы не можем вернуть кортеж, поэтому возвращаем null здесь
-                // Для полной реализации render нужно создать отдельный метод
-            }
-        }
+        OffsetDateTime fromTime = tickerData.get(extremums.rightEBar()).getTime();
+        OffsetDateTime toTime = tickerData.get(tickerData.size() - 1).getTime();
 
-        return null;
+        List<HorizontalLineDto> lines = new ArrayList<>();
+
+        // Линия уровня 38.2
+        lines.add(HorizontalLineDto.builder()
+                .fromPrice(fiboLevels.fibo382())
+                .toPrice(fiboLevels.fibo382())
+                .fromUtc(fromTime)
+                .toUtc(toTime)
+                .style("dashed")
+                .label("Fibo 38.2")
+                .color("#FF0000")
+                .build());
+
+        // Линия уровня 61.8
+        lines.add(HorizontalLineDto.builder()
+                .fromPrice(fiboLevels.fibo618())
+                .toPrice(fiboLevels.fibo618())
+                .fromUtc(fromTime)
+                .toUtc(toTime)
+                .style("dashed")
+                .label("Fibo 61.8")
+                .color("#0000FF")
+                .build());
+
+        // Линии максимума и минимума
+        lines.add(HorizontalLineDto.builder()
+                .fromPrice(extremums.supremum().value())
+                .toPrice(extremums.supremum().value())
+                .fromUtc(fromTime)
+                .toUtc(toTime)
+                .style("solid")
+                .label("Supremum")
+                .color("#00FF00")
+                .build());
+
+        lines.add(HorizontalLineDto.builder()
+                .fromPrice(extremums.infimum().value())
+                .toPrice(extremums.infimum().value())
+                .fromUtc(fromTime)
+                .toUtc(toTime)
+                .style("solid")
+                .label("Infimum")
+                .color("#FFFF00")
+                .build());
+
+        return lines;
     }
 
     private static String getPositionInfo(Float priceOpen, Float takeProfit, Float stopLoss) {
@@ -198,4 +292,32 @@ public class FiboSignals implements IStrategy {
                 ". \r\n TP:" + String.format("%.4f", takeProfit) +
                 ". \r\n Kprofit:" + String.format("%.2f", tpToSl);
     }
+
+    // Record classes для структурирования данных
+    private record Extremum(float value, int index) {}
+
+    private record ExtremumResult(
+            Extremum supremum,
+            Extremum infimum,
+            int leftEBar,
+            int rightEBar,
+            int trend,
+            float leftExtremum,
+            float rightExtremum
+    ) {}
+
+    private record FiboLevels(float fibo382, float fibo618, float rangeSize, float sigma, float alpha) {}
+
+    private record LevelCheckResult(boolean isBroken, List<Marker> markers) {}
+
+    private record TouchCountResult(int touches, List<Marker> markers) {}
+
+    private record LevelAnalysisResult(
+            boolean isBroken382,
+            boolean isBroken618,
+            int touches382,
+            int touches618,
+            List<Marker> markers382,
+            List<Marker> markers618
+    ) {}
 }

@@ -4,22 +4,32 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
-import ru.grnk.tradevisor.calculate.strategies.dto.*;
+import ru.grnk.tradevisor.calculate.strategies.dto.Marker;
+import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
+import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 import ru.grnk.tradevisor.notify.plot.dto.HorizontalLineDto;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Component
 @ConditionalOnProperty(value = "app.calculate.gap")
 public class GapSignals implements IStrategy {
 
+    private static final int MIN_DATA_SIZE = 20;
+    private static final int DEFAULT_BARS_REQUIRED = 100;
+    private static final double GAP_SIZE_MULTIPLIER = 0.1;
+    private static final double SIGMA_MULTIPLIER = 0.03;
+    private static final double OMEGA_MULTIPLIER = 0.01;
+    private static final int TOUCH_SKIP_INTERVAL = 2;
+
     @Override
     public Integer barsRequiredToCalcStrategy() {
-        return 100;
+        return DEFAULT_BARS_REQUIRED;
     }
 
     @Override
@@ -35,123 +45,181 @@ public class GapSignals implements IStrategy {
     }
 
     public static Optional<TrvCalculationResult> getGapSignals(List<MarketData> data) {
-        if (data.size() < 20) {
+        if (data.size() < MIN_DATA_SIZE) {
             return Optional.empty();
         }
-        List<MarketData> ohlcRecord = data.subList(0, Math.min(100, data.size()));
-        float rangeSize = (float) ohlcRecord.stream()
+
+        List<MarketData> ohlcRecord = data.subList(0, Math.min(DEFAULT_BARS_REQUIRED, data.size()));
+        double rangeSize = calculateRangeSize(ohlcRecord);
+        double minGapSize = rangeSize * GAP_SIZE_MULTIPLIER;
+
+        return findGap(ohlcRecord, minGapSize, rangeSize)
+                .filter(gapInfo -> !isGapBroken(ohlcRecord, gapInfo, rangeSize))
+                .flatMap(gapInfo -> processGapTouches(ohlcRecord, gapInfo, rangeSize, minGapSize, data));
+    }
+
+    private static double calculateRangeSize(List<MarketData> ohlcRecord) {
+        double maxHigh = ohlcRecord.stream()
                 .mapToDouble(MarketData::getHigh)
                 .max()
-                .orElse(0)
-                - (float) ohlcRecord.stream().mapToDouble(MarketData::getLow).min().orElse(0);
-        Float minGapSize = rangeSize * 0.1f;
-        Float supremum = null;
-        Float infimum = null;
-        Integer gapBar = null;
-        int trend = 0;
-        List<Marker> markersTuplesInfimum = new ArrayList<>();
-        List<Marker> markersTuplesSupremum = new ArrayList<>();
-        for (int i = 0; i < ohlcRecord.size() - 1; i++) {
-            Float gap = ohlcRecord.get(i).getOpen() - ohlcRecord.get(i + 1).getClose();
-            if (Math.abs(gap) > minGapSize) {
-                if (gap > 0) {
-                    supremum =ohlcRecord.get(i).getOpen();
-                    infimum = ohlcRecord.get(i + 1).getClose();
-                    trend = 1;
-                } else {
-                    supremum = ohlcRecord.get(i + 1).getClose();
-                    infimum = ohlcRecord.get(i).getOpen();
-                    trend = -1;
-                }
-                gapBar = i;
-                break;
-            }
-        }
-        if (gapBar == null || gapBar == 0) {
-            return Optional.empty();
-        }
-        boolean gapIsBroken = false;
-        Float sigma = rangeSize * 0.03f;
-        Float omega = rangeSize * 0.01f;
-        for (int j = 0; j < gapBar - 1; j++) {
-            if (trend == -1) {
-                if (ohlcRecord.get(j).getHigh() - supremum > omega) {
-                    gapIsBroken = true;
-                    markersTuplesSupremum.add(new Marker(j, ohlcRecord.get(j).getHigh(), "black"));
-                }
-            }
-            if (trend == 1) {
-                if (infimum - ohlcRecord.get(j).getLow() > omega) {
-                    gapIsBroken = true;
-                    markersTuplesInfimum.add(new Marker(j, ohlcRecord.get(j).getLow(), "black"));
-                }
-            }
-        }
+                .orElse(0);
+        double minLow = ohlcRecord.stream()
+                .mapToDouble(MarketData::getLow)
+                .min()
+                .orElse(0);
+        return maxHigh - minLow;
+    }
 
-        if (gapIsBroken) {
-            return Optional.empty();
-        }
+    private static Optional<GapInfo> findGap(List<MarketData> ohlcRecord, double minGapSize, double rangeSize) {
+        return IntStream.range(0, ohlcRecord.size() - 1)
+                .mapToObj(i -> {
+                    double gap = ohlcRecord.get(i).getOpen() - ohlcRecord.get(i + 1).getClose();
+                    if (Math.abs(gap) > minGapSize) {
+                        if (gap > 0) {
+                            return new GapInfo(i, ohlcRecord.get(i).getOpen(), ohlcRecord.get(i + 1).getClose(), 1);
+                        } else {
+                            return new GapInfo(i, ohlcRecord.get(i + 1).getClose(), ohlcRecord.get(i).getOpen(), -1);
+                        }
+                    }
+                    return null;
+                })
+                .filter(gapInfo -> gapInfo != null && gapInfo.gapBar() > 0)
+                .findFirst();
+    }
 
-        int supremumTouches = 0;
-        int infimumTouches = 0;
-        int k = 0;
+    private static boolean isGapBroken(List<MarketData> ohlcRecord, GapInfo gapInfo, double rangeSize) {
+        double omega = rangeSize * OMEGA_MULTIPLIER;
 
-        while (k < gapBar) {
-            if (trend == -1) {
-                if (supremum - ohlcRecord.get(k).getHigh() < sigma) {
-                    supremumTouches++;
-                    k += 2;
-                    markersTuplesSupremum.add(new Marker(k, ohlcRecord.get(k).getHigh(), "black"));
-                }
-            }
-            if (trend == 1) {
-                if (ohlcRecord.get(k).getLow() - infimum < sigma) {
-                    infimumTouches++;
-                    k += 2;
-                    markersTuplesInfimum.add(new Marker(k, ohlcRecord.get(k).getLow(), "black"));
-                }
-            }
-            k++;
-        }
+        return IntStream.range(0, gapInfo.gapBar() - 1)
+                .anyMatch(j -> {
+                    if (gapInfo.trend() == -1) {
+                        return ohlcRecord.get(j).getHigh() - gapInfo.supremum() > omega;
+                    } else if (gapInfo.trend() == 1) {
+                        return gapInfo.infimum() - ohlcRecord.get(j).getLow() > omega;
+                    }
+                    return false;
+                });
+    }
 
-        if (supremumTouches > 1 || infimumTouches > 1) {
-            Float takeProfit = null;
-            Float stopLoss = null;
-            Float priceOpen = null;
+    private static Optional<TrvCalculationResult> processGapTouches(
+            List<MarketData> ohlcRecord,
+            GapInfo gapInfo,
+            double rangeSize,
+            double minGapSize,
+            List<MarketData> originalData) {
 
-            if (supremumTouches > 1) {
-                takeProfit = supremum;
-                stopLoss = infimum - minGapSize;
-                priceOpen = infimum;
-                log.info("long signal detected. strategy: gap. touches: {}, stopLoss: {}, takeProfit: {}, PriceOpen: {}",
-                        supremumTouches, stopLoss, takeProfit, priceOpen);
-            }
+        double sigma = rangeSize * SIGMA_MULTIPLIER;
+        TouchCountResult touchResult = countTouches(ohlcRecord, gapInfo, sigma);
 
-            if (infimumTouches > 1) {
-                takeProfit = infimum;
-                stopLoss = supremum + minGapSize;
-                priceOpen = supremum;
-                log.info("short signal detected. strategy: gap. touches: {}, stopLoss: {}, takeProfit: {}, PriceOpen: {}",
-                        infimumTouches, stopLoss, takeProfit, priceOpen);
-            }
-            return Optional.of(TrvCalculationResult.builder()
-                    .lots(supremumTouches > 1 ? supremumTouches : infimumTouches)
-                    .stopLoss(stopLoss)
-                    .takeProfit(takeProfit)
-                    .direction(TradingDirection.LONG)
-                    .priceOpen(priceOpen)
-                    .lines(List.of(
-                            HorizontalLineDto.builder()
-                                    .fromPrice(infimum)
-                                    .toPrice(supremum)
-                                    .fromUtc(data.get(gapBar).getTime())
-                                    .toUtc(data.get(data.size()-1).getTime())
-                                    .build()
-                    ))
-                    .build());
+        if (touchResult.supremumTouches() > 1 || touchResult.infimumTouches() > 1) {
+            SignalParams signalParams = calculateSignalParams(
+                    touchResult.supremumTouches(),
+                    touchResult.infimumTouches(),
+                    gapInfo.supremum(),
+                    gapInfo.infimum(),
+                    minGapSize
+            );
+
+            logSignalDetection(touchResult, signalParams);
+
+            return Optional.of(createCalculationResult(signalParams, gapInfo, originalData));
         }
 
         return Optional.empty();
     }
-}
 
+    private static TouchCountResult countTouches(List<MarketData> ohlcRecord, GapInfo gapInfo, double sigma) {
+        List<Marker> markersTuplesInfimum = new ArrayList<>();
+        List<Marker> markersTuplesSupremum = new ArrayList<>();
+        int supremumTouches = 0;
+        int infimumTouches = 0;
+
+        for (int k = 0; k < gapInfo.gapBar(); k++) {
+            if (gapInfo.trend() == -1) {
+                if (gapInfo.supremum() - ohlcRecord.get(k).getHigh() < sigma) {
+                    supremumTouches++;
+                    k += TOUCH_SKIP_INTERVAL;
+                    if (k < ohlcRecord.size()) {
+                        markersTuplesSupremum.add(new Marker(k, ohlcRecord.get(k).getHigh(), "black"));
+                    }
+                }
+            }
+            if (gapInfo.trend() == 1) {
+                if (ohlcRecord.get(k).getLow() - gapInfo.infimum() < sigma) {
+                    infimumTouches++;
+                    k += TOUCH_SKIP_INTERVAL;
+                    if (k < ohlcRecord.size()) {
+                        markersTuplesInfimum.add(new Marker(k, ohlcRecord.get(k).getLow(), "black"));
+                    }
+                }
+            }
+        }
+
+        return new TouchCountResult(supremumTouches, infimumTouches);
+    }
+
+    private static SignalParams calculateSignalParams(
+            int supremumTouches,
+            int infimumTouches,
+            double supremum,
+            double infimum,
+            double minGapSize) {
+
+        if (supremumTouches > 1) {
+            return new SignalParams(
+                    supremum,                           // takeProfit
+                    infimum - minGapSize,              // stopLoss
+                    infimum,                           // priceOpen
+                    supremumTouches,                   // lots
+                    TradingDirection.LONG              // direction
+            );
+        } else {
+            return new SignalParams(
+                    infimum,                           // takeProfit
+                    supremum + minGapSize,             // stopLoss
+                    supremum,                          // priceOpen
+                    infimumTouches,                    // lots
+                    TradingDirection.SHORT             // direction
+            );
+        }
+    }
+
+    private static void logSignalDetection(TouchCountResult touchResult, SignalParams signalParams) {
+        if (touchResult.supremumTouches() > 1) {
+            log.info("long signal detected. strategy: gap. touches: {}, stopLoss: {}, takeProfit: {}, PriceOpen: {}",
+                    touchResult.supremumTouches(), signalParams.stopLoss(), signalParams.takeProfit(), signalParams.priceOpen());
+        }
+        if (touchResult.infimumTouches() > 1) {
+            log.info("short signal detected. strategy: gap. touches: {}, stopLoss: {}, takeProfit: {}, PriceOpen: {}",
+                    touchResult.infimumTouches(), signalParams.stopLoss(), signalParams.takeProfit(), signalParams.priceOpen());
+        }
+    }
+
+    private static TrvCalculationResult createCalculationResult(
+            SignalParams signalParams,
+            GapInfo gapInfo,
+            List<MarketData> originalData) {
+
+        return TrvCalculationResult.builder()
+                .lots(signalParams.lots())
+                .stopLoss((float)signalParams.stopLoss())
+                .takeProfit((float)signalParams.takeProfit())
+                .direction(signalParams.direction())
+                .priceOpen((float)signalParams.priceOpen())
+                .lines(List.of(
+                        HorizontalLineDto.builder()
+                                .fromPrice((float)gapInfo.infimum())
+                                .toPrice((float)gapInfo.supremum())
+                                .fromUtc(originalData.get(gapInfo.gapBar()).getTime())
+                                .toUtc(originalData.get(originalData.size() - 1).getTime())
+                                .build()
+                ))
+                .build();
+    }
+
+    private record GapInfo(int gapBar, double supremum, double infimum, int trend) {}
+
+    private record TouchCountResult(int supremumTouches, int infimumTouches) {}
+
+    private record SignalParams(double takeProfit, double stopLoss, double priceOpen, int lots, TradingDirection direction) {}
+}

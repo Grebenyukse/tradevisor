@@ -62,10 +62,8 @@ app:
       tinkoff: true
   calculate:
     cron: 1 * * * * *
-    three-bars-growth: true
-    fibo: false
+    fibo: true
     gap: false
-    always-buy: false
   trade:
     cron: 1 * * * * *
     limits: 1
