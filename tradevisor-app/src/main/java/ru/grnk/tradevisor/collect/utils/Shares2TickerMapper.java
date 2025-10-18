@@ -19,7 +19,7 @@ public class Shares2TickerMapper {
                 .setExpiration(null)
                 .setGo(null)
                 .setLot(share.getLot())
-                .setUuid(share.getUid())
+                .setTickerCode(share.getUid())
                 .setFigi(share.getFigi())
                 .setMarketType("акции")
                 .setPrecision(1);
@@ -38,7 +38,7 @@ public class Shares2TickerMapper {
                 )
                 .setGo(null)
                 .setLot(future.getLot())
-                .setUuid(future.getUid())
+                .setTickerCode(future.getUid())
                 .setFigi(future.getFigi())
                 .setMarketType("фьючерсы")
                 .setPrecision(1);

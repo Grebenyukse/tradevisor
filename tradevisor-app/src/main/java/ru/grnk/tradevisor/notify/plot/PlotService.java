@@ -27,9 +27,9 @@ public class PlotService {
 
     @SneakyThrows
     public byte[] saveCandlestickChartToFile(Signals signal, boolean saveToFs) {
-        List<MarketData> md = marketDataRepository.fetchMarketDataForLast(100, signal.getInstrumentUuid());
+        List<MarketData> md = marketDataRepository.fetchMarketDataForLast(100, signal.getTickerCode());
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();
-        Tickers ticker = tickersRepository.findTickerByUid(signal.getInstrumentUuid());
+        Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
         HorizontalLineDto stopLoss = HorizontalLineDto.builder()
                 .fromUtc(ohlcData.get(0).date())
                 .toUtc(ohlcData.get(ohlcData.size()-1).date())
@@ -52,7 +52,7 @@ public class PlotService {
                 .toPrice(signal.getPriceOpen())
                 .build();
         PlotRecord plotRecord = new PlotRecord(
-            ohlcData, stopLoss, takeProfit, priceOpen, ticker.getTicker(), ticker.getUuid(), signal.getDirection()
+            ohlcData, stopLoss, takeProfit, priceOpen, ticker.getTicker(), ticker.getTickerCode(), signal.getDirection()
         );
         return quickChartService.saveCandlestickChartToFile(plotRecord, true);
     }

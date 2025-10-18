@@ -19,6 +19,3 @@ databaseChangeLog:
   - include:
       file: 2025-10-13-04-tickers.sql
       relativeToChangelogFile: true
-  - include:
-      file: 2025-10-13-05-finam_tickers.sql
-      relativeToChangelogFile: true

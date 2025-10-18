@@ -8,7 +8,7 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 import ru.grnk.tradevisor.dbmodel.tables.FinamExchanges;
 
-import static ru.grnk.tradevisor.dbmodel.tables.FinamTickers.FINAM_TICKERS;
+import static ru.grnk.tradevisor.dbmodel.Tables.TICKERS;
 
 @Repository
 @RequiredArgsConstructor
@@ -24,8 +24,24 @@ public class FinamMetainfoRepository {
     }
 
     public void saveFinamAsset(Asset asset) {
-        dslContext.insertInto(FINAM_TICKERS, FINAM_TICKERS.ID, FINAM_TICKERS.TICKER, FINAM_TICKERS.MIC, FINAM_TICKERS.ISIN, FINAM_TICKERS.NAME, FINAM_TICKERS.TYPE)
-                .values(asset.getId(), asset.getTicker(), asset.getMic(), asset.getIsin(), asset.getName(), asset.getType())
+        dslContext.insertInto(TICKERS,
+                        TICKERS.TICKER,
+                        TICKERS.CURRENCY,
+                        TICKERS.TICKER_CODE,
+                        TICKERS.DESCRIPTION,
+                        TICKERS.FIGI,
+                        TICKERS.EXCHANGE,
+                        TICKERS.PROVIDER,
+                        TICKERS.MARKET_TYPE)
+                .values(asset.getTicker(),
+                        "rub",
+                        asset.getTicker() + "@" + asset.getMic(),
+                        asset.getName(),
+                        asset.getIsin(),
+                        asset.getMic(),
+                        "finam",
+                        asset.getType()
+                        )
                 .onConflictDoNothing()
                 .execute();
     }

@@ -106,3 +106,4 @@ app:
       host: api.finam.ru
       port: 443
       account-id: ${FINAM_ACCOUNT_KEY}
+      history-max-depth-days: 150

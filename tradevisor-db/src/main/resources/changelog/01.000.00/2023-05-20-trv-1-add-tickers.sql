@@ -8,7 +8,7 @@ name varchar not null primary key
 
 --rollback drop table if exists tradevisor.tickers;
 create table if not exists tradevisor.tickers(
-    uuid        varchar not null primary key,
+    ticker_code        varchar not null primary key, -- ticker@mic
     ticker      varchar not null,
     figi        varchar not null,
     description varchar,

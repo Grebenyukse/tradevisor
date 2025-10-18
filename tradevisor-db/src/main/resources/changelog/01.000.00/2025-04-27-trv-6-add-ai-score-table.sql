@@ -4,8 +4,8 @@
 --rollback drop table if exists tradevisor.ai_score;
 create table if not exists tradevisor.ai_score (
     request_date date not null,
-    ticker varchar(20) not null,
+    ticker_code varchar(20) not null,
     score int not null,
     source varchar(20) not null,
-    unique (request_date, ticker, source)
+    unique (request_date, ticker_code, source)
 );

@@ -8,14 +8,3 @@ create table if not exists tradevisor.finam_exchanges(
     mic varchar(100) unique,
     is_active bool
 );
-
---rollback drop table if exists tradevisor.finam_tickers;
-create table if not exists tradevisor.finam_tickers(
-    id varchar not null primary key,
-    ticker varchar not null,
-    mic varchar references tradevisor.finam_exchanges(mic),
-    isin varchar not null,
-    name varchar,
-    type varchar,
-    t_uuid varchar references tradevisor.tickers(uuid)
-);

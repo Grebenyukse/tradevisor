@@ -24,13 +24,13 @@ public class PlotRepository {
                 MarketData.MARKET_DATA.CLOSE,
                 MarketData.MARKET_DATA.TIME
                 ).from(MarketData.MARKET_DATA)
-                .where(MarketData.MARKET_DATA.INSTRUMENT_UUID.eq(uuid))
+                .where(MarketData.MARKET_DATA.TICKER_CODE.eq(uuid))
                 .fetchStreamInto(OHLCData.class)
                 .toList();
 
         var tickerInfo = dsl.select(
                 Tickers.TICKERS.TICKER,
-                Tickers.TICKERS.UUID
+                Tickers.TICKERS.TICKER_CODE
         );
 
 

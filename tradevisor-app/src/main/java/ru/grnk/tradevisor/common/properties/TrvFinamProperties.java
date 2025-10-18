@@ -6,6 +6,7 @@ public record TrvFinamProperties(
         String url,
         String host,
         Integer port,
-        String accountId
+        String accountId,
+        Integer historyMaxDepthDays
         ) {
 }

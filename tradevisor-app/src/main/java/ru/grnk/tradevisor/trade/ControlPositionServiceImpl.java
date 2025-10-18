@@ -35,7 +35,7 @@ public class ControlPositionServiceImpl implements TradeService {
     @Override
     public void loadNewSignals() {
         Map<String, List<Signals>> newSignals = signalsRepository.findPublishedSignals()
-                .stream().collect(groupingBy(Signals::getInstrumentUuid));
+                .stream().collect(groupingBy(Signals::getTickerCode));
         var expiredSignals = new ArrayList<Signals>();
         for (var s : newSignals.entrySet()) {
             if (s.getValue().size() > 1) {

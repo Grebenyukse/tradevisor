@@ -62,7 +62,7 @@ public class SignalsRepository {
                            OffsetDateTime lastCandleTime
     ) {
         dsl.insertInto(SIGNALS,
-                        SIGNALS.INSTRUMENT_UUID,
+                        SIGNALS.TICKER_CODE,
                         SIGNALS.NAME,
                         SIGNALS.DIRECTION,
                         SIGNALS.PRICE_OPEN,

@@ -7,7 +7,7 @@ create table if not exists tradevisor.signals
     id          serial primary key,
     name        varchar,
     description varchar,
-    instrument_uuid      varchar references tradevisor.tickers (uuid),
+    ticker_code      varchar references tradevisor.tickers (ticker_code),
     direction   smallint, -- 1 long -1 short
     price_open  real,
     stop_loss   real,
@@ -21,4 +21,4 @@ create table if not exists tradevisor.signals
 
 alter table tradevisor.signals drop constraint if exists signal_on_bar_calculated_once_per_strategy;
 alter table tradevisor.signals add constraint signal_on_bar_calculated_once_per_strategy unique
-    (name, instrument_uuid, status, direction);
+    (name, ticker_code, status, direction);

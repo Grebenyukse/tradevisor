@@ -35,7 +35,7 @@ public class ReportsCollectorImpl implements EventCollector {
     public List<TickerEvent> collect() {
         List<Tickers> tickers = tickersRepository.getAllTickers();
         return tickers.stream()
-                .map(t -> investApi.getInstrumentsService().getAssetsReportsSync(t.getUuid(), Instant.now(), Instant.now().plus(300, DAYS)))
+                .map(t -> investApi.getInstrumentsService().getAssetsReportsSync(t.getTickerCode(), Instant.now(), Instant.now().plus(300, DAYS)))
                 .flatMap(res -> res.stream().map(x -> TickerEvent.builder()
                         .id(calcHash(x.getReportDate(), x.getInstrumentId(), EventCategory.REPORTS.name()))
                         .eventDate(OffsetDateTime.ofInstant(Instant.ofEpochSecond(x.getReportDate().getSeconds()), ZoneOffset.ofHours(3)))

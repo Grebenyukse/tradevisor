@@ -33,13 +33,13 @@ public class CalculateSignalServiceImpl {
             return;
         }
         for (Tickers t : tickers) {
-            var lastTickTime = marketDataRepository.getLatestTickTime(t.getUuid());
+            var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode());
             strategies.forEach(s -> {
-                var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getUuid());
+                var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
                 if (candles.size() < s.barsRequiredToCalcStrategy()) return;
                 TrvCalculationResult result = s.calculate(candles);
                 if (result.direction() != TradingDirection.UNKNOWN) {
-                    signalsRepository.saveSignal(result, t.getUuid(), s.getStrategyUniqueName(), lastTickTime);
+                    signalsRepository.saveSignal(result, t.getTickerCode(), s.getStrategyUniqueName(), lastTickTime);
                 }
             });
         }

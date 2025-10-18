@@ -32,7 +32,7 @@ public class MarketDataRepository {
 
     public List<MarketData> fetchMarketDataForLast(int bars, String instrumentUid) {
         return dsl.select().from(MARKET_DATA)
-                .where(MARKET_DATA.INSTRUMENT_UUID.eq(instrumentUid))
+                .where(MARKET_DATA.TICKER_CODE.eq(instrumentUid))
                 .orderBy(MARKET_DATA.ID.desc())
                 .limit(bars).offset(0)
                 .fetchStreamInto(MarketData.class)
@@ -40,15 +40,15 @@ public class MarketDataRepository {
     }
 
     public OffsetDateTime getLatestTickTime(String instrumentUuid) {
-        var historyMaxDepthDays = trvProperties.integration().tinkoff().historyMaxDepthDays();
+        var historyMaxDepthDays = trvProperties.integration().finam().historyMaxDepthDays();
         return dsl.select(max(MARKET_DATA.TIME)).from(MARKET_DATA)
-                .where(MARKET_DATA.INSTRUMENT_UUID.eq(instrumentUuid))
+                .where(MARKET_DATA.TICKER_CODE.eq(instrumentUuid))
                 .fetchOptionalInto(OffsetDateTime.class)
                 .orElseGet(() -> OffsetDateTime.now().minusDays(historyMaxDepthDays));
     }
 
     public void saveMarketData(HistoricCandle candle, String instrument_uid) {
-        dsl.insertInto(MARKET_DATA, MARKET_DATA.INSTRUMENT_UUID,
+        dsl.insertInto(MARKET_DATA, MARKET_DATA.TICKER_CODE,
                 MARKET_DATA.OPEN,
                 MARKET_DATA.HIGH,
                 MARKET_DATA.LOW,
@@ -69,7 +69,7 @@ public class MarketDataRepository {
 
     // finam trade api
     public void saveMarketData(Bar bar, String instrument_uid) {
-        dsl.insertInto(MARKET_DATA, MARKET_DATA.INSTRUMENT_UUID,
+        dsl.insertInto(MARKET_DATA, MARKET_DATA.TICKER_CODE,
                         MARKET_DATA.OPEN,
                         MARKET_DATA.HIGH,
                         MARKET_DATA.LOW,

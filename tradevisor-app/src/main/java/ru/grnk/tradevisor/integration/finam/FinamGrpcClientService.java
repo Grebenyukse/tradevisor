@@ -17,8 +17,8 @@ import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.prices.PricesLoader;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
-import ru.grnk.tradevisor.common.repository.FinamTickersRepository;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
+import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.integration.finam.repository.FinamMetainfoRepository;
 
 import java.time.OffsetDateTime;
@@ -36,7 +36,7 @@ public class FinamGrpcClientService implements PricesLoader {
     private final MarketDataServiceGrpc.MarketDataServiceBlockingStub marketDataServiceBlockingStub;
     private  final FinamMetainfoRepository finamMetainfoRepository;
     private final MarketDataRepository marketDataRepository;
-    private final FinamTickersRepository finamTickersRepository;
+    private final TickersRepository tickersRepository;
 
     public void initTickers() {
         initExchanges();
@@ -60,9 +60,9 @@ public class FinamGrpcClientService implements PricesLoader {
         return new BearerToken(authRs.getToken());
     }
 
-    public void loadHistoryForSymbol(String tickerUid) {
-        var ticker = finamTickersRepository.findFinamTickerByUuid(tickerUid);
-        var symbol = ticker.getTicker() + "@" + ticker.getMic();
+    public void loadHistoryForSymbol(String tickerCode) {
+        var ticker = tickersRepository.findTickerByTickerCode(tickerCode);
+        var symbol = tickerCode;
         log.debug("load prices for {}", symbol);
         var bearer = getBearer();
         var startTime = findStartTime(symbol);
@@ -80,7 +80,7 @@ public class FinamGrpcClientService implements PricesLoader {
                         .setSymbol(symbol)
                         .setTimeframe(TimeFrame.TIME_FRAME_H1)
                         .build());
-        marketDataRs.getBarsList().stream().forEach(b -> marketDataRepository.saveMarketData(b, tickerUid));
+        marketDataRs.getBarsList().stream().forEach(b -> marketDataRepository.saveMarketData(b, tickerCode));
     }
 
     private Timestamp convertToTimestamp(ZonedDateTime zonedDateTime) {

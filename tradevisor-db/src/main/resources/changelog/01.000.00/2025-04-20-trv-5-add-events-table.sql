@@ -2,13 +2,13 @@
 
 --changeset SE-Grebenyuk:01.000.00/TVR-1/init-schema
 create table if not exists tradevisor.events(
-    hash_id varchar not null primary key,
-    event_date timestamp with time zone,
-    category varchar,
-    impact varchar,
-    source  varchar,
-    content varchar,
-    instrument_uuid varchar not null references tradevisor.tickers (uuid)
+    hash_id     varchar not null primary key,
+    event_date  timestamp with time zone,
+    category    varchar,
+    impact      varchar,
+    source      varchar,
+    content     varchar,
+    ticker_code varchar not null references tradevisor.tickers (ticker_code)
 );
 CREATE INDEX if not exists idx_events_event_date_desc ON tradevisor.events (event_date DESC);
 --rollback drop index if exists idx_events_event_date_desc;

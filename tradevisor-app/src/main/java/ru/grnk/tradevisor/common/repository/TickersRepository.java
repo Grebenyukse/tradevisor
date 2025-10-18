@@ -17,9 +17,9 @@ public class TickersRepository {
 
     private final DSLContext dsl;
 
-    public Tickers findTickerByUid(String uuid) {
+    public Tickers findTickerByTickerCode(String tickerCode) {
         return dsl.select().from(TICKERS)
-                .where(TICKERS.UUID.eq(uuid))
+                .where(TICKERS.TICKER_CODE.eq(tickerCode))
                 .fetchInto(Tickers.class)
                 .stream()
                 .findFirst()
@@ -35,7 +35,7 @@ public class TickersRepository {
     public void saveInstrument(Tickers ticker) {
         dsl.insertInto(TICKERS, TICKERS.FIGI,
                         TICKERS.TICKER,
-                        TICKERS.UUID,
+                        TICKERS.TICKER_CODE,
                         TICKERS.DESCRIPTION,
                         TICKERS.PRECISION,
                         TICKERS.GO,
@@ -47,7 +47,7 @@ public class TickersRepository {
                 )
                 .values(ticker.getFigi(),
                         ticker.getTicker(),
-                        ticker.getUuid(),
+                        ticker.getTickerCode(),
                         ticker.getDescription(),
                         ticker.getPrecision(),
                         ticker.getGo(),
