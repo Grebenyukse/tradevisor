@@ -36,6 +36,7 @@ public class CalculateSignalServiceImpl {
             var lastTickTime = marketDataRepository.getLatestTickTime(t.getUuid());
             strategies.forEach(s -> {
                 var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getUuid());
+                if (candles.size() < s.barsRequiredToCalcStrategy()) return;
                 TrvCalculationResult result = s.calculate(candles);
                 if (result.direction() != TradingDirection.UNKNOWN) {
                     signalsRepository.saveSignal(result, t.getUuid(), s.getStrategyUniqueName(), lastTickTime);

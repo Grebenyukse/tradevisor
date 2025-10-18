@@ -78,7 +78,7 @@ public class FinamGrpcClientService implements PricesLoader {
                                 .setEndTime(endTime)
                                 .build())
                         .setSymbol(symbol)
-                        .setTimeframe(TimeFrame.TIME_FRAME_M5)
+                        .setTimeframe(TimeFrame.TIME_FRAME_H1)
                         .build());
         marketDataRs.getBarsList().stream().forEach(b -> marketDataRepository.saveMarketData(b, tickerUid));
     }
