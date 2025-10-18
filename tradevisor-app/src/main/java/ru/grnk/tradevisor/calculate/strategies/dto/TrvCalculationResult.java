@@ -12,5 +12,6 @@ public record TrvCalculationResult(
         Float stopLoss,
         Float takeProfit,
         Integer lots,
-        List<HorizontalLineDto> lines) {
+        List<HorizontalLineDto> lines,
+        String description) {
 }

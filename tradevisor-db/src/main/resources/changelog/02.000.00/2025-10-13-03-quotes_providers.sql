@@ -5,4 +5,5 @@
 --precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM tradevisor.quotes_providers
 INSERT INTO tradevisor.quotes_providers ("name") VALUES
 	 ('finam'),
-	 ('tinkoff');
+	 ('tinkoff'),
+	 ('yahoo');

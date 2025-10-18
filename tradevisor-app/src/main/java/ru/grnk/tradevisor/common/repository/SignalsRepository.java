@@ -1,7 +1,10 @@
 package ru.grnk.tradevisor.common.repository;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.jooq.DSLContext;
+import org.jooq.JSONB;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
@@ -19,6 +22,7 @@ import static ru.grnk.tradevisor.dbmodel.tables.Signals.SIGNALS;
 public class SignalsRepository {
 
     private final DSLContext dsl;
+    private final ObjectMapper om;
 
     @Transactional
     public void updateSignalStatus(Signals signal, TrvSignalStatus status) {
@@ -50,6 +54,7 @@ public class SignalsRepository {
         dsl.delete(SIGNALS).where(SIGNALS.ID.in(ids)).execute();
     }
 
+    @SneakyThrows
     @Transactional
     public void saveSignal(TrvCalculationResult trvCalculationResult,
                            String instrumentUid,
@@ -65,7 +70,8 @@ public class SignalsRepository {
                         SIGNALS.TAKE_PROFIT,
                         SIGNALS.DESCRIPTION,
                         SIGNALS.STATUS,
-                        SIGNALS.CREATED_AT
+                        SIGNALS.CREATED_AT,
+                        SIGNALS.STRATEGY_PROPS
                 )
                 .values(
                         instrumentUid,
@@ -74,9 +80,10 @@ public class SignalsRepository {
                         trvCalculationResult.priceOpen(),
                         trvCalculationResult.stopLoss(),
                         trvCalculationResult.takeProfit(),
-                        null,
+                        trvCalculationResult.description(),
                         TrvSignalStatus.CREATED.name(),
-                        lastCandleTime
+                        lastCandleTime,
+                        JSONB.valueOf(om.writeValueAsString(trvCalculationResult.lines()))
                 )
                 .onConflictDoNothing()
                 .execute();
