@@ -125,5 +125,73 @@ class FiboSignalsShortProducerTest {
             assertThat(df.format(resultParams.takeProfit())).isEqualTo(df.format(88.0221));
     }
 
+    @Test
+    public void touchRegisterGap_failed_no_signal_test() {
+        // Arrange
+        float[] lows = {
+                // рост 0‑100%
+                80f,81f,82f,83f,84f,85f,86f,87f,88f,89f, 90f,91f,92f,93f,94f,95f,96f,97f,98f,99f,
+                // откат до 38.2% (≈ 87.64)
+                99f,98f,97f,96f,95f,94.7f,94.8f,94.9f,94.5f,(92.978f - 0.20f), // touch-2 level breakdown ok.
+                // отскок
+                95f,96f,96f,97f,97f,96f,97f,98f,97f,97f,
+                // откат до 38.2% (≈ 87.64)
+                99f,98f,97f,96f,95f,94.7f,94.8f,94.9f,94.5f,(92.978f + 0.64f), // touch-1 no touch. registration failed.
+                // отскок
+                95f,96f,96f,97f,97f,96f,97f,98f,97f,97f
+        };
+        float[] highs = {
+                // рост
+                82f,83f,84f,85f,86f,87f,88f,89f,90f,91f, 92f,93f,94f,95f,96f,97f,98f,99f,100f,101f,
+                // откат
+                100f,100f,99f,98f,97f,96f,95f,95f,95f,95f,
+                // отскок
+                96f,97f,98f,99f,99f,98f,97f,97f,98f,99f,
+                // откат
+                100f,100f,99f,98f,97f,96f,95f,95f,95f,95f,
+                // отскок
+                96f,97f,98f,99f,99f,98f,97f,97f,98f,99f
+        };
+        reverse(lows);
+        reverse(highs);
+        var candles = generateCandles(lows, highs);
+        Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void levelBreakDown_no_signal_test() {
+        // Arrange
+        float[] lows = {
+                // рост 0‑100%
+                80f,81f,82f,83f,84f,85f,86f,87f,88f,89f, 90f,91f,92f,93f,94f,95f,96f,97f,98f,99f,
+                // откат до 38.2% (≈ 87.64)
+                99f,98f,97f,96f,95f,94.7f,94.8f,94.9f,94.5f,(92.978f - 0.22f), // touch-2 level breakdown. no signal.
+                // отскок
+                95f,96f,96f,97f,97f,96f,97f,98f,97f,97f,
+                // откат до 38.2% (≈ 87.64)
+                99f,98f,97f,96f,95f,94.7f,94.8f,94.9f,94.5f,(92.978f + 0.62f), // touch-1 touch registration ok.
+                // отскок
+                95f,96f,96f,97f,97f,96f,97f,98f,97f,97f
+        };
+        float[] highs = {
+                // рост
+                82f,83f,84f,85f,86f,87f,88f,89f,90f,91f, 92f,93f,94f,95f,96f,97f,98f,99f,100f,101f,
+                // откат
+                100f,100f,99f,98f,97f,96f,95f,95f,95f,95f,
+                // отскок
+                96f,97f,98f,99f,99f,98f,97f,97f,98f,99f,
+                // откат
+                100f,100f,99f,98f,97f,96f,95f,95f,95f,95f,
+                // отскок
+                96f,97f,98f,99f,99f,98f,97f,97f,98f,99f
+        };
+        reverse(lows);
+        reverse(highs);
+        var candles = generateCandles(lows, highs);
+        Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles);
+        assertTrue(result.isEmpty());
+    }
+
 
 }
