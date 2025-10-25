@@ -6,7 +6,6 @@ import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.util.Arrays;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static ru.grnk.tradevisor.calculate.strategies.fibo.TestUtils.generateCandles;
 import static ru.grnk.tradevisor.calculate.strategies.fibo.TestUtils.reverse;
 
-class FiboSignalsShortProducerTest {
+class FiboSignalsShort382Test {
 
     /**
      * 100% ┤------------------------------------------------------------

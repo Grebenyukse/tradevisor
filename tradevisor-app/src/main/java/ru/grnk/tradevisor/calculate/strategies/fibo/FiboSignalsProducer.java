@@ -183,10 +183,10 @@ public class FiboSignalsProducer {
             float priceOpen = fiboLevels.fibo382();
             List<HorizontalLineDto> lines = createHorizontalLines(
                     tickerData, extremums, fiboLevels, analysis.markers618());
-            log.info("обнаружен сигнал по стратегии FIBO. {} касания 61.8. {}",analysis.touches382(),
+            log.info("обнаружен сигнал по стратегии FIBO. {} касания 61.8. {}",analysis.touches618(),
                     getPositionInfo(priceOpen, takeProfit, stopLoss));
             return Optional.of(TrvCalculationResult.builder()
-                    .direction(TradingDirection.from(extremums.trend()))
+                    .direction(TradingDirection.from(-1* extremums.trend()))
                     .priceOpen(priceOpen)
                     .stopLoss(stopLoss)
                     .takeProfit(takeProfit)
