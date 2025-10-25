@@ -109,8 +109,8 @@ public class GapSignals implements IStrategy {
             double minGapSize,
             List<MarketData> originalData) {
 
-        double sigma = rangeSize * SIGMA_MULTIPLIER;
-        TouchCountResult touchResult = countTouches(ohlcRecord, gapInfo, sigma);
+        double touchRegistrationGap = rangeSize * SIGMA_MULTIPLIER;
+        TouchCountResult touchResult = countTouches(ohlcRecord, gapInfo, touchRegistrationGap);
 
         if (touchResult.supremumTouches() > 1 || touchResult.infimumTouches() > 1) {
             SignalParams signalParams = calculateSignalParams(
@@ -129,7 +129,7 @@ public class GapSignals implements IStrategy {
         return Optional.empty();
     }
 
-    private static TouchCountResult countTouches(List<MarketData> ohlcRecord, GapInfo gapInfo, double sigma) {
+    private static TouchCountResult countTouches(List<MarketData> ohlcRecord, GapInfo gapInfo, double touchRegistrationGap) {
         List<Marker> markersTuplesInfimum = new ArrayList<>();
         List<Marker> markersTuplesSupremum = new ArrayList<>();
         int supremumTouches = 0;
@@ -137,7 +137,7 @@ public class GapSignals implements IStrategy {
 
         for (int k = 0; k < gapInfo.gapBar(); k++) {
             if (gapInfo.trend() == -1) {
-                if (gapInfo.supremum() - ohlcRecord.get(k).getHigh() < sigma) {
+                if (gapInfo.supremum() - ohlcRecord.get(k).getHigh() < touchRegistrationGap) {
                     supremumTouches++;
                     k += TOUCH_SKIP_INTERVAL;
                     if (k < ohlcRecord.size()) {
@@ -146,7 +146,7 @@ public class GapSignals implements IStrategy {
                 }
             }
             if (gapInfo.trend() == 1) {
-                if (ohlcRecord.get(k).getLow() - gapInfo.infimum() < sigma) {
+                if (ohlcRecord.get(k).getLow() - gapInfo.infimum() < touchRegistrationGap) {
                     infimumTouches++;
                     k += TOUCH_SKIP_INTERVAL;
                     if (k < ohlcRecord.size()) {
