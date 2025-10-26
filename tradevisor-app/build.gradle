@@ -69,7 +69,7 @@ dependencies {
     implementation 'org.jooq:jooq'
     implementation 'ch.qos.logback:logback-classic:1.2.6'
 
-    runtimeOnly 'org.postgresql:postgresql'
+    implementation 'org.postgresql:postgresql'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -79,10 +79,61 @@ dependencies {
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// Задача для очистки Docker окружения
+task cleanDocker(type: Exec) {
+    group = 'Docker'
+    description = 'Очистка Docker окружения перед запуском тестов'
+
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'cmd', '/c', 'scripts\\clean-docker.bat'
+    } else {
+        commandLine 'bash', 'scripts/clean-docker.sh'
+    }
+
+    // Создаем директорию для скриптов если её нет
+    doFirst {
+        file('scripts').mkdirs()
+    }
+    // Игнорируем ошибки если скрипт не найден
+    ignoreExitValue = true
+}
+
+// Задача для подготовки окружения перед тестами
+task prepareForTests {
+    group = 'Verification'
+    description = 'Подготовка окружения для запуска тестов'
+    dependsOn cleanDocker
+}
+
+// Модифицируем задачу test
 test {
+    // Зависимость от подготовки окружения
+    dependsOn prepareForTests
+
     useJUnitPlatform()
+    environment "TESTCONTAINERS_REUSE_ENABLE", "true"
+    environment "TESTCONTAINERS_RYUK_DISABLED", "true"
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+// Задача для запуска только интеграционных тестов с предварительной очисткой
+task integrationTest(type: Test) {
+    group = 'Verification'
+    description = 'Запуск интеграционных тестов с очисткой Docker'
+    dependsOn prepareForTests
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    environment "TESTCONTAINERS_REUSE_ENABLE", "true"
+    environment "TESTCONTAINERS_RYUK_DISABLED", "true"
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }
 
 bootJar {
@@ -94,7 +145,6 @@ jar {
 }
 
 generateJsonSchema2DataClass {
-
     dependencies {
         implementation 'javax.validation:validation-api:1.1.0.CR2'
         implementation 'javax.validation:validation-api:2.0.1.Final'
@@ -120,3 +170,14 @@ generateJsonSchema2DataClass {
     }
     generateJsonSchema2DataClass.dependsOn clean
 }
+
+// Делаем скрипты исполняемыми (для Unix систем)
+tasks.register('makeScriptsExecutable', Exec) {
+    if (!System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'chmod', '+x', 'scripts/clean-docker.sh'
+    }
+    onlyIf { !System.getProperty('os.name').toLowerCase().contains('windows') }
+}
+
+// Автоматически делаем скрипты исполняемыми перед выполнением cleanDocker
+cleanDocker.dependsOn makeScriptsExecutable

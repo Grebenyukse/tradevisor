@@ -1,0 +1,23 @@
+@echo off
+echo 🧹 Очистка Docker окружения...
+
+echo ⏹️  Остановка всех контейнеров...
+for /f %%i in ('docker ps -aq 2^>NUL') do docker stop %%i 2>NUL
+
+echo 🗑️  Удаление всех контейнеров...
+for /f %%i in ('docker ps -aq 2^>NUL') do docker rm %%i 2>NUL
+
+echo 💾 Удаление всех volumes...
+echo y | docker volume prune
+
+echo 🌐 Удаление всех networks...
+echo y | docker network prune
+
+echo 🧹 Удаление dangling образов...
+echo y | docker image prune
+
+echo ⚡ Удаление build cache...
+echo y | docker builder prune
+
+echo ✅ Docker окружение очищено!
+docker ps -a

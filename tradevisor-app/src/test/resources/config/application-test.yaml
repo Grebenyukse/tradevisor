@@ -1,0 +1,109 @@
+server:
+  port: 8001
+
+logging:
+  config: classpath:config/logback.xml
+  level:
+    ROOT: debug
+    org.jooq.Constants.org.jooq.Constants: WARN
+    reactor.netty.http.client: INFO
+
+management:
+  server:
+    port: 8002
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState, ping
+        readiness:
+          include: readinessState, db
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+
+spring:
+  sleuth:
+    enabled: true
+  zipkin:
+    base-url: http://localhost:9411
+    enabled: false #включать при работающем локально jaeger-клиенте
+  application:
+    name: tradevisor
+  datasource:
+    url: jdbc:postgresql://localhost:5434/postgres
+    username: test
+    password: test
+  liquibase:
+    changeLog: classpath:changelog/changelog-master.yaml
+    enabled: true
+
+app:
+  collect:                    # сбор информации для анализа
+    ai-score:
+      cron: 1 * * * * *
+      enabled: false
+    events:                   # события, влияющие на ценную бумагу
+      cron: 1 * * * * *       # период сбора информации
+      dividends: false        # выплата дивидендов
+      economic: false         # макроэкономика и прочие
+      expiration: false       # экспирация
+      reports: false
+      news: false
+    prices:
+      cron: 1 * * * * *
+      finam: true
+      tinkoff: false
+  calculate:
+    cron: 1 * * * * *
+    fibo: true
+    gap: false
+  trade:
+    cron: 1 * * * * *
+    limits: 1
+    enabled: false
+  notification:
+    enabled: false
+    cron: 1 * * * * *
+  integration:
+    tinkoff:
+      enabled: true
+      token: ${TINKOFF_INVEST_TOKEN}
+      host: "invest-public-api.tinkoff.ru:443"
+      history-max-depth-days: 1
+    proxyapi:
+      enabled: false
+      key: ${PROXY_API_KEY}
+      url: https://api.proxyapi.ru/deepseek/chat/completions
+    deepseek:
+      enabled: false
+      url: https://api.deepseek.com/v1/chat/completions
+      key: ${DEEPSEEK_KEY}
+    gigachat:
+      enabled: false
+      client-id: ${GIGACHAT_CLIENT_ID}
+      client-secret: ${GIGACHAT_CLIENT_SECRET}
+    telegram:
+      enabled: false
+      chat-id: ${CHAT_ID}
+      chat-token: ${CHAT_TOKEN}
+      base-url: ${BASE_URL}
+    newsapi:
+      enabled: false
+      api-key: ${NEWS_API_KEY}
+      url: "https://newsapi.org/v2/top-headlines?category=business"
+      page-size: 50
+    finam:
+      enabled: true
+      secret: ${FINAM_API_KEY}
+      url: https://api.finam.ru/v1
+      host: api.finam.ru
+      port: 443
+      account-id: ${FINAM_ACCOUNT_KEY}
+      history-max-depth-days: 150
