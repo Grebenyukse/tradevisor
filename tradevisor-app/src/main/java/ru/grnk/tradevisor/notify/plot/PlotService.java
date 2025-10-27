@@ -14,6 +14,7 @@ import ru.grnk.tradevisor.notify.plot.dto.OHLCData;
 import ru.grnk.tradevisor.notify.plot.dto.PlotRecord;
 import ru.grnk.tradevisor.notify.plot.quickchart.QuickChartService;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Slf4j
@@ -29,6 +30,7 @@ public class PlotService {
     public byte[] saveCandlestickChartToFile(Signals signal, boolean saveToFs) {
         List<MarketData> md = marketDataRepository.fetchMarketDataForLast(100, signal.getTickerCode());
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();
+        if (ohlcData.isEmpty()) return "".getBytes(StandardCharsets.UTF_8);
         Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
         HorizontalLineDto stopLoss = HorizontalLineDto.builder()
                 .fromUtc(ohlcData.get(0).date())
