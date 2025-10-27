@@ -24,17 +24,19 @@ import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 
 import javax.sql.DataSource;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DecimalFormat;
 import java.util.Map;
 
 @Slf4j
 @SpringBootTest(properties = {
-    "spring.config.location=classpath:config/application-test.yaml"
+        "spring.config.location=classpath:config/application-test.yaml"
 })
 @Testcontainers
 abstract class BaseIntegrationTest {
@@ -55,6 +57,12 @@ abstract class BaseIntegrationTest {
 
     @Autowired
     protected SignalsRepository signalsRepository;
+
+    protected static DecimalFormat df = new DecimalFormat("#.####");
+
+    static {
+        df.setRoundingMode(RoundingMode.CEILING);
+    }
 
     @Container
     protected static final PostgreSQLContainer<?> postgresContainer =

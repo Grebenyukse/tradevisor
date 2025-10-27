@@ -57,7 +57,7 @@ public class SignalsRepository {
     @SneakyThrows
     @Transactional
     public void saveSignal(TrvCalculationResult trvCalculationResult,
-                           String instrumentUid,
+                           String tickerCode,
                            String strategyName,
                            OffsetDateTime lastCandleTime
     ) {
@@ -74,7 +74,7 @@ public class SignalsRepository {
                         SIGNALS.STRATEGY_PROPS
                 )
                 .values(
-                        instrumentUid,
+                        tickerCode,
                         strategyName,
                         trvCalculationResult.direction().directionCode(),
                         trvCalculationResult.priceOpen(),

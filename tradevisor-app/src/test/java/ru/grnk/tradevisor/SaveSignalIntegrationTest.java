@@ -7,6 +7,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.CREATED;
 import static ru.grnk.tradevisor.calculate.strategies.fibo.TestUtils.*;
 
 
@@ -16,6 +17,7 @@ public class SaveSignalIntegrationTest extends BaseIntegrationTest {
     static void additionalConfig(DynamicPropertyRegistry registry) {
         registry.add("app.integration.finam.enabled", () -> "true");
         registry.add("app.calculate.fibo", () -> "true");
+        registry.add("app.calculate.bars_required_to_calculate_fibo", () -> 60);
     }
 
     @Test
@@ -40,15 +42,18 @@ public class SaveSignalIntegrationTest extends BaseIntegrationTest {
                 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 7.2580f, // touch - 2
                 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 2.0f, 3.0f, 4.0f, 4.0f, 3.0f, 2.0f // rollback
         };
-        reverse(lows);
-        reverse(highs);
         var candles = generateCandles(lows, highs, TEST_TICKER_CODE, 1);
         marketDataRepository.batchInsertMarketData(candles);
         await(() -> !signalsRepository.findUnpublishedSignals().isEmpty());
         assertThat(signalsRepository.findUnpublishedSignals().size()).isEqualTo(1);
         var signal = signalsRepository.findUnpublishedSignals().get(0);
-        assertThat(signal.getDirection()).isEqualTo(TradingDirection.LONG);
-        assertThat(signal.getDirection()).isEqualTo(TradingDirection.LONG);
+        assertThat(signal.getDirection()).isEqualTo(TradingDirection.LONG.directionCode());
+        assertThat(signal.getName()).isEqualTo("fibo");
+        assertThat(signal.getStatus()).isEqualTo(CREATED.name());
+        assertThat(df.format(signal.getPriceOpen())).isEqualTo(df.format(3.629f));
+        assertThat(df.format(signal.getStopLoss())).isEqualTo(df.format(0f));
+        assertThat(df.format(signal.getTakeProfit())).isEqualTo(df.format(11.742f));
+        assertThat(signal.getTickerCode()).isEqualTo(TEST_TICKER_CODE);
     }
 
 

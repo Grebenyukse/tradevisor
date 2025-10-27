@@ -43,6 +43,7 @@ app:
   calculate:
     cron: 0/1 * * * * *
     fibo: false
+    bars_required_to_calculate_fibo: 10
     gap: false
   trade:
     cron: 0/1 * * * * *

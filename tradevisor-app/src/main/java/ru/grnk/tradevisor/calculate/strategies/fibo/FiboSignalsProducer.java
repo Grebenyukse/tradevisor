@@ -16,7 +16,6 @@ import java.util.stream.IntStream;
 
 @Slf4j
 public class FiboSignalsProducer {
-    private static final int MIN_DATA_SIZE = 20;
     private static final double FIBO_382_LEVEL = 0.382;
     private static final double FIBO_618_LEVEL = 0.618;
     private static final double TOUCH_REGISTRATION_GAP_MULTIPLIER = 0.03;
@@ -25,9 +24,6 @@ public class FiboSignalsProducer {
     private static final int MIN_TOUCHES = 2;
 
     public static Optional<TrvCalculationResult> getFiboSignals(List<MarketData> tickerData) {
-        if (tickerData.size() < MIN_DATA_SIZE) {
-            return Optional.empty();
-        }
         ExtremumResult extremums = findExtremums(tickerData);
         if (extremums.left().index() == extremums.right().index()) {
             return Optional.empty();

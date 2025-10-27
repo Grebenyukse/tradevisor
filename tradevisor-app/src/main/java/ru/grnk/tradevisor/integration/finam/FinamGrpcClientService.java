@@ -24,6 +24,8 @@ import ru.grnk.tradevisor.integration.finam.repository.FinamMetainfoRepository;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
+import static ru.grnk.tradevisor.common.util.TimeUtils.convertToTimestamp;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -81,22 +83,6 @@ public class FinamGrpcClientService implements PricesLoader {
                         .setTimeframe(TimeFrame.TIME_FRAME_H1)
                         .build());
         marketDataRs.getBarsList().stream().forEach(b -> marketDataRepository.saveMarketData(b, tickerCode));
-    }
-
-    private Timestamp convertToTimestamp(ZonedDateTime zonedDateTime) {
-        var instant = zonedDateTime.toInstant();
-        return com.google.protobuf.Timestamp.newBuilder()
-                .setSeconds(instant.getEpochSecond())
-                .setNanos(instant.getNano())
-                .build();
-    }
-
-    private Timestamp convertToTimestamp(OffsetDateTime offsetDateTime) {
-        var instant = offsetDateTime.toInstant();
-        return com.google.protobuf.Timestamp.newBuilder()
-                .setSeconds(instant.getEpochSecond())
-                .setNanos(instant.getNano())
-                .build();
     }
 
     private Timestamp  findStartTime(String symbol) {

@@ -5,6 +5,7 @@ public record TrvCalculateProperties(
         Boolean threeBarsGrowth,
         Boolean fibo,
         Boolean gap,
-        Boolean alwaysBuy
+        Boolean alwaysBuy,
+        Integer barsRequiredToCalculateFibo
 ) {
 }
