@@ -8,6 +8,7 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
+import ru.grnk.tradevisor.dbmodel.tables.records.MarketDataRecord;
 import ru.tinkoff.piapi.contract.v1.HistoricCandle;
 import ru.tinkoff.piapi.contract.v1.Quotation;
 
@@ -66,6 +67,21 @@ public class MarketDataRepository {
                 .onConflictDoNothing()
                 .execute();
     }
+
+    public void batchInsertMarketData(List<MarketData> records) {
+        List<MarketDataRecord> batchRecords = records.stream()
+                .map(record -> dsl.newRecord(MARKET_DATA)
+                        .into(MARKET_DATA)
+                        .setTickerCode(record.getTickerCode())
+                        .setOpen(record.getOpen())
+                        .setHigh(record.getHigh())
+                        .setLow(record.getLow())
+                        .setClose(record.getClose())
+                        .setTime(record.getTime()))
+                .collect(Collectors.toList());
+        dsl.batchStore(batchRecords).execute();
+    }
+
 
     // finam trade api
     public void saveMarketData(Bar bar, String instrument_uid) {

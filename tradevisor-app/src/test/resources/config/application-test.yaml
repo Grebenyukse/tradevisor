@@ -8,26 +8,6 @@ logging:
     org.jooq.Constants.org.jooq.Constants: WARN
     reactor.netty.http.client: INFO
 
-management:
-  server:
-    port: 8002
-  endpoint:
-    health:
-      show-details: always
-      probes:
-        enabled: true
-      group:
-        liveness:
-          include: livenessState, ping
-        readiness:
-          include: readinessState, db
-  endpoints:
-    web:
-      exposure:
-        include:
-          - health
-          - prometheus
-
 spring:
   sleuth:
     enabled: true
@@ -42,38 +22,38 @@ spring:
     password: test
   liquibase:
     changeLog: classpath:changelog/changelog-master.yaml
-    enabled: true
+    enabled: false
 
 app:
   collect:                    # сбор информации для анализа
     ai-score:
-      cron: 1 * * * * *
+      cron: 0/1 * * * * *
       enabled: false
     events:                   # события, влияющие на ценную бумагу
-      cron: 1 * * * * *       # период сбора информации
+      cron: 0/1 * * * * *       # период сбора информации
       dividends: false        # выплата дивидендов
       economic: false         # макроэкономика и прочие
       expiration: false       # экспирация
       reports: false
       news: false
     prices:
-      cron: 1 * * * * *
-      finam: true
+      cron: 0/1 * * * * *
+      finam: false
       tinkoff: false
   calculate:
-    cron: 1 * * * * *
-    fibo: true
+    cron: 0/1 * * * * *
+    fibo: false
     gap: false
   trade:
-    cron: 1 * * * * *
+    cron: 0/1 * * * * *
     limits: 1
     enabled: false
   notification:
     enabled: false
-    cron: 1 * * * * *
+    cron: 0/1 * * * * *
   integration:
     tinkoff:
-      enabled: true
+      enabled: false
       token: ${TINKOFF_INVEST_TOKEN}
       host: "invest-public-api.tinkoff.ru:443"
       history-max-depth-days: 1
@@ -100,7 +80,7 @@ app:
       url: "https://newsapi.org/v2/top-headlines?category=business"
       page-size: 50
     finam:
-      enabled: true
+      enabled: false
       secret: ${FINAM_API_KEY}
       url: https://api.finam.ru/v1
       host: api.finam.ru

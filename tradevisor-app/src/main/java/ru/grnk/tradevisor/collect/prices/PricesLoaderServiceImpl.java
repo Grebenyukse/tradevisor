@@ -44,6 +44,7 @@ public class PricesLoaderServiceImpl {
         tickers.stream().filter(x -> x.getProvider() != null)
                 .forEach(x -> {
                     var loader = loaders.get(x.getProvider());
+                    if (loader == null) return;
                     loader.loadPrices(x.getTickerCode());
                 });
         log.debug("historic candles loaded");

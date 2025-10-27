@@ -6,7 +6,9 @@ import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -18,6 +20,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
+import ru.grnk.tradevisor.common.repository.MarketDataRepository;
+import ru.grnk.tradevisor.common.repository.SignalsRepository;
 
 import javax.sql.DataSource;
 import java.nio.file.Files;
@@ -26,6 +30,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Map;
 
 @Slf4j
 @SpringBootTest(properties = {
@@ -35,9 +40,21 @@ import java.sql.Statement;
 abstract class BaseIntegrationTest {
 
     private static final int POSTGRES_PORT = 5432;
+    protected static final String TEST_TICKER = "TEST_TICKER";
+    protected static final String TEST_EXCHANGE = "TEST_EXCHANGE";
+    protected static final String TEST_TICKER_CODE = TEST_TICKER + "@" + TEST_EXCHANGE;
 
     @Autowired
     protected TradevisorProperties properties;
+
+    @Autowired
+    protected DSLContext dsl;
+
+    @Autowired
+    protected MarketDataRepository marketDataRepository;
+
+    @Autowired
+    protected SignalsRepository signalsRepository;
 
     @Container
     protected static final PostgreSQLContainer<?> postgresContainer =
@@ -58,7 +75,6 @@ abstract class BaseIntegrationTest {
         registry.add("spring.datasource.username", postgresContainer::getUsername);
         registry.add("spring.datasource.password", postgresContainer::getPassword);
         registry.add("spring.liquibase.enabled", () -> "false");
-
     }
 
     @BeforeAll
@@ -76,10 +92,7 @@ abstract class BaseIntegrationTest {
 
     @AfterAll
     static void tearDown() throws Exception {
-        // Выполняем SQL скрипт для очистки таблиц
         executeSqlScript("src/test/resources/sql/cleanup-test-data.sql");
-
-        // Останавливаем контейнер
         postgresContainer.stop();
     }
 
@@ -115,7 +128,8 @@ abstract class BaseIntegrationTest {
         return ds;
     }
 
-    protected static void executeSqlScript(String scriptPath) throws Exception {
+    @SneakyThrows
+    protected static void executeSqlScript(String scriptPath) {
         String sql = Files.readString(Path.of(scriptPath));
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
