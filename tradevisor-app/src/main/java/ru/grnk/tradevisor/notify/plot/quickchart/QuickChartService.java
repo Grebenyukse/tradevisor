@@ -21,6 +21,8 @@ import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static ru.grnk.tradevisor.common.util.MathUtils.round;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -138,8 +140,14 @@ public class QuickChartService {
                                                                 .enabled(true)
                                                                 .color("black")
                                                                 .backgroundColor("transparent")
-                                                                .content("SL  " + plotRecord.stopLoss().toPrice())
-                                                                .position("top")
+                                                                .content("SL  " + plotRecord.stopLoss().toPrice() + " "
+                                                                        + Math.abs(plotRecord.stopLoss().toPrice() - plotRecord.priceOpen().toPrice()) + " pts. "
+                                                                        + round(Math.abs(plotRecord.stopLoss().toPrice() - plotRecord.priceOpen().toPrice())/plotRecord.priceOpen().toPrice()*100, 2) + " % "
+                                                                )
+                                                                .position("end")
+                                                                .padding(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.Padding.builder()
+                                                                        .bottom(10)
+                                                                        .build())
                                                                 .build())
                                                         .build(),
                                                 ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.builder()
@@ -154,8 +162,17 @@ public class QuickChartService {
                                                                 .enabled(true)
                                                                 .color("black")
                                                                 .backgroundColor("transparent")
-                                                                .content("TP  " + plotRecord.takeProfit().toPrice() + " (61.8%)")
-                                                                .position("top")
+                                                                .content("TP fibo 61.8%: " + plotRecord.takeProfit().toPrice() + "; "
+                                                                        + Math.abs(plotRecord.takeProfit().toPrice() - plotRecord.priceOpen().toPrice())  + " pts; "
+                                                                        + round(Math.abs(plotRecord.takeProfit().toPrice() - plotRecord.priceOpen().toPrice())/plotRecord.priceOpen().toPrice()*100, 2) + "%; "
+                                                                        + round(Math.abs(plotRecord.takeProfit().toPrice() -
+                                                                        plotRecord.priceOpen().toPrice())/Math.abs(plotRecord.stopLoss().toPrice() -
+                                                                        plotRecord.priceOpen().toPrice()), 2) + " tp/sl ratio."
+                                                                )
+                                                                .position("end")
+                                                                .padding(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.Padding.builder()
+                                                                        .bottom(15)
+                                                                        .build())
                                                                 .build())
                                                         .build(),
                                                 ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.builder()
@@ -172,7 +189,10 @@ public class QuickChartService {
                                                                 .backgroundColor("transparent")
                                                                 .content(plotRecord.direction() == TradingDirection.LONG.directionCode()
                                                                         ? "BUY  " : "SELL  " + plotRecord.priceOpen().toPrice())
-                                                                .position("center")
+                                                                .position("end")
+                                                                .padding(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.Padding.builder()
+                                                                        .bottom(15)
+                                                                        .build())
                                                                 .build())
                                                         .build()
                                         ))
