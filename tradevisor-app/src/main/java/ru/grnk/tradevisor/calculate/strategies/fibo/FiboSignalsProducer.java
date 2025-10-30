@@ -216,8 +216,8 @@ public class FiboSignalsProducer {
             float priceOpen,
             boolean isFibo382Signal
             ) {
-        OffsetDateTime fromTime = tickerData.get(extremums.right().index()).getTime();
-        OffsetDateTime toTime = tickerData.get(tickerData.size() - 1).getTime();
+        OffsetDateTime fromTime = tickerData.get(0).getTime();
+        OffsetDateTime toTime = tickerData.get(extremums.left().index()).getTime();
         var stopLoss = round(extremums.right().value(), 4);
         var takeProfit = round(fiboLevels.fibo618(), 4);
         List<ChartLineDto> lines = new ArrayList<>();
