@@ -5,14 +5,13 @@ import ru.grnk.tradevisor.calculate.strategies.dto.Marker;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
-import ru.grnk.tradevisor.notify.plot.dto.HorizontalLineDto;
+import ru.grnk.tradevisor.notify.plot.dto.ChartLineDto;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.IntStream;
+
+import static ru.grnk.tradevisor.common.util.MathUtils.round;
 
 @Slf4j
 public class FiboSignalsProducer {
@@ -160,14 +159,22 @@ public class FiboSignalsProducer {
             LevelAnalysisResult analysis) {
         float stopLoss = extremums.right().value();
         float takeProfit = fiboLevels.fibo618();
+        TradingDirection tradingDirection = TradingDirection.from(-1 * extremums.trend());
         if (!analysis.isBroken382() && analysis.touches382() >= MIN_TOUCHES) {
             float priceOpen = (extremums.right().value() + fiboLevels.fibo382()) / 2;
-            List<HorizontalLineDto> lines = createHorizontalLines(
-                    tickerData, extremums, fiboLevels, analysis.markers382());
+            List<ChartLineDto> lines = createHorizontalLines(
+                    tickerData,
+                    extremums,
+                    fiboLevels,
+                    analysis.markers382(),
+                    tradingDirection,
+                    priceOpen,
+                    true
+            );
             log.info("обнаружен сигнал по стратегии FIBO. {} касания 38.2. {}",analysis.touches382(),
                     getPositionInfo(priceOpen, takeProfit, stopLoss));
             return Optional.of(TrvCalculationResult.builder()
-                    .direction(TradingDirection.from(-1 * extremums.trend())) // контртрендовая страта. позиция открывается на продолжение коррекции
+                    .direction(tradingDirection)
                     .priceOpen(priceOpen)
                     .stopLoss(stopLoss)
                     .takeProfit(takeProfit)
@@ -177,12 +184,19 @@ public class FiboSignalsProducer {
         }
         if (!analysis.isBroken618() && analysis.touches618() >= MIN_TOUCHES) {
             float priceOpen = fiboLevels.fibo382();
-            List<HorizontalLineDto> lines = createHorizontalLines(
-                    tickerData, extremums, fiboLevels, analysis.markers618());
+            List<ChartLineDto> lines = createHorizontalLines(
+                    tickerData,
+                    extremums,
+                    fiboLevels,
+                    analysis.markers618(),
+                    tradingDirection,
+                    priceOpen,
+                    false
+            );
             log.info("обнаружен сигнал по стратегии FIBO. {} касания 61.8. {}",analysis.touches618(),
                     getPositionInfo(priceOpen, takeProfit, stopLoss));
             return Optional.of(TrvCalculationResult.builder()
-                    .direction(TradingDirection.from(-1* extremums.trend()))
+                    .direction(tradingDirection)
                     .priceOpen(priceOpen)
                     .stopLoss(stopLoss)
                     .takeProfit(takeProfit)
@@ -193,52 +207,91 @@ public class FiboSignalsProducer {
         return Optional.empty();
     }
 
-    private static List<HorizontalLineDto> createHorizontalLines(
+    private static List<ChartLineDto> createHorizontalLines(
             List<MarketData> tickerData,
             ExtremumResult extremums,
             FiboLevels fiboLevels,
-            List<Marker> markers) {
+            List<Marker> markers,
+            TradingDirection direction,
+            float priceOpen,
+            boolean isFibo382Signal
+            ) {
         OffsetDateTime fromTime = tickerData.get(extremums.right().index()).getTime();
         OffsetDateTime toTime = tickerData.get(tickerData.size() - 1).getTime();
-        List<HorizontalLineDto> lines = new ArrayList<>();
-        lines.add(HorizontalLineDto.builder()
-                .fromPrice(fiboLevels.fibo382())
-                .toPrice(fiboLevels.fibo382())
-                .fromUtc(fromTime)
-                .toUtc(toTime)
-                .style("dashed")
-                .label("Fibo 38.2")
-                .color("#FF0000")
-                .build());
-        lines.add(HorizontalLineDto.builder()
+        var stopLoss = round(extremums.right().value(), 4);
+        var takeProfit = round(fiboLevels.fibo618(), 4);
+        List<ChartLineDto> lines = new ArrayList<>();
+        if (isFibo382Signal) {
+            lines.add(ChartLineDto.builder()
+                            .fromPrice(fiboLevels.fibo382())
+                            .toPrice(fiboLevels.fibo382())
+                            .fromUtc(fromTime)
+                            .toUtc(toTime)
+                            .style("dashed")
+                            .label("Fibo 38.2%  " + round(fiboLevels.fibo382(), 4))
+                            .color("#FF0000")
+                    .build());
+            lines.add(ChartLineDto.builder()
+                    .fromPrice(priceOpen)
+                    .toPrice(priceOpen)
+                    .fromUtc(fromTime)
+                    .toUtc(toTime)
+                    .style("solid")
+                    .label(TradingDirection.LONG == direction ? "BUY " : "SELL "
+                            + round(priceOpen,4))
+                    .color("blue")
+                    .build());
+        } else {
+            lines.add(ChartLineDto.builder()
+                    .fromPrice(priceOpen)
+                    .toPrice(priceOpen)
+                    .fromUtc(fromTime)
+                    .toUtc(toTime)
+                    .style("solid")
+                    .label("Fibo 38.2% "
+                            + (TradingDirection.LONG == direction ? "BUY " : "SELL ")
+                            + round(priceOpen,4))
+                    .color("blue")
+                    .build());
+        }
+        lines.add(ChartLineDto.builder()
                 .fromPrice(fiboLevels.fibo618())
                 .toPrice(fiboLevels.fibo618())
                 .fromUtc(fromTime)
                 .toUtc(toTime)
-                .style("dashed")
-                .label("Fibo 61.8")
-                .color("#0000FF")
+                .style("solid")
+                .label(
+                        "TP fibo 61.8%: " + takeProfit + "; "
+                                + Math.abs(takeProfit - priceOpen) + " pts; "
+                                + round(Math.abs(takeProfit - priceOpen) / priceOpen * 100, 2) + "%; "
+                                + round(Math.abs(takeProfit - priceOpen) / Math.abs(stopLoss - priceOpen), 2) + " tp/sl ratio."
+                )
+                .color("green")
                 .build());
-        lines.add(HorizontalLineDto.builder()
+        lines.add(ChartLineDto.builder()
+                .fromPrice(stopLoss)
+                .toPrice(stopLoss)
+                .fromUtc(fromTime)
+                .toUtc(toTime)
+                .style("solid")
+                .label("SL  " + stopLoss + "; "
+                    + Math.abs(stopLoss - priceOpen) + " pts; "
+                    + round(Math.abs(stopLoss - priceOpen) / priceOpen * 100, 2) + " % "
+                )
+                .color("red")
+                .build());
+        // обозначение экстремумов. временной ряд справа->налево
+        lines.add(ChartLineDto.builder()
                 .fromPrice(extremums.right().value())
-                .toPrice(extremums.right().value())
-                .fromUtc(fromTime)
-                .toUtc(toTime)
-                .style("solid")
-                .label("Right")
-                .color("#00FF00")
-                .build());
-        lines.add(HorizontalLineDto.builder()
-                .fromPrice(extremums.left().value())
                 .toPrice(extremums.left().value())
-                .fromUtc(fromTime)
-                .toUtc(toTime)
-                .style("solid")
-                .label("Left")
+                .fromUtc(tickerData.get(extremums.right().index()).getTime())
+                .toUtc(tickerData.get(extremums.left().index()).getTime())
+                .style("dashed")
+                .label("")
                 .color("#FFFF00")
                 .build());
         for (var marker : markers) {
-            lines.add(HorizontalLineDto.builder()
+            lines.add(ChartLineDto.builder()
                     .fromPrice(marker.y())
                     .toPrice(marker.y())
                     .color(marker.color())

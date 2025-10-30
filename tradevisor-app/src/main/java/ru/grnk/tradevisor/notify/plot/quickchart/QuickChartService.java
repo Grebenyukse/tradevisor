@@ -5,12 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.notify.plot.dto.PlotRecord;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -19,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 import static ru.grnk.tradevisor.common.util.MathUtils.round;
@@ -93,10 +91,10 @@ public class QuickChartService {
                                                 .build())
                                         .data(plotRecord.data().stream().map(x -> ChartDto.ChartData.ChartDataset.Dataset.builder()
                                                 .x(x.date().toEpochSecond() * 1000)
-                                                .o(roundDoubleValueToPrecision(x.open(), 3))
-                                                .h(roundDoubleValueToPrecision(x.high(), 3))
-                                                .l(roundDoubleValueToPrecision(x.low(), 3))
-                                                .c(roundDoubleValueToPrecision(x.close(), 3))
+                                                .o(round(x.open(), 4))
+                                                .h(round(x.high(), 4))
+                                                .l(round(x.low(), 4))
+                                                .c(round(x.close(), 4))
                                                 .build()
                                         ).toList())
                                         .build()
@@ -127,88 +125,39 @@ public class QuickChartService {
                                 .build())
                         .plugins(ChartDto.ChartOptions.ChartPlugins.builder()
                                 .annotation(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.builder()
-                                        .annotations(List.of(
-                                                ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.builder()
-                                                        .type("line")
-                                                        .mode("horizontal")
-                                                        .yMin(plotRecord.stopLoss().fromPrice())
-                                                        .yMax(plotRecord.stopLoss().toPrice())
-                                                        .xMax(plotRecord.stopLoss().fromUtc().toEpochSecond() * 1000)
-                                                        .xMin(plotRecord.stopLoss().toUtc().toEpochSecond() * 1000)
-                                                        .borderColor("red")
-                                                        .label(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.builder()
-                                                                .enabled(true)
-                                                                .color("black")
-                                                                .backgroundColor("transparent")
-                                                                .content("SL  " + plotRecord.stopLoss().toPrice() + " "
-                                                                        + Math.abs(plotRecord.stopLoss().toPrice() - plotRecord.priceOpen().toPrice()) + " pts. "
-                                                                        + round(Math.abs(plotRecord.stopLoss().toPrice() - plotRecord.priceOpen().toPrice())/plotRecord.priceOpen().toPrice()*100, 2) + " % "
-                                                                )
-                                                                .position("end")
-                                                                .padding(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.Padding.builder()
-                                                                        .bottom(10)
-                                                                        .build())
-                                                                .build())
-                                                        .build(),
-                                                ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.builder()
-                                                        .type("line")
-                                                        .mode("horizontal")
-                                                        .yMin(plotRecord.takeProfit().fromPrice())
-                                                        .yMax(plotRecord.takeProfit().toPrice())
-                                                        .xMax(plotRecord.takeProfit().fromUtc().toEpochSecond() * 1000)
-                                                        .xMin(plotRecord.takeProfit().toUtc().toEpochSecond() * 1000)
-                                                        .borderColor("green")
-                                                        .label(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.builder()
-                                                                .enabled(true)
-                                                                .color("black")
-                                                                .backgroundColor("transparent")
-                                                                .content("TP fibo 61.8%: " + plotRecord.takeProfit().toPrice() + "; "
-                                                                        + Math.abs(plotRecord.takeProfit().toPrice() - plotRecord.priceOpen().toPrice())  + " pts; "
-                                                                        + round(Math.abs(plotRecord.takeProfit().toPrice() - plotRecord.priceOpen().toPrice())/plotRecord.priceOpen().toPrice()*100, 2) + "%; "
-                                                                        + round(Math.abs(plotRecord.takeProfit().toPrice() -
-                                                                        plotRecord.priceOpen().toPrice())/Math.abs(plotRecord.stopLoss().toPrice() -
-                                                                        plotRecord.priceOpen().toPrice()), 2) + " tp/sl ratio."
-                                                                )
-                                                                .position("end")
-                                                                .padding(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.Padding.builder()
-                                                                        .bottom(15)
-                                                                        .build())
-                                                                .build())
-                                                        .build(),
-                                                ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.builder()
-                                                        .type("line")
-                                                        .mode("horizontal")
-                                                        .yMin(plotRecord.priceOpen().fromPrice())
-                                                        .yMax(plotRecord.priceOpen().toPrice())
-                                                        .xMax(plotRecord.priceOpen().fromUtc().toEpochSecond() * 1000)
-                                                        .xMin(plotRecord.priceOpen().toUtc().toEpochSecond() * 1000)
-                                                        .borderColor("blue")
-                                                        .label(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.builder()
-                                                                .enabled(true)
-                                                                .color("black")
-                                                                .backgroundColor("transparent")
-                                                                .content(plotRecord.direction() == TradingDirection.LONG.directionCode()
-                                                                        ? "BUY  " : "SELL  " + plotRecord.priceOpen().toPrice())
-                                                                .position("end")
-                                                                .padding(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.Padding.builder()
-                                                                        .bottom(15)
-                                                                        .build())
-                                                                .build())
-                                                        .build()
-                                        ))
+                                        .annotations(getAnnotations(plotRecord))
                                         .build()
                                 )
                                 .build())
-
                         .build())
                 .build();
 
     }
 
-    private static Float roundDoubleValueToPrecision(float value, Integer precision) {
-        return BigDecimal.valueOf(value)
-                .setScale(precision, RoundingMode.HALF_UP)
-                .floatValue();
+    private static List<ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem> getAnnotations(PlotRecord plotRecord) {
+        List<ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem> res = new ArrayList<>();
+        for (var hl : plotRecord.lines()) {
+            res.add(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.builder()
+                    .type("line")
+                    .mode("horizontal")
+                    .yMin(Math.min(hl.fromPrice(), hl.toPrice()))
+                    .yMax(Math.max(hl.toPrice(), hl.fromPrice()))
+                    .xMax(hl.fromUtc().toEpochSecond() * 1000)
+                    .xMin(hl.toUtc().toEpochSecond() * 1000)
+                    .borderColor(hl.color())
+                    .label(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.builder()
+                            .enabled(true)
+                            .color("black")
+                            .backgroundColor("transparent")
+                            .content(hl.label())
+                            .position("end")
+                            .padding(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.Padding.builder()
+                                    .bottom(15)
+                                    .build())
+                            .build())
+                    .build());
+        }
+        return res;
     }
 
     private byte[] download(String chartUrl) {

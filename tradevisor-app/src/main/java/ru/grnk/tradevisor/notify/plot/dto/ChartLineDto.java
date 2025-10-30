@@ -5,7 +5,7 @@ import lombok.Builder;
 import java.time.OffsetDateTime;
 
 @Builder
-public record HorizontalLineDto(
+public record ChartLineDto(
         Float fromPrice,
         Float toPrice,
         OffsetDateTime fromUtc,

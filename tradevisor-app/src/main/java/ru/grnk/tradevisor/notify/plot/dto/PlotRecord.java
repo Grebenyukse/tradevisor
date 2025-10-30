@@ -4,11 +4,12 @@ import java.util.List;
 
 public record PlotRecord(
         List<OHLCData> data,
-        HorizontalLineDto stopLoss,
-        HorizontalLineDto takeProfit,
-        HorizontalLineDto priceOpen,
+        ChartLineDto stopLoss,
+        ChartLineDto takeProfit,
+        ChartLineDto priceOpen,
         String ticker,
         String uuid,
-        Short direction
+        Short direction,
+        List<ChartLineDto> lines
 ) {
 }

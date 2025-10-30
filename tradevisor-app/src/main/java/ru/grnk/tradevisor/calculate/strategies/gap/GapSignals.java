@@ -8,7 +8,7 @@ import ru.grnk.tradevisor.calculate.strategies.dto.Marker;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
-import ru.grnk.tradevisor.notify.plot.dto.HorizontalLineDto;
+import ru.grnk.tradevisor.notify.plot.dto.ChartLineDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -208,7 +208,7 @@ public class GapSignals implements IStrategy {
                 .direction(signalParams.direction())
                 .priceOpen((float)signalParams.priceOpen())
                 .lines(List.of(
-                        HorizontalLineDto.builder()
+                        ChartLineDto.builder()
                                 .fromPrice((float)gapInfo.infimum())
                                 .toPrice((float)gapInfo.supremum())
                                 .fromUtc(originalData.get(gapInfo.gapBar()).getTime())
