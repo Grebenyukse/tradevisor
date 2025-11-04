@@ -10,8 +10,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static ru.grnk.tradevisor.calculate.strategies.fibo.TestUtils.generateCandles;
-import static ru.grnk.tradevisor.calculate.strategies.fibo.TestUtils.reverse;
+import static ru.grnk.tradevisor.testutils.TestUtils.generateCandles;
+import static ru.grnk.tradevisor.testutils.TestUtils.reverse;
 
 class FiboSignalsShort382Test {
 

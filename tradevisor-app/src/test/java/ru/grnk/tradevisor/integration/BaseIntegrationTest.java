@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor;
+package ru.grnk.tradevisor.integration;
 
 import com.github.dockerjava.api.model.PortBinding;
 import liquibase.Liquibase;
@@ -32,7 +32,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DecimalFormat;
-import java.util.Map;
 
 @Slf4j
 @SpringBootTest(properties = {

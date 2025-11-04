@@ -1,5 +1,5 @@
 server:
-  port: 8001
+  port: 8080
 
 logging:
   config: classpath:config/logback.xml
@@ -75,6 +75,7 @@ app:
       chat-id: ${CHAT_ID}
       chat-token: ${CHAT_TOKEN}
       base-url: ${BASE_URL}
+      webhook-path: "/"
     newsapi:
       enabled: false
       api-key: ${NEWS_API_KEY}

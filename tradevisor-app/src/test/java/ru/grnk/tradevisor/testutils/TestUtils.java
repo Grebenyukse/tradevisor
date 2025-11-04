@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.calculate.strategies.fibo;
+package ru.grnk.tradevisor.testutils;
 
 import org.awaitility.Awaitility;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;

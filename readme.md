@@ -42,3 +42,10 @@ fibo:
 2. отправка скрина с закрытой позицией в telegram
 3. статистика по счету за месяц
 
+
+
+запуск telegram bot локально:
+
+1. cd C:\Users\grebe\Downloads\clo-2.4.5-stable-windows-x86_64
+2.  .\clo.exe publish http 8080
+3. 

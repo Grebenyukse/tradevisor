@@ -13,6 +13,7 @@ import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static ru.grnk.tradevisor.dbmodel.tables.Signals.SIGNALS;
@@ -38,6 +39,12 @@ public class SignalsRepository {
                 .orderBy(SIGNALS.CREATED_AT)
                 .fetchStreamInto(Signals.class)
                 .collect(Collectors.toList());
+    }
+
+    public Optional<Signals> findSignalBySignalId(Integer id) {
+        return dsl.select().from(SIGNALS)
+                .where(SIGNALS.ID.eq(id))
+                .fetchOptionalInto(Signals.class);
     }
 
     @Transactional

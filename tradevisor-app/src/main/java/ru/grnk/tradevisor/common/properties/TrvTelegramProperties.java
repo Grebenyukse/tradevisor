@@ -4,6 +4,7 @@ public record TrvTelegramProperties(
         Boolean enabled,
         String chatId,
         String chatToken,
-        String baseUrl
+        String baseUrl,
+        String webhookPath
 ) {
 }

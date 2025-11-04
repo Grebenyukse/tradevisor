@@ -3,26 +3,39 @@ package ru.grnk.tradevisor.notify;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
-import ru.grnk.tradevisor.integration.telegram.out.BotMsgSender;
+import ru.grnk.tradevisor.integration.telegram.TelegramMessageService;
 import ru.grnk.tradevisor.notify.plot.PlotService;
 
 @Component
 @RequiredArgsConstructor
 public class MessagePublisher {
 
-    private final BotMsgSender botMsgSender;
     private final SignalsRepository signalsRepository;
     private final PlotService plotService;
+    private final TelegramMessageService telegramMessageService;
 
     @Transactional
     public void publishMessage(Signals signal) {
-        byte[] image = plotService.saveCandlestickChartToFile(signal, true);
-        if (image.length == 0 ) return;
-        var botMessage = MapSignal2Message.from(signal);
-        botMsgSender.sendMessage(botMessage);
+        String image = plotService.saveCandlestickChartToFile(signal, true);
+        if (image == null ) return;
+        telegramMessageService.sendMessage(image, signal.getName(), signal.getDescription());
         signalsRepository.updateSignalStatus(signal, TrvSignalStatus.PUBLISHED);
+    }
+
+    private static String getTitle(Signals signal) {
+        return signal.getTickerCode() + " " + TradingDirection.from(signal.getDirection()).name() + " " + signal.getName();
+    }
+
+    private static String getText(Signals signal) {
+        return TradingDirection.from(signal.getDirection()).name()
+                + ". \n\n PriceOpen: " + signal.getPriceOpen()
+                + ". \n\n TakeProfit: " + signal.getTakeProfit()
+                + ". \n\n StopLoss: " + signal.getStopLoss()
+                + ". \n\n Touches: " + signal.getDescription()
+                + ". \n\n ProducedAt: " + signal.getCreatedAt();
     }
 }

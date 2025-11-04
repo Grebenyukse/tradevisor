@@ -1,6 +1,6 @@
-package ru.grnk.tradevisor.calculate.strategies.fibo;
+package ru.grnk.tradevisor.testutils;
 
-public class Main {
+public class PrintChartsForOhlcArrays {
 
     public static void main(String[] args) {
 // Arrange

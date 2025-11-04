@@ -4,14 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import ru.grnk.tradevisor.notify.plot.dto.PlotRecord;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,22 +28,17 @@ public class QuickChartService {
     private static final String QUICKCHART_URL = "https://quickchart.io/chart/create";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    private final HttpClient httpClient;
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     @SneakyThrows
-    public byte[] saveCandlestickChartToFile(PlotRecord plotRecord, boolean saveToFs) {
+    public String getCandlestickChartUrl(PlotRecord plotRecord, boolean saveToFs) {
         String chartUrl = createCandlestickChart(plotRecord);
         if (chartUrl == null) {
             log.error("не получен урл графика");
             return null;
         }
-        byte[] downloadedChart = download(chartUrl);
-        if (saveToFs && downloadedChart != null) {
-            String path = saveChartToFile(downloadedChart.clone(), plotRecord.uuid() + "_" + plotRecord.ticker() + ".png");
-            log.info("график сохранен локально по адресу: {}", path);
-        }
-        return downloadedChart;
+        return chartUrl;
     }
 
     @SneakyThrows
@@ -60,18 +53,17 @@ public class QuickChartService {
                 .chart(createChartDto(plotRecord))
                 .build();
         String requestBody = objectMapper.writeValueAsString(requestDto);
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(QUICKCHART_URL))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() == 200) {
-            ChartResponseDto responseDto = objectMapper.readValue(response.body(), ChartResponseDto.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<String> response = restTemplate.postForEntity(QUICKCHART_URL, entity, String.class);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            ChartResponseDto responseDto = objectMapper.readValue(response.getBody(), ChartResponseDto.class);
             return responseDto.getUrl();
         } else {
-            log.error("Ошибка при создании графика. Код ответа: {}", response.statusCode());
-            log.error("Тело ответа: {}", response.body());
+            log.error("Ошибка при создании графика. Код ответа: {}", response.getStatusCode());
+            log.error("Тело ответа: {}", response.getBody());
             throw new RuntimeException("Ошибка при создании графика");
         }
     }
@@ -162,18 +154,22 @@ public class QuickChartService {
 
     private byte[] download(String chartUrl) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(chartUrl))
-                    .build();
-            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            if (response.statusCode() == 200) {
+            HttpHeaders headers = new HttpHeaders();
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+            ResponseEntity<byte[]> response = restTemplate.exchange(
+                    chartUrl,
+                    HttpMethod.GET,
+                    entity,
+                    byte[].class
+            );
+            if (response.getStatusCode() == HttpStatus.OK) {
                 log.info("График успешно скачен");
-                return response.body();
+                return response.getBody();
             } else {
-                log.error("Ошибка загрузки изображения. Код ответа: {}", response.statusCode());
+                log.error("Ошибка загрузки изображения. Код ответа: {}", response.getStatusCode());
                 return null;
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             log.error("Ошибка при сохранении графика", e);
             throw new RuntimeException("Ошибка при сохранении графика", e);
         }

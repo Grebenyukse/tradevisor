@@ -15,7 +15,6 @@ import ru.grnk.tradevisor.notify.plot.dto.OHLCData;
 import ru.grnk.tradevisor.notify.plot.dto.PlotRecord;
 import ru.grnk.tradevisor.notify.plot.quickchart.QuickChartService;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,10 +30,10 @@ public class PlotService {
     private final ObjectMapper om;
 
     @SneakyThrows
-    public byte[] saveCandlestickChartToFile(Signals signal, boolean saveToFs) {
+    public String saveCandlestickChartToFile(Signals signal, boolean saveToFs) {
         List<MarketData> md = marketDataRepository.fetchMarketDataForLast(100, signal.getTickerCode());
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();
-        if (ohlcData.isEmpty()) return "".getBytes(StandardCharsets.UTF_8);
+        if (ohlcData.isEmpty()) return null;
         Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
         var signalLines = om.readValue(signal.getStrategyProps().toString(), ChartLineDto[].class);
         List<ChartLineDto> lines = new ArrayList<>(Arrays.asList(signalLines));
@@ -69,6 +68,6 @@ public class PlotService {
                 signal.getDirection(),
                 lines
         );
-        return quickChartService.saveCandlestickChartToFile(plotRecord, true);
+        return quickChartService.getCandlestickChartUrl(plotRecord, true);
     }
 }
