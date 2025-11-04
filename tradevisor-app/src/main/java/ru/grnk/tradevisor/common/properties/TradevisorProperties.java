@@ -12,7 +12,8 @@ public record TradevisorProperties(
         @NotNull TrvCalculateProperties calculate,
         @NotNull TrvTradeProperties trade,
         @NotNull TrvNotificationProperties notification,
-        @NotNull TrvIntegrationProperties integration
+        @NotNull TrvIntegrationProperties integration,
+        @NotNull TrvCleanupProperties cleanup
 
 ) {
 }

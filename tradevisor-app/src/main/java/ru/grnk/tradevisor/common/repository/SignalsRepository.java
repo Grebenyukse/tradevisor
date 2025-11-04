@@ -4,18 +4,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.jooq.DSLContext;
+import org.jooq.DatePart;
 import org.jooq.JSONB;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.jooq.impl.DSL.currentTimestamp;
 import static ru.grnk.tradevisor.dbmodel.tables.Signals.SIGNALS;
 
 @Repository
@@ -24,6 +28,7 @@ public class SignalsRepository {
 
     private final DSLContext dsl;
     private final ObjectMapper om;
+
 
     @Transactional
     public void updateSignalStatus(Signals signal, TrvSignalStatus status) {
@@ -54,6 +59,16 @@ public class SignalsRepository {
                 .orderBy(SIGNALS.CREATED_AT)
                 .fetchStreamInto(Signals.class)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public int expirePublishedSignals(int retentionDays) {
+        OffsetDateTime cutoffTime = OffsetDateTime.now().minusDays(retentionDays);
+        return dsl.update(SIGNALS)
+                .set(SIGNALS.STATUS, TrvSignalStatus.EXPIRED.name())
+                .where(SIGNALS.STATUS.eq(TrvSignalStatus.PUBLISHED.name()))
+                .and(SIGNALS.CREATED_AT.lt(cutoffTime))
+                .execute();
     }
 
     @Transactional

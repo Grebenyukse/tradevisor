@@ -72,6 +72,10 @@ app:
   notification:
     enabled: false
     cron: 1 * * * * *
+  cleanup:
+    cron: 0 0 0 1 * ?
+    retention_days: 30
+    enabled: false
   integration:
     tinkoff:
       enabled: true
