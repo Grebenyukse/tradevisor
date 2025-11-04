@@ -100,6 +100,7 @@ app:
       chat-token: ${CHAT_TOKEN}
       base-url: ${BASE_URL}
       webhook-path: "/telegram/webhook"
+      re-register: false
     newsapi:
       enabled: false
       api-key: ${NEWS_API_KEY}

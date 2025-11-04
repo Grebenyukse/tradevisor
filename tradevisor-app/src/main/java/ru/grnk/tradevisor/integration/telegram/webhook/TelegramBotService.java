@@ -177,4 +177,12 @@ public class TelegramBotService {
     public String setWebhook() {
         return telegramApiClient.setWebhook();
     }
+
+    public String getWebhookInfo() {
+        return telegramApiClient.getWebhookInfo();
+    }
+
+    public boolean deleteWebhook() {
+        return telegramApiClient.deleteWebhook();
+    }
 }

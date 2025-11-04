@@ -21,6 +21,7 @@ public class SaveSignalIntegrationTest extends BaseIntegrationTest {
         registry.add("app.calculate.fibo", () -> "true");
         registry.add("app.calculate.bars_required_to_calculate_fibo", () -> 60);
         registry.add("app.notification.enabled", () -> "true");
+        registry.add("app.integration.telegram.re-register", () -> "true");
     }
 
     @Test

@@ -34,9 +34,12 @@ import java.sql.Statement;
 import java.text.DecimalFormat;
 
 @Slf4j
-@SpringBootTest(properties = {
-        "spring.config.location=classpath:config/application-test.yaml"
-})
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "spring.config.location=classpath:config/application-test.yaml",
+                "server.port=8080"
+        })
 @Testcontainers
 abstract class BaseIntegrationTest {
 

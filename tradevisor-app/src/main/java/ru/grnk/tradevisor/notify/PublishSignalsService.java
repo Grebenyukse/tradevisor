@@ -11,7 +11,7 @@ import ru.grnk.tradevisor.common.repository.SignalsRepository;
 @Slf4j
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "app.notification.enabled")
-public class PublishSignalsServiceImpl {
+public class PublishSignalsService {
 
     private final MessagePublisher messagePublisher;
     private final SignalsRepository signalsRepository;
