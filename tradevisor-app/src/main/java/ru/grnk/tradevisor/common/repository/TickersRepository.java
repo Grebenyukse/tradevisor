@@ -4,11 +4,14 @@ package ru.grnk.tradevisor.common.repository;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
+import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
+import ru.tinkoff.piapi.contract.v1.TradingStatus;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static ru.grnk.tradevisor.dbmodel.tables.Signals.SIGNALS;
 import static ru.grnk.tradevisor.dbmodel.tables.Tickers.TICKERS;
 
 @Repository
@@ -30,6 +33,21 @@ public class TickersRepository {
         return dsl.select().from(TICKERS)
                 .fetchStreamInto(Tickers.class)
                 .collect(Collectors.toList());
+    }
+
+    public List<Tickers> getUnpublishedTickers() {
+        return dsl.selectFrom(TICKERS)
+                .whereNotExists(
+                        dsl.selectOne()
+                                .from(SIGNALS)
+                                .where(SIGNALS.TICKER_CODE.eq(TICKERS.TICKER_CODE))
+                                .and(SIGNALS.STATUS.in(
+                                        TrvSignalStatus.PUBLISHED.name(),
+                                        TrvSignalStatus.CREATED.name(),
+                                        TrvSignalStatus.EXECUTED.name()
+                                ))
+                )
+                .fetchInto(Tickers.class);
     }
 
     public void saveInstrument(Tickers ticker) {

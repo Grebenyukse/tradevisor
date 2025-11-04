@@ -27,7 +27,7 @@ public class CalculateSignalServiceImpl {
     @Scheduled(cron = "${app.calculate.cron}")
     public void doWork() {
         log.info("calculate all signals mf");
-        var tickers = tickersRepository.getAllTickers();
+        var tickers = tickersRepository.getUnpublishedTickers();
         if (tickers.isEmpty()) {
             log.info("нет тикеров ждем когда появятся");
             return;

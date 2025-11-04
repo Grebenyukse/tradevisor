@@ -22,7 +22,7 @@ public class MessagePublisher {
     public void publishMessage(Signals signal) {
         String image = plotService.saveCandlestickChartToFile(signal, true);
         if (image == null ) return;
-        telegramMessageService.sendMessage(image, signal.getName(), signal.getDescription());
+        telegramMessageService.sendMessage(image, getTitle(signal), getText(signal));
         signalsRepository.updateSignalStatus(signal, TrvSignalStatus.PUBLISHED);
     }
 
@@ -35,7 +35,6 @@ public class MessagePublisher {
                 + ". \n\n PriceOpen: " + signal.getPriceOpen()
                 + ". \n\n TakeProfit: " + signal.getTakeProfit()
                 + ". \n\n StopLoss: " + signal.getStopLoss()
-                + ". \n\n Touches: " + signal.getDescription()
                 + ". \n\n ProducedAt: " + signal.getCreatedAt();
     }
 }
