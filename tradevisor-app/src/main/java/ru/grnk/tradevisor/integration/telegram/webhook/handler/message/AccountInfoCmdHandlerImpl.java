@@ -14,7 +14,7 @@ public class AccountInfoCmdHandlerImpl implements TgMessageHandler {
     private final TelegramApiClient telegramApiClient;
 
     @Override
-    public String commandStartsWith() {
+    public String command() {
         return "account_info";
     }
 

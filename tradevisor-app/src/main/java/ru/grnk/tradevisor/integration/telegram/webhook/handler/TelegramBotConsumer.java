@@ -29,7 +29,7 @@ public class TelegramBotConsumer {
             List<TgCallbackQueryHandler> callbackQueryHandlers,
             WelcomeHandler welcomeHandler
     ) {
-        this.messageHandlersMap = messageHandlers.stream().collect(toMap(TgMessageHandler::commandStartsWith, Function.identity()));
+        this.messageHandlersMap = messageHandlers.stream().collect(toMap(TgMessageHandler::command, Function.identity()));
         this.callbackQueryHandlers = callbackQueryHandlers;
         this.welcomeHandler = welcomeHandler;
     }
@@ -45,11 +45,11 @@ public class TelegramBotConsumer {
             } else if (update.hasCallbackQuery()) {
                 callbackQueryHandlers.stream()
                         .filter(x -> update.getCallbackQuery().getData().startsWith(x.commandStartsWith()))
-                                .findFirst()
-                                        .ifPresentOrElse(h -> h.handle(update.getCallbackQuery()),
-                                                () -> {
-                                            throw new RuntimeException("unkown callback query " + update.getCallbackQuery().toString());
-                                        });
+                        .findFirst()
+                                .ifPresentOrElse(h -> h.handle(update.getCallbackQuery()),
+                                        () -> {
+                                    throw new RuntimeException("unkown callback query " + update.getCallbackQuery().toString());
+                                });
             }
         } catch (Exception e) {
             log.error("Error processing update", e);

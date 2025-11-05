@@ -61,7 +61,7 @@ public class SignalsRepository {
         OffsetDateTime cutoffTime = OffsetDateTime.now().minusDays(retentionDays);
         return dsl.update(SIGNALS)
                 .set(SIGNALS.STATUS, TrvSignalStatus.EXPIRED.name())
-                .where(SIGNALS.STATUS.eq(TrvSignalStatus.PUBLISHED.name()))
+                .where(SIGNALS.STATUS.in(TrvSignalStatus.PUBLISHED.name(), TrvSignalStatus.CANCELLED.name()))
                 .and(SIGNALS.CREATED_AT.lt(cutoffTime))
                 .execute();
     }

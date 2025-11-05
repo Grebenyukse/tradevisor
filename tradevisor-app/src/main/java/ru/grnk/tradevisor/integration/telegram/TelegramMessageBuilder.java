@@ -12,7 +12,7 @@ import java.util.List;
 public class TelegramMessageBuilder {
 
     public static Integer getSignalIdFromQuery(String callbackData) {
-        var parts = callbackData.split("//");
+        var parts = callbackData.split("/");
         if (parts.length < 2) {
             throw new RuntimeException("unkown command on button click query " + callbackData);
         }

@@ -14,7 +14,7 @@ public class MenuCmdHandlerImpl implements TgMessageHandler {
     private final TelegramApiClient telegramApiClient;
 
     @Override
-    public String commandStartsWith() {
+    public String command() {
         return "menu";
     }
 

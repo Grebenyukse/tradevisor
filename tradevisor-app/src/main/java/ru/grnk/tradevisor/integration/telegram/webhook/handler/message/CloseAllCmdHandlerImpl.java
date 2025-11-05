@@ -14,7 +14,7 @@ public class CloseAllCmdHandlerImpl implements TgMessageHandler {
     private final TelegramApiClient telegramApiClient;
 
     @Override
-    public String commandStartsWith() {
+    public String command() {
         return "close_all";
     }
 

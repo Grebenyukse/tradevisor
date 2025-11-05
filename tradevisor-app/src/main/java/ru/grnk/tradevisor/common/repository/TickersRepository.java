@@ -45,7 +45,8 @@ public class TickersRepository {
                                         TrvSignalStatus.CREATED.name(),
                                         TrvSignalStatus.PUBLISHED.name(),
                                         TrvSignalStatus.CONFIRMED.name(),
-                                        TrvSignalStatus.EXECUTED.name()
+                                        TrvSignalStatus.EXECUTED.name(),
+                                        TrvSignalStatus.CANCELLED.name()
                                 ))
                 )
                 .fetchInto(Tickers.class);

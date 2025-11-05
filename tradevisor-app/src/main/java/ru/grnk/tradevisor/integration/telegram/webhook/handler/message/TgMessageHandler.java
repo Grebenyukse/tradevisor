@@ -4,7 +4,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 
 public interface TgMessageHandler {
 
-    String commandStartsWith();
+    String command();
 
     void handle(Message message);
 

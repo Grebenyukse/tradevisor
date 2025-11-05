@@ -11,8 +11,8 @@ package ru.grnk.tradevisor.calculate.signals;
 public enum TrvSignalStatus {
     CREATED,
     PUBLISHED,
-    EXPIRED,
     CONFIRMED,
     EXECUTED,
-    CANCELLED
+    CANCELLED,
+    EXPIRED
 }
