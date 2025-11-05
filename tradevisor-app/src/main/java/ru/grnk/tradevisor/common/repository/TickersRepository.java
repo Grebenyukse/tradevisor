@@ -42,8 +42,9 @@ public class TickersRepository {
                                 .from(SIGNALS)
                                 .where(SIGNALS.TICKER_CODE.eq(TICKERS.TICKER_CODE))
                                 .and(SIGNALS.STATUS.in(
-                                        TrvSignalStatus.PUBLISHED.name(),
                                         TrvSignalStatus.CREATED.name(),
+                                        TrvSignalStatus.PUBLISHED.name(),
+                                        TrvSignalStatus.CONFIRMED.name(),
                                         TrvSignalStatus.EXECUTED.name()
                                 ))
                 )

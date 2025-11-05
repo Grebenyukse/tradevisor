@@ -2,19 +2,16 @@ package ru.grnk.tradevisor.integration.telegram;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.grnk.tradevisor.common.properties.TradevisorProperties;
-import ru.grnk.tradevisor.integration.telegram.webhook.TelegramBotService;
+import ru.grnk.tradevisor.integration.telegram.sender.TelegramSender;
 
 @Service
 @RequiredArgsConstructor
 public class TelegramMessageService {
 
-    private final TelegramBotService telegramBotService;
-    private final TradevisorProperties tradevisorProperties;
+    private final TelegramSender telegramSender;
 
-    public void sendMessage(String url, String title, String text) {
-        Long chatId = Long.parseLong(tradevisorProperties.integration().telegram().chatId());
-        telegramBotService.sendMessage(chatId, url, title, text);
+    public void sendMessage(String url, String title, String text, Integer id) {
+        telegramSender.sendMessage(url, title, text, id);
     }
 
 }
