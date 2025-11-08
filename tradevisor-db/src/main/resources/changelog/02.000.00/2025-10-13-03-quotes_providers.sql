@@ -6,4 +6,7 @@
 INSERT INTO tradevisor.quotes_providers ("name") VALUES
 	 ('finam'),
 	 ('tinkoff'),
-	 ('yahoo');
+	 ('yahoo'),
+	 ('finam-failed'),
+	 ('tinkoff-failed'),
+	 ('yahoo-failed');

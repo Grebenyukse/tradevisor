@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 
@@ -117,6 +118,21 @@ public class TelegramApiClient {
             return response.getStatusCode().is2xxSuccessful();
         } catch (Exception e) {
             log.error("Error editing message", e);
+            return false;
+        }
+    }
+
+    public boolean deleteMessage(DeleteMessage deleteMessage) {
+        String token = tradevisorProperties.integration().telegram().chatToken();
+        try {
+            String apiUrl = "https://api.telegram.org/bot" + token + "/deleteMessage";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<DeleteMessage> entity = new HttpEntity<>(deleteMessage, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            log.error("Error deleting message", e);
             return false;
         }
     }

@@ -11,6 +11,8 @@ import ru.tinkoff.piapi.contract.v1.TradingStatus;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.jooq.impl.DSL.concat;
+import static org.jooq.impl.DSL.inline;
 import static ru.grnk.tradevisor.dbmodel.tables.Signals.SIGNALS;
 import static ru.grnk.tradevisor.dbmodel.tables.Tickers.TICKERS;
 
@@ -31,6 +33,7 @@ public class TickersRepository {
 
     public List<Tickers> getAllTickers() {
         return dsl.select().from(TICKERS)
+                .where(TICKERS.PROVIDER.notIn("finam-failed", "tinkoff-failed", "yahoo-failed"))
                 .fetchStreamInto(Tickers.class)
                 .collect(Collectors.toList());
     }
@@ -78,6 +81,13 @@ public class TickersRepository {
                         ticker.getExpiration()
                 )
                 .onConflictDoNothing()
+                .execute();
+    }
+
+    public int markTickerFailed(String tickerCode) {
+        return dsl.update(TICKERS)
+                .set(TICKERS.PROVIDER, concat(TICKERS.PROVIDER, inline("-failed")))
+                .where(TICKERS.TICKER_CODE.eq(tickerCode))
                 .execute();
     }
 

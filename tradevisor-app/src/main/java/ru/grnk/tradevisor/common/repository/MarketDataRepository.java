@@ -104,6 +104,10 @@ public class MarketDataRepository {
                 .execute();
     }
 
+    public void deleteMarketData(String tickerCode) {
+        dsl.delete(MARKET_DATA).where(MARKET_DATA.TICKER_CODE.eq(tickerCode)).execute();
+    }
+
     private static OffsetDateTime timeFrom(Timestamp timestamp) {
         return Instant.ofEpochSecond(
                 timestamp.getSeconds(),

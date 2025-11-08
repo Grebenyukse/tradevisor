@@ -2,9 +2,9 @@ server:
   port: 8080
 
 logging:
-  config: config/logback.xml
+  config: classpath:logback.xml
   level:
-    ROOT: debug
+    ROOT: info
     org.jooq.Constants.org.jooq.Constants: WARN
     reactor.netty.http.client: INFO
 
@@ -63,22 +63,22 @@ app:
   calculate:
     cron: 1 * * * * *
     fibo: true
-    bars_required_to_calculate_fibo: 100
+    bars_required_to_calculate_fibo: 300
     gap: false
   trade:
     cron: 1 * * * * *
     limits: 1
     enabled: false
   notification:
-    enabled: false
+    enabled: true
     cron: 1 * * * * *
   cleanup:
     cron: 0 0 0 1 * ?
     retention_days: 30
-    enabled: false
+    enabled: true
   integration:
     tinkoff:
-      enabled: true
+      enabled: false
       token: ${TINKOFF_INVEST_TOKEN}
       host: "invest-public-api.tinkoff.ru:443"
       history-max-depth-days: 1
@@ -95,11 +95,11 @@ app:
       client-id: ${GIGACHAT_CLIENT_ID}
       client-secret: ${GIGACHAT_CLIENT_SECRET}
     telegram:
-      enabled: false
+      enabled: true
       chat-id: ${CHAT_ID}
       chat-token: ${CHAT_TOKEN}
       base-url: ${BASE_URL}
-      webhook-path: "/telegram/webhook"
+      webhook-path: "/"
       re-register: false
     newsapi:
       enabled: false
@@ -113,4 +113,4 @@ app:
       host: api.finam.ru
       port: 443
       account-id: ${FINAM_ACCOUNT_KEY}
-      history-max-depth-days: 150
+      history-max-depth-days: 30

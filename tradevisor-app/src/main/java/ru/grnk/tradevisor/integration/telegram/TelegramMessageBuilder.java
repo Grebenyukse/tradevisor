@@ -1,6 +1,7 @@
 package ru.grnk.tradevisor.integration.telegram;
 
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -17,6 +18,13 @@ public class TelegramMessageBuilder {
             throw new RuntimeException("unkown command on button click query " + callbackData);
         }
         return Integer.parseInt(parts[1]);
+    }
+
+    public static DeleteMessage buildDeleteMessage(Message originalMessage) {
+        DeleteMessage dm = new DeleteMessage();
+        dm.setChatId(originalMessage.getChatId().toString());
+        dm.setMessageId(originalMessage.getMessageId());
+        return dm;
     }
 
     public static EditMessageText buildReactionMessage(Message originalMessage, String reaction) {
@@ -100,8 +108,13 @@ public class TelegramMessageBuilder {
         declineButton.setText("Decline");
         declineButton.setCallbackData("decline/" + signalId);
 
+        InlineKeyboardButton deleteButton = new InlineKeyboardButton();
+        deleteButton.setText("Delete");
+        deleteButton.setCallbackData("delete/" + signalId);
+
         row.add(acceptButton);
         row.add(declineButton);
+        row.add(deleteButton);
         rows.add(row);
 
         markup.setKeyboard(rows);

@@ -32,6 +32,7 @@ import static ru.grnk.tradevisor.common.util.TimeUtils.convertToTimestamp;
 @ConditionalOnProperty(value = "app.collect.prices.finam")
 public class FinamGrpcClientService implements PricesLoader {
 
+    public static final int MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK = 720;
     private final TradevisorProperties properties;
     private final AssetsServiceGrpc.AssetsServiceBlockingStub assetsServiceBlockingStub;
     private final AuthServiceGrpc.AuthServiceBlockingStub authServiceBlockingStub;
@@ -63,13 +64,13 @@ public class FinamGrpcClientService implements PricesLoader {
     }
 
     public void loadHistoryForSymbol(String tickerCode) {
-        var ticker = tickersRepository.findTickerByTickerCode(tickerCode);
         var symbol = tickerCode;
         log.debug("load prices for {}", symbol);
         var bearer = getBearer();
         var startTime = findStartTime(symbol);
         var endTime = convertToTimestamp(ZonedDateTime.now());
-        if ((endTime.getSeconds() - startTime.getSeconds())/60 < 5) {
+        var intervalInHours = (endTime.getSeconds() - startTime.getSeconds())/60;
+        if (intervalInHours < 5) {
             return;
         }
         var marketDataRs = marketDataServiceBlockingStub
@@ -83,6 +84,9 @@ public class FinamGrpcClientService implements PricesLoader {
                         .setTimeframe(TimeFrame.TIME_FRAME_H1)
                         .build());
         marketDataRs.getBarsList().stream().forEach(b -> marketDataRepository.saveMarketData(b, tickerCode));
+        if(marketDataRs.getBarsList().isEmpty() && intervalInHours > MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK) {
+            tickersRepository.markTickerFailed(tickerCode);
+        }
     }
 
     private Timestamp  findStartTime(String symbol) {
