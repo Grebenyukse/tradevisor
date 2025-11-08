@@ -20,9 +20,8 @@ public class FiboSignalsProducer {
     private static final double TOUCH_REGISTRATION_GAP_MULTIPLIER = 0.03;
     private static final double LEVEL_BREAKDOWN_GAP_MULTIPLIER = 0.01;
     private static final int TOUCH_SKIP_INTERVAL = 2;
-    private static final int MIN_TOUCHES = 2;
 
-    public static Optional<TrvCalculationResult> getFiboSignals(List<MarketData> tickerData) {
+    public static Optional<TrvCalculationResult> getFiboSignals(List<MarketData> tickerData, int minTouches) {
         ExtremumResult extremums = findExtremums(tickerData);
         if (extremums.left().index() == extremums.right().index()) {
             return Optional.empty();
@@ -30,7 +29,7 @@ public class FiboSignalsProducer {
         FiboLevels fiboLevels = calculateFiboLevels(extremums, tickerData);
         LevelAnalysisResult levelAnalysis = analyzeLevels(tickerData, extremums, fiboLevels);
 
-        return generateSignal(tickerData, extremums, fiboLevels, levelAnalysis);
+        return generateSignal(tickerData, extremums, fiboLevels, levelAnalysis, minTouches);
     }
 
     private static ExtremumResult findExtremums(List<MarketData> tickerData) {
@@ -156,11 +155,11 @@ public class FiboSignalsProducer {
             List<MarketData> tickerData,
             ExtremumResult extremums,
             FiboLevels fiboLevels,
-            LevelAnalysisResult analysis) {
+            LevelAnalysisResult analysis, int minTouches) {
         float stopLoss = extremums.right().value();
         float takeProfit = fiboLevels.fibo618();
         TradingDirection tradingDirection = TradingDirection.from(-1 * extremums.trend());
-        if (!analysis.isBroken382() && analysis.touches382() >= MIN_TOUCHES) {
+        if (!analysis.isBroken382() && analysis.touches382() >= minTouches) {
             float priceOpen = (extremums.right().value() + fiboLevels.fibo382()) / 2;
             List<ChartLineDto> lines = createHorizontalLines(
                     tickerData,
@@ -182,7 +181,7 @@ public class FiboSignalsProducer {
                     .lines(lines)
                     .build());
         }
-        if (!analysis.isBroken618() && analysis.touches618() >= MIN_TOUCHES) {
+        if (!analysis.isBroken618() && analysis.touches618() >= minTouches) {
             float priceOpen = fiboLevels.fibo382();
             List<ChartLineDto> lines = createHorizontalLines(
                     tickerData,

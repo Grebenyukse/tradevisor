@@ -30,7 +30,7 @@ public class FiboSignals implements IStrategy {
 
     @Override
     public TrvCalculationResult calculate(List<MarketData> candles) {
-        return getFiboSignals(candles)
+        return getFiboSignals(candles, tradevisorProperties.calculate().minTouchesCount())
                 .orElse(TrvCalculationResult.builder()
                         .direction(TradingDirection.UNKNOWN)
                         .build());

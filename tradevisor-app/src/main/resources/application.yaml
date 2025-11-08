@@ -65,6 +65,7 @@ app:
     fibo: true
     bars_required_to_calculate_fibo: 300
     gap: false
+    min_touches_count: 3
   trade:
     cron: 1 * * * * *
     limits: 1

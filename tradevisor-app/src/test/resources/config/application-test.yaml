@@ -45,6 +45,7 @@ app:
     fibo: false
     bars_required_to_calculate_fibo: 10
     gap: false
+    min_touches_count: 2
   trade:
     cron: 0/1 * * * * *
     limits: 1

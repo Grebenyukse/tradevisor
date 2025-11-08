@@ -8,8 +8,7 @@ import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
 
-import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.buildReactionMessage;
-import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.getSignalIdFromQuery;
+import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.*;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +27,8 @@ public class DeclineCmdHandlerImpl implements TgCallbackQueryHandler {
         String callbackData = callbackQuery.getData();
         Message message = callbackQuery.getMessage();
         signalsRepository.updateSignalStatus(getSignalIdFromQuery(callbackData), TrvSignalStatus.CANCELLED);
-        telegramApiClient.editMessageText(buildReactionMessage(message, "❌"));
+//        telegramApiClient.editMessageText(buildReactionMessage(message, "❌"));
+        // удаляем чтобы не захломлять чат с ботом
+        telegramApiClient.deleteMessage(buildDeleteMessage(message));
     }
 }

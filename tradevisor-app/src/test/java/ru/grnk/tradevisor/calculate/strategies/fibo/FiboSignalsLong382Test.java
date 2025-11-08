@@ -59,7 +59,7 @@ class FiboSignalsLong382Test {
         reverse(lows);
         reverse(highs);
         var candles = generateCandles(lows, highs);
-        Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles);
+        Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles, 2);
         assertTrue(result.isPresent());
         var resultParams = result.get();
         DecimalFormat df = new DecimalFormat("#.####");
@@ -99,7 +99,7 @@ class FiboSignalsLong382Test {
         reverse(lows);
         reverse(highs);
         var candles = generateCandles(lows, highs);
-        Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles);
+        Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles, 2);
         assertTrue(result.isPresent());
         var resultParams = result.get();
         DecimalFormat df = new DecimalFormat("#.####");
@@ -139,7 +139,7 @@ class FiboSignalsLong382Test {
         reverse(lows);
         reverse(highs);
         var candles = generateCandles(lows, highs);
-        Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles);
+        Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles, 2);
         assertTrue(result.isEmpty());
     }
 
@@ -171,7 +171,7 @@ class FiboSignalsLong382Test {
         reverse(lows);
         reverse(highs);
         var candles = generateCandles(lows, highs);
-        Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles);
+        Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles, 2);
         assertTrue(result.isEmpty());
     }
 

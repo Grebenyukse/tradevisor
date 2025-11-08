@@ -59,9 +59,6 @@ public class SaveSignalIntegrationTest extends BaseIntegrationTest {
         assertThat(df.format(signal.getPriceOpen())).isEqualTo(df.format(3.629f));
         assertThat(df.format(signal.getStopLoss())).isEqualTo(df.format(0f));
         assertThat(df.format(signal.getTakeProfit())).isEqualTo(df.format(11.742f));
-        await(() -> false);
-        assertThat(1).isEqualTo(1);
+//        await(() -> false);
     }
-
-
 }
