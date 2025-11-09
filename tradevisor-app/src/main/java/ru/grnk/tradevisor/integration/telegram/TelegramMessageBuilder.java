@@ -97,7 +97,7 @@ public class TelegramMessageBuilder {
     public static SendMessage buildChartMessage(Long chatId, String url, String title, String text, Integer signalId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId.toString());
-        sendMessage.setText("<b>" + title + "</b>\n" + text + "\n" + url);
+        sendMessage.setText("<b>" + title + "</b>\n" + url + "\n" + text);
         sendMessage.enableHtml(true);
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
