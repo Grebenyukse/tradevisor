@@ -1,12 +1,17 @@
 package ru.grnk.tradevisor.integration.telegram;
 
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -111,15 +116,40 @@ public class TelegramMessageBuilder {
         InlineKeyboardButton deleteButton = new InlineKeyboardButton();
         deleteButton.setText("Delete");
         deleteButton.setCallbackData("delete/" + signalId);
+        // second row
+        List<InlineKeyboardButton> row2 = new ArrayList<>();
+
+        InlineKeyboardButton downloadButton = new InlineKeyboardButton();
+        downloadButton.setText("Download quotes");
+        downloadButton.setCallbackData("download/" + signalId);
 
         row.add(acceptButton);
         row.add(declineButton);
         row.add(deleteButton);
+
+        row2.add(downloadButton);
         rows.add(row);
+        rows.add(row2);
 
         markup.setKeyboard(rows);
         sendMessage.setReplyMarkup(markup);
         return sendMessage;
+    }
+
+    public static SendDocument buildDocumentMessage(Long chatId) {
+        // Создаем содержимое файла
+        String fileContent = "пользователь запросил скачивание файла";
+        InputStream inputStream = new ByteArrayInputStream(fileContent.getBytes(StandardCharsets.UTF_8));
+
+        // Создаем InputFile из потока данных
+        InputFile inputFile = new InputFile(inputStream, "quotes.txt");
+
+        // Создаем объект для отправки документа
+        SendDocument sendDocument = new SendDocument();
+        sendDocument.setChatId(chatId.toString());
+        sendDocument.setDocument(inputFile);
+        sendDocument.setCaption("Файл с цитатами");
+        return sendDocument;
     }
 
 }

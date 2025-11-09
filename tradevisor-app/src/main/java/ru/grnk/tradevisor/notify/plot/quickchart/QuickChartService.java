@@ -32,8 +32,8 @@ public class QuickChartService {
     private final ObjectMapper objectMapper;
 
     @SneakyThrows
-    public String getCandlestickChartUrl(PlotRecord plotRecord, boolean saveToFs) {
-        String chartUrl = createCandlestickChart(plotRecord);
+    public String getCandlestickChartUrl(PlotRecord plotRecord, boolean printRequest) {
+        String chartUrl = createCandlestickChart(plotRecord, printRequest);
         if (chartUrl == null) {
             log.error("не получен урл графика");
             return null;
@@ -42,7 +42,7 @@ public class QuickChartService {
     }
 
     @SneakyThrows
-    private String createCandlestickChart(PlotRecord plotRecord) {
+    private String createCandlestickChart(PlotRecord plotRecord, Boolean printRequest) {
         int width = Math.max(800, Math.min(2000, plotRecord.data().size() * 15));
         int height = 600;
         ChartRequestDto requestDto = ChartRequestDto.builder()
@@ -53,7 +53,9 @@ public class QuickChartService {
                 .chart(createChartDto(plotRecord))
                 .build();
         String requestBody = objectMapper.writeValueAsString(requestDto);
-
+        if (printRequest) {
+            log.info("Request to load requestBody: {}", requestBody);
+        }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);

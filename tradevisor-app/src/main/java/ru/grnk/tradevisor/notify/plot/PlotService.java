@@ -30,7 +30,7 @@ public class PlotService {
     private final ObjectMapper om;
 
     @SneakyThrows
-    public String saveCandlestickChartToFile(Signals signal, boolean saveToFs) {
+    public String saveCandlestickChartToFile(Signals signal, boolean printRequest) {
         List<MarketData> md = marketDataRepository.fetchMarketDataForLast(100, signal.getTickerCode());
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();
         if (ohlcData.isEmpty()) return null;
@@ -68,6 +68,6 @@ public class PlotService {
                 signal.getDirection(),
                 lines
         );
-        return quickChartService.getCandlestickChartUrl(plotRecord, true);
+        return quickChartService.getCandlestickChartUrl(plotRecord, printRequest);
     }
 }
