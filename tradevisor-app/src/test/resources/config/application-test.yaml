@@ -40,6 +40,7 @@ app:
       cron: 0/1 * * * * *
       finam: false
       tinkoff: false
+      bybit: true
   calculate:
     cron: 0/1 * * * * *
     fibo: false
@@ -95,3 +96,10 @@ app:
       port: 443
       account-id: ${FINAM_ACCOUNT_KEY}
       history-max-depth-days: 150
+    bybit:
+      enabled: true
+      key: ${BYBIT_KEY}
+      secret: ${BYBIT_SECRET}
+      url: https://api.bybit.com
+      history-max-depth-days: 70
+      load-tickers: false

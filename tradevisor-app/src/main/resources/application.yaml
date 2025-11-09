@@ -4,7 +4,7 @@ server:
 logging:
   config: classpath:logback.xml
   level:
-    ROOT: info
+    ROOT: debug
     org.jooq.Constants.org.jooq.Constants: WARN
     reactor.netty.http.client: INFO
 
@@ -60,6 +60,7 @@ app:
       cron: 1 * * * * *
       finam: true
       tinkoff: false
+      bybit: true
   calculate:
     cron: 1 * * * * *
     fibo: true
@@ -114,4 +115,11 @@ app:
       host: api.finam.ru
       port: 443
       account-id: ${FINAM_ACCOUNT_KEY}
-      history-max-depth-days: 30
+      history-max-depth-days: 70
+    bybit:
+      enabled: true
+      key: ${BYBIT_KEY}
+      secret: ${BYBIT_SECRET}
+      url: https://api.bybit.com
+      history-max-depth-days: 70
+      load-tickers: false

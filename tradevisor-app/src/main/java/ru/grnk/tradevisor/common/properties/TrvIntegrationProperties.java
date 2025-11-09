@@ -7,6 +7,7 @@ public record TrvIntegrationProperties(
         TrvGigachatProperties gigachat,
         TrvTelegramProperties telegram,
         TrvNewsapiProperties newsapi,
-        TrvFinamProperties finam
+        TrvFinamProperties finam,
+        TrvBybitProperties bybit
 ) {
 }
