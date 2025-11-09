@@ -38,7 +38,8 @@ public class BybitClient {
      * @param limit    максимум свечей в ответе (Bybit ≤ 500)
      * @return список свечей, отсортированных по времени возрастания
      */
-    public List<Object> fetchHourlyCandles(String symbol, long from, int limit) {
+    public List<BybitMarketdataRs.Candlestick> fetchHourlyCandles(String tickerCode, long from, int limit) {
+        var symbol = tickerCode.split("@")[0];
         var baseUrl = tradevisorProperties.integration().bybit().url();
         String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .path("/v5/market/kline")
@@ -49,10 +50,10 @@ public class BybitClient {
                 .queryParam("limit", limit)
                 .toUriString();
 
-        Object resp = restTemplate.getForObject(url, String.class);
-//        if (resp == null || resp.retCode() != 0) {
-//            throw new IllegalStateException("Failed to fetch candles for " + symbol + ": " + (resp != null ? resp.retMsg() : "null"));
-//        }
-        return List.of();
+        BybitMarketdataRs resp = restTemplate.getForObject(url, BybitMarketdataRs.class);
+        if (resp == null || resp.retCode() != 0) {
+            throw new IllegalStateException("Failed to fetch candles for " + symbol + ": " + (resp != null ? resp.retMsg() : "null"));
+        }
+        return resp.result().list();
     }
 }

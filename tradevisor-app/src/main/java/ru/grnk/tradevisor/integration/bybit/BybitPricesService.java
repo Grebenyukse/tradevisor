@@ -12,6 +12,8 @@ import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import static java.util.stream.Collectors.toList;
@@ -38,7 +40,8 @@ public class BybitPricesService implements PricesLoader {
             return;
         }
         var candles = bybitClient.fetchHourlyCandles(tickerCode, startTime.getSeconds(), 500);
-        var res  = candles.stream().map(x -> new MarketData())
+        var res  = candles.stream()
+                .map(x -> from(x, tickerCode))
                 .collect(toList());
         marketDataRepository.batchInsertMarketData(res);
     }
@@ -75,6 +78,16 @@ public class BybitPricesService implements PricesLoader {
                 .setPrecision(bybitTicker.lotSizeFilter().basePrecision().precision())
                 .setLot(1)
                 .setProvider("bybit");
+    }
+
+    private static MarketData from(BybitMarketdataRs.Candlestick candlestick, String tickerCode) {
+        return new MarketData()
+                .setTime(Instant.ofEpochMilli(candlestick.openTime()).atZone(ZoneId.of("Europe/Moscow")).toOffsetDateTime())
+                .setOpen(candlestick.openPrice())
+                .setHigh(candlestick.highPrice())
+                .setLow(candlestick.lowPrice())
+                .setClose(candlestick.closePrice())
+                .setTickerCode(tickerCode);
     }
 
 }
