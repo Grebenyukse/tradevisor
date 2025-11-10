@@ -32,3 +32,9 @@ databaseChangeLog:
   - include:
       file: 2025-08-03-trv-7-add-finam-meta.sql
       relativeToChangelogFile: true
+  - include:
+      file: 2025-08-03-trv-8-tickers-failed-status.sql
+      relativeToChangelogFile: true
+  - include:
+      file: 2025-08-03-trv-9-tickers-priority-column.sql
+      relativeToChangelogFile: true

@@ -4,7 +4,7 @@ server:
 logging:
   config: classpath:logback.xml
   level:
-    ROOT: debug
+    ROOT: info
     org.jooq.Constants.org.jooq.Constants: WARN
     reactor.netty.http.client: INFO
 

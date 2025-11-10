@@ -6,7 +6,6 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
-import ru.tinkoff.piapi.contract.v1.TradingStatus;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +32,8 @@ public class TickersRepository {
 
     public List<Tickers> getAllTickers() {
         return dsl.select().from(TICKERS)
-                .where(TICKERS.PROVIDER.notIn("finam-failed", "tinkoff-failed", "yahoo-failed"))
+                .where(TICKERS.STATUS.isNull())
+                .orderBy(TICKERS.LOAD_PRIORITY.desc())
                 .fetchStreamInto(Tickers.class)
                 .collect(Collectors.toList());
     }
@@ -51,7 +51,8 @@ public class TickersRepository {
                                         TrvSignalStatus.EXECUTED.name(),
                                         TrvSignalStatus.CANCELLED.name()
                                 ))
-                )
+                ).and(TICKERS.STATUS.isNull())
+                .orderBy(TICKERS.LOAD_PRIORITY.desc())
                 .fetchInto(Tickers.class);
     }
 
@@ -84,9 +85,17 @@ public class TickersRepository {
                 .execute();
     }
 
-    public int markTickerFailed(String tickerCode) {
+    public int markTickerFailedByUser(String tickerCode) {
+        return markTickerFailedByUser(tickerCode, "failed by user");
+    }
+
+    public int  markTickerFailedByQuotes(String tickerCode) {
+        return markTickerFailedByUser(tickerCode, "failed for no quotes");
+    }
+
+    public int markTickerFailedByUser(String tickerCode, String reason) {
         return dsl.update(TICKERS)
-                .set(TICKERS.PROVIDER, concat(TICKERS.PROVIDER, inline("-failed")))
+                .set(TICKERS.STATUS, reason)
                 .where(TICKERS.TICKER_CODE.eq(tickerCode))
                 .execute();
     }

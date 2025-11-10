@@ -52,7 +52,7 @@ public class PricesLoaderServiceImpl {
                             loader.loadPrices(x.getTickerCode());
                         } catch (Exception e) {
                             if (e.getMessage().contains("Security id doesn't exist for mic")) {
-                                tickersRepository.markTickerFailed(x.getTickerCode());
+                                tickersRepository.markTickerFailedByQuotes(x.getTickerCode());
                                 log.warn("ticker {} excluded as unknown. will not be requested next time.", x.getTickerCode());
                                 return;
                             }

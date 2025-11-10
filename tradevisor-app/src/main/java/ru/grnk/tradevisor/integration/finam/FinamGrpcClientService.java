@@ -85,7 +85,7 @@ public class FinamGrpcClientService implements PricesLoader {
                         .build());
         marketDataRs.getBarsList().stream().forEach(b -> marketDataRepository.saveMarketData(b, tickerCode));
         if(marketDataRs.getBarsList().isEmpty() && intervalInHours > MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK) {
-            tickersRepository.markTickerFailed(tickerCode);
+            tickersRepository.markTickerFailedByQuotes(tickerCode);
         }
     }
 

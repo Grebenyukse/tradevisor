@@ -33,7 +33,7 @@ public class DeleteCmdHandlerImpl implements TgCallbackQueryHandler {
         Message message = callbackQuery.getMessage();
         Integer signalId = getSignalIdFromQuery(callbackData);
         Signals signal = signalsRepository.findSignalBySignalId(signalId).orElseThrow();
-        tickersRepository.markTickerFailed(signal.getTickerCode());
+        tickersRepository.markTickerFailedByUser(signal.getTickerCode());
         marketDataRepository.deleteMarketData(signal.getTickerCode());
         signalsRepository.updateSignalStatus(signalId, TrvSignalStatus.CANCELLED);
         telegramApiClient.deleteMessage(buildDeleteMessage(message));
