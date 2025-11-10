@@ -2,6 +2,8 @@ package ru.grnk.tradevisor.calculate;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.tongfei.progressbar.ProgressBarBuilder;
+import me.tongfei.progressbar.ProgressBarStyle;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
@@ -32,17 +34,27 @@ public class CalculateSignalServiceImpl {
             log.info("нет тикеров ждем когда появятся");
             return;
         }
-        for (Tickers t : tickers) {
-            var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode());
-            strategies.forEach(s -> {
-                var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
-                if (candles.size() < s.barsRequiredToCalcStrategy()) return;
-                TrvCalculationResult result = s.calculate(candles);
-                if (result.direction() != TradingDirection.UNKNOWN) {
-                    signalsRepository.saveSignal(result, t.getTickerCode(), s.getStrategyUniqueName(), lastTickTime);
-                }
-            });
-        }
+//        try (var pb = new ProgressBarBuilder()
+//                .setTaskName("Calculate strategies")
+//                .setInitialMax(tickers.size())
+//                .setStyle(ProgressBarStyle.COLORFUL_UNICODE_BLOCK)
+//                .build()) {
+            for (Tickers t : tickers) {
+                var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode());
+                strategies.forEach(s -> {
+                    var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
+                    if (candles.size() < s.barsRequiredToCalcStrategy()) return;
+                    TrvCalculationResult result = s.calculate(candles);
+
+                    if (result.direction() != TradingDirection.UNKNOWN) {
+                        signalsRepository.saveSignal(result, t.getTickerCode(), s.getStrategyUniqueName(), lastTickTime);
+                    }
+                });
+//                pb.step();
+//                pb.setExtraMessage(t.getTickerCode());
+            }
+//        }
+        log.info("all signals calculated");
     }
 
 }

@@ -115,11 +115,11 @@ app:
       host: api.finam.ru
       port: 443
       account-id: ${FINAM_ACCOUNT_KEY}
-      history-max-depth-days: 70
+      history-max-depth-days: 30
     bybit:
       enabled: true
       key: ${BYBIT_KEY}
       secret: ${BYBIT_SECRET}
       url: https://api.bybit.com
-      history-max-depth-days: 70
+      history-max-depth-days: 30
       load-tickers: false
