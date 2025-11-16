@@ -3,11 +3,13 @@ package ru.grnk.tradevisor.common.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.jooq.impl.DSL.concat;
@@ -36,6 +38,42 @@ public class TickersRepository {
                 .orderBy(TICKERS.LOAD_PRIORITY.desc())
                 .fetchStreamInto(Tickers.class)
                 .collect(Collectors.toList());
+    }
+
+    public List<Tickers> getAllTickers(String provider, Integer limit) {
+        return dsl.select().from(TICKERS)
+                .where(TICKERS.STATUS.isNull()).and(TICKERS.PROVIDER.eq(provider))
+                .orderBy(TICKERS.LOAD_PRIORITY.desc())
+                .limit(limit)
+                .fetchStreamInto(Tickers.class)
+                .collect(Collectors.toList());
+    }
+
+    public Integer getAllTickersCount() {
+        return dsl.selectCount()
+                .from(TICKERS)
+                .where(TICKERS.STATUS.isNull()
+                        .and(TICKERS.PROVIDER.isNotNull()))
+                .fetchOneInto(Integer.class);
+    }
+
+    // Новый метод с пагинацией
+    public List<Tickers> getAllTickers(String provider, Integer limit, Integer offset) {
+        return dsl.select().from(TICKERS)
+                .where(TICKERS.STATUS.isNull()).and(TICKERS.PROVIDER.eq(provider))
+                .orderBy(TICKERS.LOAD_PRIORITY.desc())
+                .limit(limit)
+                .offset(offset)
+                .fetchStreamInto(Tickers.class)
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, Integer> getTickersCountByProvider() {
+        return dsl.select(TICKERS.PROVIDER, DSL.count())
+                .from(TICKERS)
+                .where(TICKERS.STATUS.isNull())
+                .groupBy(TICKERS.PROVIDER)
+                .fetchMap(TICKERS.PROVIDER, DSL.count());
     }
 
     public List<Tickers> getUnpublishedTickers() {
