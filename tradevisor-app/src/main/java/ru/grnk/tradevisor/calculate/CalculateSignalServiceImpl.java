@@ -2,8 +2,10 @@ package ru.grnk.tradevisor.calculate;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.tongfei.progressbar.ProgressBar;
 import me.tongfei.progressbar.ProgressBarBuilder;
 import me.tongfei.progressbar.ProgressBarStyle;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
@@ -26,35 +28,51 @@ public class CalculateSignalServiceImpl {
     private final SignalsRepository signalsRepository;
     private final List<IStrategy> strategies;
 
+    @Value("${app.calculate.batch-size:1000}")
+    private int batchSize;
+
     @Scheduled(cron = "${app.calculate.cron}")
     public void doWork() {
         log.info("calculate all signals mf");
-        var tickers = tickersRepository.getUnpublishedTickers();
-        if (tickers.isEmpty()) {
+
+        int totalTickersCount = tickersRepository.getUnpublishedTickersCount();
+        if (totalTickersCount == 0) {
             log.info("нет тикеров ждем когда появятся");
             return;
         }
-//        try (var pb = new ProgressBarBuilder()
-//                .setTaskName("Calculate strategies")
-//                .setInitialMax(tickers.size())
-//                .setStyle(ProgressBarStyle.COLORFUL_UNICODE_BLOCK)
-//                .build()) {
-            for (Tickers t : tickers) {
-                var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode());
-                strategies.forEach(s -> {
-                    var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
-                    if (candles.size() < s.barsRequiredToCalcStrategy()) return;
-                    TrvCalculationResult result = s.calculate(candles);
-
-                    if (result.direction() != TradingDirection.UNKNOWN) {
-                        signalsRepository.saveSignal(result, t.getTickerCode(), s.getStrategyUniqueName(), lastTickTime);
-                    }
-                });
-//                pb.step();
-//                pb.setExtraMessage(t.getTickerCode());
-            }
-//        }
+        try (ProgressBar pb = new ProgressBarBuilder()
+                .setTaskName("Calculate strategies")
+                .setInitialMax(totalTickersCount)
+                .setStyle(ProgressBarStyle.COLORFUL_UNICODE_BLOCK)
+                .build()) {
+            int offset = 0;
+            List<Tickers> tickersBatch;
+            do {
+                tickersBatch = tickersRepository.getUnpublishedTickersBatch(batchSize, offset);
+                if (tickersBatch.isEmpty()) {
+                    break;
+                }
+                processTickersBatch(tickersBatch, pb);
+                offset += batchSize;
+            } while (tickersBatch.size() == batchSize);
+        }
         log.info("all signals calculated");
     }
 
+    private void processTickersBatch(List<Tickers> tickers, ProgressBar progressBar) {
+        for (Tickers t : tickers) {
+            var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode());
+            strategies.forEach(s -> {
+                var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
+                if (candles.size() < s.barsRequiredToCalcStrategy()) return;
+                TrvCalculationResult result = s.calculate(candles);
+
+                if (result.direction() != TradingDirection.UNKNOWN) {
+                    signalsRepository.saveSignal(result, t.getTickerCode(), s.getStrategyUniqueName(), lastTickTime);
+                }
+            });
+            progressBar.step();
+            progressBar.setExtraMessage(t.getTickerCode());
+        }
+    }
 }

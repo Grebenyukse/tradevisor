@@ -94,6 +94,46 @@ public class TickersRepository {
                 .fetchInto(Tickers.class);
     }
 
+    // Добавьте этот метод в TickersRepository
+    public int getUnpublishedTickersCount() {
+        return dsl.selectCount()
+                .from(TICKERS)
+                .whereNotExists(
+                        dsl.selectOne()
+                                .from(SIGNALS)
+                                .where(SIGNALS.TICKER_CODE.eq(TICKERS.TICKER_CODE))
+                                .and(SIGNALS.STATUS.in(
+                                        TrvSignalStatus.CREATED.name(),
+                                        TrvSignalStatus.PUBLISHED.name(),
+                                        TrvSignalStatus.CONFIRMED.name(),
+                                        TrvSignalStatus.EXECUTED.name(),
+                                        TrvSignalStatus.CANCELLED.name()
+                                ))
+                ).and(TICKERS.STATUS.isNull())
+                .fetchOneInto(Integer.class);
+    }
+
+    // Добавьте этот метод в TickersRepository
+    public List<Tickers> getUnpublishedTickersBatch(int limit, int offset) {
+        return dsl.selectFrom(TICKERS)
+                .whereNotExists(
+                        dsl.selectOne()
+                                .from(SIGNALS)
+                                .where(SIGNALS.TICKER_CODE.eq(TICKERS.TICKER_CODE))
+                                .and(SIGNALS.STATUS.in(
+                                        TrvSignalStatus.CREATED.name(),
+                                        TrvSignalStatus.PUBLISHED.name(),
+                                        TrvSignalStatus.CONFIRMED.name(),
+                                        TrvSignalStatus.EXECUTED.name(),
+                                        TrvSignalStatus.CANCELLED.name()
+                                ))
+                ).and(TICKERS.STATUS.isNull())
+                .orderBy(TICKERS.LOAD_PRIORITY.desc())
+                .limit(limit)
+                .offset(offset)
+                .fetchInto(Tickers.class);
+    }
+
     public void saveInstrument(Tickers ticker) {
         dsl.insertInto(TICKERS, TICKERS.FIGI,
                         TICKERS.TICKER,
