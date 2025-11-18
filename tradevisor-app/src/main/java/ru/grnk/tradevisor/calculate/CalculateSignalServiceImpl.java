@@ -2,21 +2,28 @@ package ru.grnk.tradevisor.calculate;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.tongfei.progressbar.ProgressBar;
-import me.tongfei.progressbar.ProgressBarBuilder;
-import me.tongfei.progressbar.ProgressBarStyle;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
+import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
+import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
 
+import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.sendSimpleMessage;
 
 @Service
 @Slf4j
@@ -27,6 +34,8 @@ public class CalculateSignalServiceImpl {
     private final MarketDataRepository marketDataRepository;
     private final SignalsRepository signalsRepository;
     private final List<IStrategy> strategies;
+    private final TelegramApiClient telegramApiClient;
+    private final TradevisorProperties tradevisorProperties;
 
     @Value("${app.calculate.batch-size:1000}")
     private int batchSize;
@@ -38,41 +47,102 @@ public class CalculateSignalServiceImpl {
         int totalTickersCount = tickersRepository.getUnpublishedTickersCount();
         if (totalTickersCount == 0) {
             log.info("нет тикеров ждем когда появятся");
+            sendTelegramMessage("Нет тикеров для обработки. Ждем появления новых.");
             return;
         }
-        try (ProgressBar pb = new ProgressBarBuilder()
-                .setTaskName("Calculate strategies")
-                .setInitialMax(totalTickersCount)
-                .setStyle(ProgressBarStyle.COLORFUL_UNICODE_BLOCK)
-                .build()) {
-            int offset = 0;
-            List<Tickers> tickersBatch;
-            do {
-                tickersBatch = tickersRepository.getUnpublishedTickersBatch(batchSize, offset);
-                if (tickersBatch.isEmpty()) {
-                    break;
-                }
-                processTickersBatch(tickersBatch, pb);
-                offset += batchSize;
-            } while (tickersBatch.size() == batchSize);
+        Long chatId = Long.parseLong(tradevisorProperties.integration().telegram().chatId());
+        SendMessage startMessage = sendSimpleMessage(chatId,
+                "🚀 Начало расчета сигналов...\n" +
+                        "📊 Всего тикеров: " + totalTickersCount + "\n" +
+                        "🕐 Время начала: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        String messageId = null;
+        try {
+            Message msg = telegramApiClient.sendAndGetMessage(startMessage);
+            messageId = String.valueOf(msg.getMessageId());
+        } catch (Exception e) {
+            log.warn("Не удалось отправить начальное сообщение в Telegram", e);
+        }
+        try {
+            int processedCount = processTickersWithUpdates(totalTickersCount, chatId, messageId);
+            sendTelegramMessage("✅ Расчет сигналов завершен!\n" +
+                    "📊 Обработано тикеров: " + processedCount + "/" + totalTickersCount + "\n" +
+                    "🕐 Время окончания: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        } catch (Exception e) {
+            String errorMessage = "❌ Ошибка при расчете сигналов: " + e.getMessage();
+            log.error(errorMessage, e);
+            sendTelegramMessage(errorMessage);
+            throw new RuntimeException("Ошибка при расчете сигналов", e);
         }
         log.info("all signals calculated");
     }
 
-    private void processTickersBatch(List<Tickers> tickers, ProgressBar progressBar) {
-        for (Tickers t : tickers) {
-            var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode());
-            strategies.forEach(s -> {
-                var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
-                if (candles.size() < s.barsRequiredToCalcStrategy()) return;
-                TrvCalculationResult result = s.calculate(candles);
-
-                if (result.direction() != TradingDirection.UNKNOWN) {
-                    signalsRepository.saveSignal(result, t.getTickerCode(), s.getStrategyUniqueName(), lastTickTime);
+    private int processTickersWithUpdates(int totalTickersCount, Long chatId, String messageId) {
+        int offset = 0;
+        List<Tickers> tickersBatch;
+        int processedCount = 0;
+        DecimalFormat df = new DecimalFormat("#.##");
+        do {
+            tickersBatch = tickersRepository.getUnpublishedTickersBatch(batchSize, offset);
+            if (tickersBatch.isEmpty()) {
+                break;
+            }
+            for (Tickers t : tickersBatch) {
+                try {
+                    var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode());
+                    strategies.forEach(s -> {
+                        var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
+                        if (candles.size() < s.barsRequiredToCalcStrategy()) return;
+                        TrvCalculationResult result = s.calculate(candles);
+                        if (result.direction() != TradingDirection.UNKNOWN) {
+                            signalsRepository.saveSignal(result, t.getTickerCode(), s.getStrategyUniqueName(), lastTickTime);
+                        }
+                    });
+                    processedCount++;
+                    if (processedCount % 10 == 0 || processedCount == totalTickersCount) {
+                        updateProgressMessage(chatId, messageId, processedCount, totalTickersCount, t.getTickerCode(), df);
+                    }
+                } catch (Exception e) {
+                    log.error("Ошибка при обработке тикера {}: {}", t.getTickerCode(), e.getMessage(), e);
                 }
-            });
-            progressBar.step();
-            progressBar.setExtraMessage(t.getTickerCode());
+            }
+            offset += batchSize;
+        } while (tickersBatch.size() == batchSize);
+        return processedCount;
+    }
+
+    private void updateProgressMessage(Long chatId, String messageId, int processedCount, int totalCount,
+                                       String currentTicker, DecimalFormat df) {
+        try {
+            double percentage = (double) processedCount / totalCount * 100;
+            String progressText = String.format(
+                    "📊 Расчет сигналов в процессе...\n" +
+                            "📈 Прогресс: %d/%d (%s%%)\n" +
+                            "💼 Текущий тикер: %s\n" +
+                            "⏱️ Время: %s",
+                    processedCount, totalCount, df.format(percentage),
+                    currentTicker, LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+            );
+            if (messageId != null) {
+                EditMessageText editMessage = new EditMessageText();
+                editMessage.setChatId(chatId.toString());
+                editMessage.setMessageId(Integer.parseInt(messageId));
+                editMessage.setText(progressText);
+                telegramApiClient.editMessageText(editMessage);
+            } else {
+                sendTelegramMessage(progressText);
+            }
+        } catch (Exception e) {
+            log.warn("Не удалось обновить сообщение прогресса в Telegram", e);
+        }
+    }
+
+    private void sendTelegramMessage(String text) {
+        try {
+            Long chatId = Long.parseLong(tradevisorProperties.integration().telegram().chatId());
+            SendMessage message = sendSimpleMessage(chatId, text);
+            telegramApiClient.sendAndGetMessage(message);
+        } catch (Exception e) {
+            log.warn("Не удалось отправить сообщение в Telegram: {}", text, e);
         }
     }
 }

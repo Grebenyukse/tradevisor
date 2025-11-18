@@ -105,4 +105,9 @@ public class SignalsRepository {
                 .onConflictDoNothing()
                 .execute();
     }
+
+    @Transactional
+    public void deleteAllSignals() {
+        dsl.delete(SIGNALS).execute();
+    }
 }

@@ -1,5 +1,7 @@
 package ru.grnk.tradevisor.integration.telegram.webhook;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
@@ -14,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.ApiResponse;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 
@@ -28,6 +31,7 @@ public class TelegramApiClient {
 
     private final RestTemplate restTemplate;
     private final TradevisorProperties tradevisorProperties;
+    private final ObjectMapper om;
 
     @PostConstruct
     public void initWebHook() {
@@ -129,6 +133,30 @@ public class TelegramApiClient {
             return false;
         }
     }
+
+    public Message sendAndGetMessage(SendMessage sendMessage) {
+        String token = tradevisorProperties.integration().telegram().chatToken();
+        try {
+            String apiUrl = "https://api.telegram.org/bot" + token + "/sendMessage";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<SendMessage> entity = new HttpEntity<>(sendMessage, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                JavaType type = om.getTypeFactory()
+                        .constructParametricType(ApiResponse.class, Message.class);
+                ApiResponse<Message> apiResponse = om.readValue(response.getBody(), type);
+                if (apiResponse != null && apiResponse.getOk()) {
+                    return apiResponse.getResult();
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error sending message", e);
+            return null;
+        }
+    }
+
 
     public boolean sendMessage(SendMessage sendMessage) {
         String token = tradevisorProperties.integration().telegram().chatToken();

@@ -57,26 +57,39 @@ public class TelegramMessageBuilder {
         sendMessage.setChatId(chatId.toString());
         sendMessage.setText("Выберите действие:");
 
+        InlineKeyboardButton statsButton = new InlineKeyboardButton();
+        statsButton.setText("/stats");
+        statsButton.setCallbackData("stats");
+
+        InlineKeyboardButton accountButton = new InlineKeyboardButton();
+        accountButton.setText("/account_info");
+        accountButton.setCallbackData("account_info");
+
+        InlineKeyboardButton closeAllButton = new InlineKeyboardButton();
+        closeAllButton.setText("/close_all");
+        closeAllButton.setCallbackData("close_all");
+
+        InlineKeyboardButton resetSignals = new InlineKeyboardButton();
+        resetSignals.setText("/delete_signals");
+        resetSignals.setCallbackData("delete_signals");
+
+        InlineKeyboardButton deleteAllMessages = new InlineKeyboardButton();
+        deleteAllMessages.setText("/delete_all_messages");
+        deleteAllMessages.setCallbackData("delete_all_messages");
+
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
         List<InlineKeyboardButton> row1 = new ArrayList<>();
-        InlineKeyboardButton statsButton = new InlineKeyboardButton();
-        statsButton.setText("/stats");
-        statsButton.setCallbackData("stats");
         row1.add(statsButton);
+        row1.add(accountButton);
+        row1.add(closeAllButton);
 
         List<InlineKeyboardButton> row2 = new ArrayList<>();
-        InlineKeyboardButton accountButton = new InlineKeyboardButton();
-        accountButton.setText("/account_info");
-        accountButton.setCallbackData("account_info");
-        row2.add(accountButton);
+        row2.add(resetSignals);
 
         List<InlineKeyboardButton> row3 = new ArrayList<>();
-        InlineKeyboardButton closeAllButton = new InlineKeyboardButton();
-        closeAllButton.setText("/close_all");
-        closeAllButton.setCallbackData("close_all");
-        row3.add(closeAllButton);
+        row3.add(deleteAllMessages);
 
         rows.add(row1);
         rows.add(row2);
