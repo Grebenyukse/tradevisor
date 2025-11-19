@@ -3,22 +3,25 @@ package ru.grnk.tradevisor.collect.prices;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
-import ru.grnk.tradevisor.common.repository.ParametersRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
 
+import javax.annotation.PostConstruct;
 import java.text.DecimalFormat;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.sendSimpleMessage;
@@ -28,57 +31,50 @@ import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.sen
 @RequiredArgsConstructor
 public class PricesLoaderServiceImpl {
 
-    public static final String SHARES_TICKER_NAMES_LOADED = "shares_ticker_names_loaded";
     public static final Integer TICKERS_BATCH_LOAD = 1000;
     private final TickersRepository tickersRepository;
-    private final ParametersRepository parametersRepository;
     private final List<PricesLoader> loaders;
     private final TelegramApiClient telegramApiClient;
     private final TradevisorProperties tradevisorProperties;
+
+    // Добавляем поле для хранения времени начала
+    private LocalDateTime startTime;
+
+    @PostConstruct
+    public void init() {
+        loaders.forEach(PricesLoader::initTickers);
+    }
 
     @SneakyThrows
     @Scheduled(cron = "${app.collect.prices.cron}")
     public void doWork() {
         log.debug("start collecting prices");
-
-        Map<String, String> parameters = parametersRepository.getAllParameters();
-
-        // Отправляем начальное сообщение и сохраняем его ID
-        String messageId = sendInitialTelegramMessage("🔄 Инициализация тикеров...");
-        loaders.forEach(PricesLoader::initTickers);
-
+        // Сохраняем время начала
+        startTime = LocalDateTime.now();
+        String messageId = sendInitialTelegramMessage("🔄 Звгрузка тикеров...");
         Integer totalTickersCount = tickersRepository.getAllTickersCount();
         if (totalTickersCount == 0) {
             log.info("Нет тикеров для загрузки");
             updateTelegramMessage(messageId, "📭 Нет тикеров для загрузки котировок");
             return;
         }
-
         Map<String, Integer> provider2TickersCount = tickersRepository.getTickersCountByProvider();
         Map<String, Integer> providerProcessedCount = new ConcurrentHashMap<>();
-
-        // Инициализируем счетчики обработанных тикеров для каждого провайдера
         provider2TickersCount.keySet().forEach(provider -> providerProcessedCount.put(provider, 0));
-
         StringBuilder initialMessage = new StringBuilder();
         initialMessage.append("🚀 Начало загрузки котировок...\n")
                 .append("📊 Всего тикеров: ").append(totalTickersCount).append("\n")
                 .append("🏢 Провайдеры:\n");
-
         for (Map.Entry<String, Integer> entry : provider2TickersCount.entrySet()) {
             initialMessage.append("  • ").append(entry.getKey()).append(": ")
                     .append(entry.getValue()).append(" тикеров\n");
         }
-
         initialMessage.append("🕐 Время начала: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-
+                .append(startTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         updateTelegramMessage(messageId, initialMessage.toString());
-
         Map<String, Integer> providerOffsets = new ConcurrentHashMap<>();
         Map<String, Boolean> providerCompleted = new ConcurrentHashMap<>();
         DecimalFormat df = new DecimalFormat("#.##");
-
         try {
             Map<String, PricesLoader> providerToLoader = new HashMap<>();
             for (PricesLoader loader : loaders) {
@@ -154,7 +150,7 @@ public class PricesLoaderServiceImpl {
                     providerCompleted.put(currentProvider, true);
                     log.info("Provider {} completed", currentProvider);
                     // Для завершения провайдера отправляем отдельное сообщение
-                    sendTelegramMessage(String.format("✅ Провайдер %s завершен", currentProvider));
+// sendTelegramMessage(String.format("✅ Провайдер %s завершен", currentProvider));
                 } else {
                     providerOffsets.put(currentProvider, offset + tickers.size());
                 }
@@ -179,6 +175,14 @@ public class PricesLoaderServiceImpl {
                                      Map<String, Integer> providerProcessedCount) {
         DecimalFormat df = new DecimalFormat("#.##");
         StringBuilder finalMessage = new StringBuilder();
+
+        // Вычисляем время окончания и продолжительность
+        LocalDateTime endTime = LocalDateTime.now();
+        Duration duration = Duration.between(startTime, endTime);
+        long hours = duration.toHours();
+        long minutes = duration.toMinutes() % 60;
+        long seconds = duration.getSeconds() % 60;
+
         finalMessage.append("✅ Загрузка котировок завершена!\n")
                 .append("📊 Обработано тикеров: ").append(processedCount).append("/").append(totalCount)
                 .append(" (").append(df.format((double) processedCount / totalCount * 100)).append("%)\n")
@@ -195,8 +199,19 @@ public class PricesLoaderServiceImpl {
                     .append(" (").append(df.format(percentage)).append("%)\n");
         }
 
-        finalMessage.append("🕐 Время окончания: ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        finalMessage.append("🕐 Время начала: ")
+                .append(startTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))).append("\n")
+                .append("🏁 Время окончания: ")
+                .append(endTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))).append("\n")
+                .append("⏱️ Затраченное время: ");
+
+        if (hours > 0) {
+            finalMessage.append(hours).append(" ч ");
+        }
+        if (minutes > 0) {
+            finalMessage.append(minutes).append(" мин ");
+        }
+        finalMessage.append(seconds).append(" сек");
 
         return finalMessage.toString();
     }

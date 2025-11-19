@@ -53,12 +53,12 @@ public class BybitPricesService implements PricesLoader {
 
     @Override
     public void initTickers() {
-        if (!tradevisorProperties.integration().bybit().loadTickers()) return;
+        if (tickersRepository.getProviderTickersCount("bybit") > 0) return;
         log.info("start loading tickers for bybit");
         var tickers = bybitClient.fetchAllTickers();
         tickers.stream()
                 .map(BybitPricesService::from)
-                .forEach(tickersRepository::saveInstrument);
+                .forEach(x -> tickersRepository.saveInstrument(x, "bybit"));
     }
 
     private Timestamp findStartTime(String symbol) {

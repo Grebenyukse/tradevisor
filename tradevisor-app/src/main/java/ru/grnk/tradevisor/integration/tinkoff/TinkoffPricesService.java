@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.prices.PricesLoader;
 import ru.grnk.tradevisor.collect.utils.Shares2TickerMapper;
+import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.tinkoff.piapi.contract.v1.CandleInterval;
@@ -24,14 +25,16 @@ public class TinkoffPricesService implements PricesLoader {
     private final InvestApi investApi;
     private final MarketDataRepository marketDataRepository;
     private final TickersRepository tickersRepository;
+    private final TradevisorProperties tradevisorProperties;
 
     @Override
     public void initTickers() {
+        if (tickersRepository.getProviderTickersCount("tinkoff") > 0) return;
         var shares = investApi.getInstrumentsService().getAllShares();
         try {
             shares.get(10, TimeUnit.SECONDS).stream()
                     .map(Shares2TickerMapper::from)
-                    .forEach(tickersRepository::saveInstrument);
+                    .forEach(x -> tickersRepository.saveInstrument(x, "tinkoff"));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -59,7 +59,7 @@ app:
     prices:
       cron: 1 * * * * *
       finam: true
-      tinkoff: false
+      tinkoff: true
       bybit: true
   calculate:
     cron: 1 * * * * *
@@ -79,11 +79,6 @@ app:
     retention_days: 30
     enabled: true
   integration:
-    tinkoff:
-      enabled: false
-      token: ${TINKOFF_INVEST_TOKEN}
-      host: "invest-public-api.tinkoff.ru:443"
-      history-max-depth-days: 1
     proxyapi:
       enabled: false
       key: ${PROXY_API_KEY}
@@ -108,6 +103,11 @@ app:
       api-key: ${NEWS_API_KEY}
       url: "https://newsapi.org/v2/top-headlines?category=business"
       page-size: 50
+    tinkoff:
+      enabled: true
+      token: ${TINKOFF_INVEST_TOKEN}
+      host: "invest-public-api.tinkoff.ru:443"
+      history-max-depth-days: 1
     finam:
       enabled: true
       secret: ${FINAM_API_KEY}
@@ -122,4 +122,3 @@ app:
       secret: ${BYBIT_SECRET}
       url: https://api.bybit.com
       history-max-depth-days: 30
-      load-tickers: false

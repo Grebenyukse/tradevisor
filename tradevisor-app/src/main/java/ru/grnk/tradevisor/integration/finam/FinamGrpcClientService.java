@@ -42,6 +42,7 @@ public class FinamGrpcClientService implements PricesLoader {
     private final TickersRepository tickersRepository;
 
     public void initTickers() {
+        if (tickersRepository.getProviderTickersCount("finam") > 0) return;
         initExchanges();
         var assetsRs = assetsServiceBlockingStub.withCallCredentials(getBearer())
                 .assets(AssetsRequest.newBuilder().build());
