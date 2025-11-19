@@ -15,7 +15,7 @@ public class StartCmdHandlerImpl implements TgMessageHandler {
 
     @Override
     public String command() {
-        return "start";
+        return "/start";
     }
 
     @Override

@@ -15,7 +15,7 @@ public class AccountInfoCmdHandlerImpl implements TgMessageHandler {
 
     @Override
     public String command() {
-        return "account_info";
+        return "/account_info";
     }
 
     @Override

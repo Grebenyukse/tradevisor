@@ -15,7 +15,7 @@ public class CloseAllCmdHandlerImpl implements TgMessageHandler {
 
     @Override
     public String command() {
-        return "close_all";
+        return "/close_all";
     }
 
     @Override

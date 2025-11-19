@@ -17,7 +17,7 @@ public class DeleteSignalsCmdHandlerImpl implements TgMessageHandler {
 
     @Override
     public String command() {
-        return "delete_signals";
+        return "/delete_signals";
     }
 
     @Override

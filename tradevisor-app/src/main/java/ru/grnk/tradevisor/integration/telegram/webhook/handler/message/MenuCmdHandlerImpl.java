@@ -15,7 +15,7 @@ public class MenuCmdHandlerImpl implements TgMessageHandler {
 
     @Override
     public String command() {
-        return "menu";
+        return "/menu";
     }
 
     @Override

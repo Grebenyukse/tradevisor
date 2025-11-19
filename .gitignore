@@ -7,3 +7,4 @@
 todo.txt
 **/.testenv
 tradevisor-app/src/test/resources/config/.testenv
+/logs/

@@ -15,7 +15,7 @@ public class StatsCmdHandlerImpl implements TgMessageHandler {
 
     @Override
     public String command() {
-        return "stats";
+        return "/stats";
     }
 
     @Override

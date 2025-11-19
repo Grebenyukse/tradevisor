@@ -14,7 +14,7 @@ public class DeleteMessagesCmdHandlerImpl implements TgMessageHandler {
 
     @Override
     public String command() {
-        return "delete_all_messages";
+        return "/delete_all_messages";
     }
 
     @Override

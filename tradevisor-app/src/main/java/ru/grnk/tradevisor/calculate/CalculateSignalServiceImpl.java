@@ -22,6 +22,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.sendSimpleMessage;
 
@@ -39,6 +40,9 @@ public class CalculateSignalServiceImpl {
 
     @Value("${app.calculate.batch-size:1000}")
     private int batchSize;
+
+    private final AtomicLong lastTelegramUpdate = new AtomicLong(0);
+    private static final long MIN_UPDATE_INTERVAL = 5000;
 
     @Scheduled(cron = "${app.calculate.cron}")
     public void doWork() {
@@ -59,6 +63,7 @@ public class CalculateSignalServiceImpl {
         try {
             Message msg = telegramApiClient.sendAndGetMessage(startMessage);
             messageId = String.valueOf(msg.getMessageId());
+            lastTelegramUpdate.set(System.currentTimeMillis());
         } catch (Exception e) {
             log.warn("Не удалось отправить начальное сообщение в Telegram", e);
         }
@@ -99,7 +104,13 @@ public class CalculateSignalServiceImpl {
                     });
                     processedCount++;
                     if (processedCount % 10 == 0 || processedCount == totalTickersCount) {
-                        updateProgressMessage(chatId, messageId, processedCount, totalTickersCount, t.getTickerCode(), df);
+                        long currentTime = System.currentTimeMillis();
+                        long lastUpdate = lastTelegramUpdate.get();
+                        if (currentTime - lastUpdate >= MIN_UPDATE_INTERVAL) {
+                            if (lastTelegramUpdate.compareAndSet(lastUpdate, currentTime)) {
+                                updateProgressMessage(chatId, messageId, processedCount, totalTickersCount, t.getTickerCode(), df);
+                            }
+                        }
                     }
                 } catch (Exception e) {
                     log.error("Ошибка при обработке тикера {}: {}", t.getTickerCode(), e.getMessage(), e);
