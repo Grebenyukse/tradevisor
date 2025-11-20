@@ -58,15 +58,16 @@ app:
       news: false
     prices:
       cron: 1 * * * * *
-      finam: true
+      finam: false
       tinkoff: true
-      bybit: true
+      bybit: false
   calculate:
     cron: 1 * * * * *
     fibo: true
     bars_required_to_calculate_fibo: 300
     gap: false
     min_touches_count: 2
+    batch-size: 1000
   trade:
     cron: 1 * * * * *
     limits: 1

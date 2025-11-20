@@ -56,7 +56,7 @@ public class TinkoffPricesService implements PricesLoader {
             return;
         }
         investApi.getMarketDataService()
-                .getCandlesSync(instrumentUuid, lastTimestamp, Instant.now(), CandleInterval.CANDLE_INTERVAL_5_MIN)
+                .getCandlesSync(instrumentUuid, lastTimestamp, Instant.now(), CandleInterval.CANDLE_INTERVAL_HOUR)
                 .stream()
                 .filter(HistoricCandle::getIsComplete)
                 .forEach(c -> marketDataRepository.saveMarketData(c, instrumentUuid));

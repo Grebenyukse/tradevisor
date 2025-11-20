@@ -7,6 +7,7 @@ public record TrvCalculateProperties(
         Boolean gap,
         Boolean alwaysBuy,
         Integer barsRequiredToCalculateFibo,
-        Integer minTouchesCount
+        Integer minTouchesCount,
+        Integer batchSize
 ) {
 }
