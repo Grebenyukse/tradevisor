@@ -131,7 +131,7 @@ public class PricesLoaderServiceImpl {
                             providerProcessedCount.merge(currentProvider, 1, Integer::sum);
                             continue;
                         }
-                        if (e.getMessage().contains("RESOURCE_EXHAUSTED")) {
+                        if (e.getMessage().contains("RESOURCE_EXHAUSTED") || e.getMessage().contains("Превышен лимит запросов в минуту")) {
                             log.warn("RESOURCE EXHAUSTED for provider: {}", currentProvider);
                             resourceExhausted = true;
                             providerOffsets.put(currentProvider, offset);
