@@ -68,7 +68,7 @@ public class FinamGrpcClientService implements PricesLoader {
         var symbol = tickerCode;
         log.debug("load prices for {}", symbol);
         var bearer = getBearer();
-        var startTime = findStartTime(symbol);
+        var startTime = findStartTime(symbol, properties.integration().finam().historyMaxDepthDays());
         var endTime = convertToTimestamp(ZonedDateTime.now());
         var intervalInHours = (endTime.getSeconds() - startTime.getSeconds())/60;
         if (intervalInHours < 5) {
@@ -90,8 +90,8 @@ public class FinamGrpcClientService implements PricesLoader {
         }
     }
 
-    private Timestamp  findStartTime(String symbol) {
-        var res = marketDataRepository.getLatestTickTime(symbol);
+    private Timestamp  findStartTime(String symbol, int historyMaxDepthDays) {
+        var res = marketDataRepository.getLatestTickTime(symbol, historyMaxDepthDays);
         return convertToTimestamp(res);
     }
 

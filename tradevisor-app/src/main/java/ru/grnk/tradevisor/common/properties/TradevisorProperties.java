@@ -14,6 +14,5 @@ public record TradevisorProperties(
         @NotNull TrvNotificationProperties notification,
         @NotNull TrvIntegrationProperties integration,
         @NotNull TrvCleanupProperties cleanup
-
 ) {
 }

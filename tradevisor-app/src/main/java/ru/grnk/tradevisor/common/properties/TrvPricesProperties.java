@@ -4,6 +4,7 @@ public record TrvPricesProperties(
         String cron,
         Boolean finam,
         Boolean tinkoff,
-        Boolean bybit
+        Boolean bybit,
+        Boolean yahoofinance
 ) {
 }

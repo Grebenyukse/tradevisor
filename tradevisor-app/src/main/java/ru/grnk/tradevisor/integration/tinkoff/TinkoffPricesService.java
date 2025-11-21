@@ -42,7 +42,7 @@ public class TinkoffPricesService implements PricesLoader {
 
     @Override
     public void loadPrices(String tickerUid) {
-        loadHistoryForTicker(tickerUid);
+        loadHistoryForTicker(tickerUid, tradevisorProperties.integration().tinkoff().historyMaxDepthDays());
     }
 
     @Override
@@ -50,8 +50,8 @@ public class TinkoffPricesService implements PricesLoader {
         return "tinkoff";
     }
 
-    public void loadHistoryForTicker(String instrumentUuid) {
-        var lastTimestamp = marketDataRepository.getLatestTickTime(instrumentUuid).toInstant();
+    public void loadHistoryForTicker(String instrumentUuid, int historyMaxDepthDays) {
+        var lastTimestamp = marketDataRepository.getLatestTickTime(instrumentUuid, historyMaxDepthDays).toInstant();
         if (lastTimestamp.isAfter(Instant.now())) {
             return;
         }

@@ -8,6 +8,7 @@ public record TrvIntegrationProperties(
         TrvTelegramProperties telegram,
         TrvNewsapiProperties newsapi,
         TrvFinamProperties finam,
-        TrvBybitProperties bybit
+        TrvBybitProperties bybit,
+        TrvYahoofinanceProperties yahoofinance
 ) {
 }

@@ -40,8 +40,7 @@ public class MarketDataRepository {
                 .collect(Collectors.toList());
     }
 
-    public OffsetDateTime getLatestTickTime(String tickerCode) {
-        var historyMaxDepthDays = trvProperties.integration().finam().historyMaxDepthDays();
+    public OffsetDateTime getLatestTickTime(String tickerCode, Integer historyMaxDepthDays) {
         return dsl.select(max(MARKET_DATA.TIME)).from(MARKET_DATA)
                 .where(MARKET_DATA.TICKER_CODE.eq(tickerCode))
                 .fetchOptionalInto(OffsetDateTime.class)

@@ -59,8 +59,9 @@ app:
     prices:
       cron: 1 * * * * *
       finam: false
-      tinkoff: true
+      tinkoff: false
       bybit: false
+      yahoofinance: true
   calculate:
     cron: 1 * * * * *
     fibo: true
@@ -123,3 +124,7 @@ app:
       secret: ${BYBIT_SECRET}
       url: https://api.bybit.com
       history-max-depth-days: 30
+    yahoofinance:
+      enabled: true
+      url: https://query1.finance.yahoo.com
+      history-max-depth-days: 7

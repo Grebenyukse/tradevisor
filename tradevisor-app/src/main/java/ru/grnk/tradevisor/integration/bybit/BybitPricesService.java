@@ -62,7 +62,7 @@ public class BybitPricesService implements PricesLoader {
     }
 
     private Timestamp findStartTime(String symbol) {
-        var res = marketDataRepository.getLatestTickTime(symbol);
+        var res = marketDataRepository.getLatestTickTime(symbol, tradevisorProperties.integration().bybit().historyMaxDepthDays());
         return convertToTimestamp(res);
     }
 

@@ -93,7 +93,7 @@ public class CalculateSignalServiceImpl {
             }
             for (Tickers t : tickersBatch) {
                 try {
-                    var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode());
+                    var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode(), 30);
                     strategies.forEach(s -> {
                         var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
                         if (candles.size() < s.barsRequiredToCalcStrategy()) return;
