@@ -27,7 +27,7 @@ import static ru.grnk.tradevisor.common.util.TimeUtils.convertToTimestamp;
 @ConditionalOnProperty(value = "app.collect.prices.yahoofinance")
 public class YahooFinancePricesService implements PricesLoader {
 
-    private final YahooFinanceClient yahooFinanceClient;
+    private final YahooFinanceService yahooFinanceService;
     private final MarketDataRepository marketDataRepository;
     private final TickersRepository tickersRepository;
     private final TradevisorProperties tradevisorProperties;
@@ -36,7 +36,7 @@ public class YahooFinancePricesService implements PricesLoader {
     public void initTickers() {
         if (tickersRepository.getProviderTickersCount("yahoofinance") > 0) return;
         log.info("Start loading tickers for Yahoo Finance");
-        var tickers = yahooFinanceClient.fetchAllTickers();
+        var tickers = yahooFinanceService.fetchAllTickers();
         for (YahooTickerInfo symbol : tickers) {
             try {
                 Tickers ticker = createTicker(symbol);
@@ -57,8 +57,7 @@ public class YahooFinancePricesService implements PricesLoader {
             return;
         }
         long from = startTime.getSeconds();
-        long to = endTime.getSeconds();
-        var candles = yahooFinanceClient.fetchHistoricalData(tickerCode, from, to);
+        var candles = yahooFinanceService.fetchHistoricalData(tickerCode, from);
         var marketDataList = candles.stream()
                 .map(candle -> from(candle, tickerCode))
                 .collect(toList());

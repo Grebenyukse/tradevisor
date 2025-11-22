@@ -59,13 +59,13 @@ app:
     prices:
       cron: 1 * * * * *
       finam: false
-      tinkoff: false
-      bybit: false
+      tinkoff: true
+      bybit: true
       yahoofinance: true
   calculate:
-    cron: 1 * * * * *
+    cron: 15 * * * * *
     fibo: true
-    bars_required_to_calculate_fibo: 300
+    bars_required_to_calculate_fibo: 150
     gap: false
     min_touches_count: 2
     batch-size: 1000
@@ -109,7 +109,7 @@ app:
       enabled: true
       token: ${TINKOFF_INVEST_TOKEN}
       host: "invest-public-api.tinkoff.ru:443"
-      history-max-depth-days: 1
+      history-max-depth-days: 30
     finam:
       enabled: true
       secret: ${FINAM_API_KEY}
@@ -127,4 +127,4 @@ app:
     yahoofinance:
       enabled: true
       url: https://query1.finance.yahoo.com
-      history-max-depth-days: 7
+      history-max-depth-days: 30
