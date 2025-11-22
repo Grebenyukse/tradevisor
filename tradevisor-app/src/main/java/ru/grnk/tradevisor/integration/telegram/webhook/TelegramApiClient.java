@@ -35,6 +35,7 @@ public class TelegramApiClient {
 
     @PostConstruct
     public void initWebHook() {
+        log.info("init webhook");
         setWebhookIfNeeded();
     }
 

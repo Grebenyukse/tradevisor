@@ -48,8 +48,7 @@ public class PricesLoaderServiceImpl {
     @SneakyThrows
     @Scheduled(cron = "${app.collect.prices.cron}")
     public void doWork() {
-        log.debug("start collecting prices");
-        // Сохраняем время начала
+        log.info("start collecting prices");
         startTime = LocalDateTime.now();
         String messageId = sendInitialTelegramMessage("🔄 Звгрузка тикеров...");
         Integer totalTickersCount = tickersRepository.getAllTickersCount();

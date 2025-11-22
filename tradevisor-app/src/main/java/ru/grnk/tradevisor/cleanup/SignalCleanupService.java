@@ -20,6 +20,7 @@ public class SignalCleanupService {
 
     @Scheduled(cron = "${app.cleanup.cron}")
     public void cleanup() {
+        log.info("cleanup service start");
         var retention = tradevisorProperties.cleanup().retentionDays();
         var res = signalsRepository.expirePublishedSignals(retention);
         log.info("переведено в статус EXPIRED {} сигналов. retention: {}", res, retention);

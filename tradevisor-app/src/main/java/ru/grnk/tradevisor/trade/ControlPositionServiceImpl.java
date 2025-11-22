@@ -24,7 +24,6 @@ import static org.jooq.impl.DSL.grouping;
 public class ControlPositionServiceImpl implements TradeService {
 
     private final SignalsRepository signalsRepository;
-    private final InvestApi investApi;
 
     @Scheduled(cron = "${app.trade.cron}")
     @Override
