@@ -40,7 +40,8 @@ app:
       cron: 0/1 * * * * *
       finam: false
       tinkoff: false
-      bybit: true
+      bybit: false
+      yahoofinance: false
   calculate:
     cron: 0/1 * * * * *
     fibo: false
@@ -102,4 +103,8 @@ app:
       key: ${BYBIT_KEY}
       secret: ${BYBIT_SECRET}
       url: https://api.bybit.com
+      history-max-depth-days: 30
+    yahoofinance:
+      enabled: true
+      url: https://query1.finance.yahoo.com
       history-max-depth-days: 30
