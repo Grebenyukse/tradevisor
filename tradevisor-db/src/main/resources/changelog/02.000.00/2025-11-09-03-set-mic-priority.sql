@@ -1,9 +1,6 @@
 --liquibase formatted sql
 
 --changeset SE-Grebenyuk:02.000.00/TVR-7/set-ticker-load-priority
-update tradevisor.tickers set load_priority = 400 where provider = 'yahoofinance';
-update tradevisor.tickers set load_priority = 300 where provider = 'bybit';
-update tradevisor.tickers set load_priority = 200 where provider = 'tinkoff';
 update tradevisor.tickers set load_priority = 100 where provider = 'fianm' and exchange = 'MISX';
 update tradevisor.tickers set load_priority = 90 where provider = 'fianm' and exchange = 'RUSX';
 update tradevisor.tickers set load_priority = 82 where provider = 'fianm' and exchange = '_SPBZ';

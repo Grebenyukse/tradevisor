@@ -49,11 +49,11 @@ public class MarketDataRepository {
 
     public void saveMarketData(HistoricCandle candle, String instrument_uid) {
         dsl.insertInto(MARKET_DATA, MARKET_DATA.TICKER_CODE,
-                MARKET_DATA.OPEN,
-                MARKET_DATA.HIGH,
-                MARKET_DATA.LOW,
-                MARKET_DATA.CLOSE,
-                MARKET_DATA.TIME
+                        MARKET_DATA.OPEN,
+                        MARKET_DATA.HIGH,
+                        MARKET_DATA.LOW,
+                        MARKET_DATA.CLOSE,
+                        MARKET_DATA.TIME
                 )
                 .values(
                         instrument_uid,
@@ -78,11 +78,16 @@ public class MarketDataRepository {
                         .setClose(record.getClose())
                         .setTime(record.getTime()))
                 .collect(Collectors.toList());
-        dsl.batchStore(batchRecords).execute();
+
+        // Для batch операций используем insert with on conflict
+        batchRecords.forEach(record ->
+                dsl.insertInto(MARKET_DATA)
+                        .set(record)
+                        .onConflictDoNothing()
+                        .execute()
+        );
     }
 
-
-    // finam trade api
     public void saveMarketData(Bar bar, String instrument_uid) {
         dsl.insertInto(MARKET_DATA, MARKET_DATA.TICKER_CODE,
                         MARKET_DATA.OPEN,

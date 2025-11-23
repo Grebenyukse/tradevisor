@@ -7,18 +7,9 @@ databaseChangeLog:
   - include:
       file: 2025-10-13-01-finam_exchanges.sql
       relativeToChangelogFile: true
-
   - include:
-      file: 2025-10-13-02-sup_parameters.sql
-      relativeToChangelogFile: true
-
-  - include:
-      file: 2025-10-13-03-quotes_providers.sql
-      relativeToChangelogFile: true
-
-  - include:
-      file: 2025-10-13-04-tickers.sql
+      file: 2025-10-13-02-tickers.sql
       relativeToChangelogFile: true
   - include:
-      file: 2025-11-09-07-set-mic-priority.sql
+      file: 2025-11-09-03-set-mic-priority.sql
       relativeToChangelogFile: true

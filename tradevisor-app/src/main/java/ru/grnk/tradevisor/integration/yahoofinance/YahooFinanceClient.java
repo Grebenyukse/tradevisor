@@ -110,7 +110,7 @@ public class YahooFinanceClient {
             if (!cookies.isEmpty()) {
                 String cookieHeader = String.join("; ", cookies);
                 headers.add("Cookie", cookieHeader);
-                log.info("Using cookies for chart request");
+                log.debug("Using cookies for chart request");
             }
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<byte[]> response = restTemplate.exchange(

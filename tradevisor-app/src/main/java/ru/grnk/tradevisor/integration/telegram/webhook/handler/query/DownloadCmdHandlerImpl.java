@@ -52,13 +52,12 @@ public class DownloadCmdHandlerImpl implements TgCallbackQueryHandler {
             return "";
         }
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("%-5s | %-10s | %-8s | %-8s | %-8s | %-8s | %-25s%n",
-                "ID", "TICKER", "OPEN", "HIGH", "LOW", "CLOSE", "TIME"));
+        sb.append(String.format("%-10s | %-8s | %-8s | %-8s | %-8s | %-25s%n",
+                "TICKER", "OPEN", "HIGH", "LOW", "CLOSE", "TIME"));
         sb.append("----------------------------------------------" +
                 "------------------------------------------------------\n");
         for (MarketData data : marketDataList) {
-            sb.append(String.format("%-5d | %-10s | %-8.2f | %-8.2f | %-8.2f | %-8.2f | %-25s%n",
-                    data.getId(),
+            sb.append(String.format("%-10s | %-8.2f | %-8.2f | %-8.2f | %-8.2f | %-25s%n",
                     data.getTickerCode(),
                     data.getOpen(),
                     data.getHigh(),

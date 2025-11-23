@@ -24,7 +24,6 @@ public class TestUtils {
 
         for (int i = 0; i < lows.length; i++) {
             list.add(new MarketData()
-                    .setId(i)
                     .setTickerCode(tickerCode)
                     .setLow(lows[i])
                     .setOpen(getRandFloat(lows[i], highs[i]))
