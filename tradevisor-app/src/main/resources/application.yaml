@@ -65,7 +65,7 @@ app:
   calculate:
     cron: 15 * * * * *
     fibo: true
-    bars_required_to_calculate_fibo: 500
+    bars_required_to_calculate_fibo: 150
     gap: false
     min_touches_count: 2
     batch-size: 1000

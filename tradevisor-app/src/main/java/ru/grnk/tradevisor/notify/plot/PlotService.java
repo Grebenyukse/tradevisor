@@ -25,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PlotService {
 
+    public static final int CHART_BARS_NORMAL_COUNT = 600;
     private final TickersRepository tickersRepository;
     private final MarketDataRepository marketDataRepository;
     private final QuickChartService quickChartService;
@@ -35,7 +36,7 @@ public class PlotService {
     @SneakyThrows
     public String saveCandlestickChartToFile(Signals signal, boolean printRequest) {
         List<MarketData> md = marketDataRepository.fetchMarketDataForLast(
-                tradevisorProperties.calculate().barsRequiredToCalculateFibo(),
+                Math.max(tradevisorProperties.calculate().barsRequiredToCalculateFibo(), CHART_BARS_NORMAL_COUNT),
                 signal.getTickerCode()
         );
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();
