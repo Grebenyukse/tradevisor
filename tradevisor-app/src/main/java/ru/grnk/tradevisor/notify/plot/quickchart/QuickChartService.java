@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -131,13 +132,26 @@ public class QuickChartService {
     private static List<ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem> getAnnotations(PlotRecord plotRecord) {
         List<ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem> res = new ArrayList<>();
         for (var hl : plotRecord.lines()) {
+            float ymin, ymax;
+            OffsetDateTime xmin, xmax;
+            if (hl.fromPrice() > hl.toPrice()) {
+                ymin = hl.toPrice();
+                ymax = hl.fromPrice();
+                xmin = hl.toUtc();
+                xmax = hl.fromUtc();
+            } else {
+                ymin = hl.fromPrice();
+                ymax = hl.toPrice();
+                xmin = hl.fromUtc();
+                xmax = hl.toUtc();
+            }
             res.add(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.builder()
                     .type("line")
                     .mode("horizontal")
-                    .yMin(Math.min(hl.fromPrice(), hl.toPrice()))
-                    .yMax(Math.max(hl.toPrice(), hl.fromPrice()))
-                    .xMax(Math.min(hl.fromUtc().toEpochSecond(), hl.toUtc().toEpochSecond()) * 1000)
-                    .xMin(Math.max(hl.fromUtc().toEpochSecond(), hl.toUtc().toEpochSecond()) * 1000)
+                    .yMin(ymin)
+                    .yMax(ymax)
+                    .xMin(xmin.toEpochSecond() * 1000)
+                    .xMax(xmax.toEpochSecond() * 1000)
                     .borderColor(hl.color())
                     .label(ChartDto.ChartOptions.ChartPlugins.ChartAnnotation.ChartAnnotationItem.Label.builder()
                             .enabled(true)
