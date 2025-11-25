@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
@@ -27,11 +28,16 @@ public class PlotService {
     private final TickersRepository tickersRepository;
     private final MarketDataRepository marketDataRepository;
     private final QuickChartService quickChartService;
+    private final TradevisorProperties tradevisorProperties;
+
     private final ObjectMapper om;
 
     @SneakyThrows
     public String saveCandlestickChartToFile(Signals signal, boolean printRequest) {
-        List<MarketData> md = marketDataRepository.fetchMarketDataForLast(100, signal.getTickerCode());
+        List<MarketData> md = marketDataRepository.fetchMarketDataForLast(
+                tradevisorProperties.calculate().barsRequiredToCalculateFibo(),
+                signal.getTickerCode()
+        );
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();
         if (ohlcData.isEmpty()) return null;
         Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());

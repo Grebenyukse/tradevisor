@@ -86,7 +86,7 @@ public class CalculateSignalServiceImpl {
         int offset = 0;
         List<Tickers> tickersBatch;
         int processedCount = 0;
-        DecimalFormat df = new DecimalFormat("#.##");
+        DecimalFormat df = new DecimalFormat("#.#####");
         do {
             tickersBatch = tickersRepository.getUnpublishedTickersBatch(batchSize, offset);
             if (tickersBatch.isEmpty()) {

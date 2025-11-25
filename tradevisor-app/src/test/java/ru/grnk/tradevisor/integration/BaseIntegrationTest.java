@@ -60,7 +60,7 @@ abstract class BaseIntegrationTest {
     @Autowired
     protected SignalsRepository signalsRepository;
 
-    protected static DecimalFormat df = new DecimalFormat("#.####");
+    protected static DecimalFormat df = new DecimalFormat("#.#####");
 
     static {
         df.setRoundingMode(RoundingMode.CEILING);

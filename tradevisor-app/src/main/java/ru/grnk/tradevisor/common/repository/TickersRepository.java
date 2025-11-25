@@ -72,7 +72,6 @@ public class TickersRepository {
                 .fetchMap(TICKERS.PROVIDER, DSL.count());
     }
 
-    // Добавьте этот метод в TickersRepository
     public int getUnpublishedTickersCount() {
         return dsl.selectCount()
                 .from(TICKERS)
@@ -91,7 +90,6 @@ public class TickersRepository {
                 .fetchOneInto(Integer.class);
     }
 
-    // Добавьте этот метод в TickersRepository
     public List<Tickers> getUnpublishedTickersBatch(int limit, int offset) {
         return dsl.selectFrom(TICKERS)
                 .whereNotExists(

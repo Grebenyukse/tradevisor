@@ -73,7 +73,7 @@ public class PricesLoaderServiceImpl {
         updateTelegramMessage(messageId, initialMessage.toString());
         Map<String, Integer> providerOffsets = new ConcurrentHashMap<>();
         Map<String, Boolean> providerCompleted = new ConcurrentHashMap<>();
-        DecimalFormat df = new DecimalFormat("#.##");
+        DecimalFormat df = new DecimalFormat("#.#####");
         try {
             Map<String, PricesLoader> providerToLoader = new HashMap<>();
             for (PricesLoader loader : loaders) {
@@ -172,7 +172,7 @@ public class PricesLoaderServiceImpl {
     private String buildFinalMessage(int processedCount, int totalCount,
                                      Map<String, Integer> providerTotalCount,
                                      Map<String, Integer> providerProcessedCount) {
-        DecimalFormat df = new DecimalFormat("#.##");
+        DecimalFormat df = new DecimalFormat("#.#####");
         StringBuilder finalMessage = new StringBuilder();
 
         // Вычисляем время окончания и продолжительность

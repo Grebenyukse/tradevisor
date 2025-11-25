@@ -62,7 +62,7 @@ class FiboSignalsLong382Test {
         Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles, 2);
         assertTrue(result.isPresent());
         var resultParams = result.get();
-        DecimalFormat df = new DecimalFormat("#.####");
+        DecimalFormat df = new DecimalFormat("#.#####");
         df.setRoundingMode(RoundingMode.CEILING);
         assertThat(resultParams.direction()).isEqualTo(TradingDirection.LONG);
         assertThat(resultParams.lots()).isEqualTo(2);
@@ -102,7 +102,7 @@ class FiboSignalsLong382Test {
         Optional<TrvCalculationResult> result = FiboSignalsProducer.getFiboSignals(candles, 2);
         assertTrue(result.isPresent());
         var resultParams = result.get();
-        DecimalFormat df = new DecimalFormat("#.####");
+        DecimalFormat df = new DecimalFormat("#.#####");
         df.setRoundingMode(RoundingMode.CEILING);
         assertThat(resultParams.direction()).isEqualTo(TradingDirection.LONG);
         assertThat(resultParams.lots()).isEqualTo(2);

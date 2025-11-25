@@ -23,7 +23,7 @@ class MyBotIntegrationTest {
     @Test
     void testWebhookIsAccessible() {
         TrvTelegramProperties telegramProperties = tradevisorProperties.integration().telegram();
-        String webhookUrl = "https://api.telegram.org/bot5364460446:AAGxpCglqUunPCyEU5ziIMvHOtSedT9Cp_k";
+        String webhookUrl = String.format("https://api.telegram.org/bot%s:%s", telegramProperties.chatId(), telegramProperties.baseUrl());
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> response = restTemplate.getForEntity(
                 webhookUrl + "/health", String.class);
