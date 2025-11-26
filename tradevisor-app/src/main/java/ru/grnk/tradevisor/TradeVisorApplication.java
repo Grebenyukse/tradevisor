@@ -10,7 +10,6 @@ import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 
 @SpringBootApplication(scanBasePackages = "ru.grnk.tradevisor")
 @EnableConfigurationProperties({TradevisorProperties.class})
-@EnableScheduling
 public class TradeVisorApplication {
     public static void main(String[] args) {
         // Загрузка переменных из .env

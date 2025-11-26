@@ -24,7 +24,7 @@ public class TelegramNotificationService {
 
     private final TelegramApiClient telegramApiClient;
     private final TradevisorProperties tradevisorProperties;
-    private final DecimalFormat decimalFormat = new DecimalFormat("#.#####");
+    private final DecimalFormat decimalFormat = new DecimalFormat("#.##");
 
     public String sendInitialMessage(String text) {
         try {

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
+import ru.grnk.tradevisor.common.util.ObjectMapperUtils;
 import ru.grnk.tradevisor.integration.yahoofinance.dto.YahooCandle;
 import ru.grnk.tradevisor.integration.yahoofinance.dto.YahooChartResponse;
 import ru.grnk.tradevisor.integration.yahoofinance.dto.YahooTickerInfo;
@@ -14,6 +15,7 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -25,6 +27,22 @@ import java.util.stream.IntStream;
 class YahooFinanceService {
 
     private final YahooFinanceClient yahooFinanceClient;
+
+
+    public List<YahooTickerInfo> fetchAllTickersFromJson() {
+        try {
+            ClassPathResource resource = new ClassPathResource("tickers/yahoofinance_tickers.json");
+            String[] symbols = ObjectMapperUtils.readValue(resource.getInputStream(), String[].class);
+            List<YahooTickerInfo> tickers = Arrays.stream(symbols)
+                    .map(symbol -> new YahooTickerInfo(symbol, symbol, "NYSE", "EQUITY"))
+                    .collect(Collectors.toList());
+            log.info("Loaded {} tickers from JSON file", tickers.size());
+            return tickers;
+        } catch (Exception e) {
+            log.error("Failed to load tickers from JSON file", e);
+            throw new IllegalStateException("Failed to load tickers from JSON file", e);
+        }
+    }
 
     public List<YahooTickerInfo> fetchAllTickers() {
         try {

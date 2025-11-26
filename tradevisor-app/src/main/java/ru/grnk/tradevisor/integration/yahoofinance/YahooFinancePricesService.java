@@ -36,7 +36,7 @@ public class YahooFinancePricesService implements PricesLoader {
     public void initTickers() {
         if (tickersRepository.getProviderTickersCount("yahoofinance") > 0) return;
         log.info("Start loading tickers for Yahoo Finance");
-        var tickers = yahooFinanceService.fetchAllTickers();
+        var tickers = yahooFinanceService.fetchAllTickersFromJson();
         for (YahooTickerInfo symbol : tickers) {
             try {
                 Tickers ticker = createTicker(symbol);

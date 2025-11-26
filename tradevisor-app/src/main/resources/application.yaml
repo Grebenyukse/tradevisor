@@ -58,7 +58,7 @@ app:
       news: false
     prices:
       cron: 1 * * * * *
-      finam: false
+      finam: true
       tinkoff: true
       bybit: true
       yahoofinance: true
