@@ -12,13 +12,12 @@ import ru.grnk.tradevisor.calculate.strategies.IStrategy;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
+import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
 
-import javax.annotation.PostConstruct;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -45,7 +44,6 @@ public class CalculateSignalServiceImpl {
     private final AtomicLong lastTelegramUpdate = new AtomicLong(0);
     private static final long MIN_UPDATE_INTERVAL = 5000;
 
-    @PostConstruct
     @Scheduled(cron = "${app.calculate.cron}")
     public void doWork() {
         log.info("calculate all signals mf");

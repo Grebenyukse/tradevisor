@@ -13,7 +13,6 @@ import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
 
-import javax.annotation.PostConstruct;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -40,14 +39,10 @@ public class PricesLoaderServiceImpl {
     // Добавляем поле для хранения времени начала
     private LocalDateTime startTime;
 
-    @PostConstruct
-    public void init() {
-        loaders.forEach(PricesLoader::initTickers);
-    }
-
     @SneakyThrows
     @Scheduled(cron = "${app.collect.prices.cron}")
     public void doWork() {
+        loaders.forEach(PricesLoader::initTickers);
         log.info("start collecting prices");
         startTime = LocalDateTime.now();
         String messageId = sendInitialTelegramMessage("🔄 Звгрузка тикеров...");

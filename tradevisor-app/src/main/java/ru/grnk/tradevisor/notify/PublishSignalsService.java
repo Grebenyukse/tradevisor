@@ -18,7 +18,6 @@ public class PublishSignalsService {
     private final MessagePublisher messagePublisher;
     private final SignalsRepository signalsRepository;
 
-    @PostConstruct
     @Scheduled(cron = "${app.notification.cron}")
     public void doWork() {
         log.info("start signals publishing");
