@@ -6,6 +6,7 @@ public record TrvTelegramProperties(
         String chatToken,
         String baseUrl,
         String webhookPath,
-        Boolean reRegister
+        Boolean reRegister,
+        TrvTelegramSupergroupProperties supergroup
 ) {
 }

@@ -50,11 +50,11 @@ public class CalculateSignalServiceImpl {
         int totalTickersCount = tickersRepository.getUnpublishedTickersCount();
         if (totalTickersCount == 0) {
             log.info("нет тикеров ждем когда появятся");
-            sendTelegramMessage("Нет тикеров для обработки. Ждем появления новых.");
+            sendTelegramLogMessage("Нет тикеров для обработки. Ждем появления новых.");
             return;
         }
-        Long chatId = Long.parseLong(tradevisorProperties.integration().telegram().chatId());
-        SendMessage startMessage = sendSimpleMessage(chatId,
+        Long chatId = tradevisorProperties.integration().telegram().supergroup().chatId();
+        SendMessage startMessage = sendSimpleMessage(chatId, tradevisorProperties.integration().telegram().supergroup().logsThreadId(),
                 "🚀 Начало расчета сигналов...\n" +
                         "📊 Всего тикеров: " + totalTickersCount + "\n" +
                         "🕐 Время начала: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
@@ -68,13 +68,13 @@ public class CalculateSignalServiceImpl {
         }
         try {
             int processedCount = processTickersWithUpdates(totalTickersCount, chatId, messageId);
-            sendTelegramMessage("✅ Расчет сигналов завершен!\n" +
+            sendTelegramLogMessage("✅ Расчет сигналов завершен!\n" +
                     "📊 Обработано тикеров: " + processedCount + "/" + totalTickersCount + "\n" +
                     "🕐 Время окончания: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         } catch (Exception e) {
             String errorMessage = "❌ Ошибка при расчете сигналов: " + e.getMessage();
             log.error(errorMessage, e);
-            sendTelegramMessage(errorMessage);
+            sendTelegramErrorMessage(errorMessage);
             throw new RuntimeException("Ошибка при расчете сигналов", e);
         }
         log.info("all signals calculated");
@@ -84,7 +84,7 @@ public class CalculateSignalServiceImpl {
         int offset = 0;
         List<Tickers> tickersBatch;
         int processedCount = 0;
-        DecimalFormat df = new DecimalFormat("#.#####");
+        DecimalFormat df = new DecimalFormat("#.##");
         do {
             tickersBatch = tickersRepository.getUnpublishedTickersBatch(batchSize, offset);
             if (tickersBatch.isEmpty()) {
@@ -139,20 +139,29 @@ public class CalculateSignalServiceImpl {
                 editMessage.setText(progressText);
                 telegramApiClient.editMessageText(editMessage);
             } else {
-                sendTelegramMessage(progressText);
+                sendTelegramLogMessage(progressText);
             }
         } catch (Exception e) {
             log.warn("Не удалось обновить сообщение прогресса в Telegram", e);
         }
     }
 
-    private void sendTelegramMessage(String text) {
+    private void sendTelegramMessage(String text, Integer threadId) {
         try {
-            Long chatId = Long.parseLong(tradevisorProperties.integration().telegram().chatId());
-            SendMessage message = sendSimpleMessage(chatId, text);
+            Long chatId = tradevisorProperties.integration().telegram().supergroup().chatId();
+            SendMessage message = sendSimpleMessage(chatId, threadId, text);
             telegramApiClient.sendAndGetMessage(message);
         } catch (Exception e) {
             log.warn("Не удалось отправить сообщение в Telegram: {}", text, e);
         }
     }
+
+    private void sendTelegramErrorMessage(String text) {
+        sendTelegramMessage(text, tradevisorProperties.integration().telegram().supergroup().errorsThreadId());
+    }
+
+    private void sendTelegramLogMessage(String text) {
+        sendTelegramMessage(text, tradevisorProperties.integration().telegram().supergroup().logsThreadId());
+    }
+
 }

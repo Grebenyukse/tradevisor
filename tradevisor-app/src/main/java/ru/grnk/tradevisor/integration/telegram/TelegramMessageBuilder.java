@@ -52,6 +52,14 @@ public class TelegramMessageBuilder {
         return sendMessage;
     }
 
+    public static SendMessage sendSimpleMessage(Long chatId, Integer threadId, String text) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId.toString());
+        sendMessage.setMessageThreadId(threadId);
+        sendMessage.setText(text);
+        return sendMessage;
+    }
+
     public static SendMessage sendMenu(Long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId.toString());
