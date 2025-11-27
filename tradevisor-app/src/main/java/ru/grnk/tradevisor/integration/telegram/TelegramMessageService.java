@@ -10,8 +10,8 @@ public class TelegramMessageService {
 
     private final TelegramSender telegramSender;
 
-    public void sendMessage(String url, String title, String text, Integer id) {
-        telegramSender.sendMessage(url, title, text, id);
+    public void sendMessage(String url, String title, String text, Integer id, Integer threadId) {
+        telegramSender.sendMessage(url, title, text, id, threadId);
     }
 
 }

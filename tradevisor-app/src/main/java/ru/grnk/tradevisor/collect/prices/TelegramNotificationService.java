@@ -28,8 +28,9 @@ public class TelegramNotificationService {
 
     public String sendInitialMessage(String text) {
         try {
-            Long chatId = Long.parseLong(tradevisorProperties.integration().telegram().chatId());
-            SendMessage message = sendSimpleMessage(chatId, text);
+            Long chatId = tradevisorProperties.integration().telegram().supergroup().chatId();
+            int logThreadId = tradevisorProperties.integration().telegram().supergroup().logsThreadId();
+            SendMessage message = sendSimpleMessage(chatId, logThreadId, text);
             Message msg = telegramApiClient.sendAndGetMessage(message);
             return msg != null ? String.valueOf(msg.getMessageId()) : null;
         } catch (Exception e) {
@@ -157,24 +158,25 @@ public class TelegramNotificationService {
     public void updateMessage(String messageId, String text) {
         try {
             if (messageId != null) {
-                Long chatId = Long.parseLong(tradevisorProperties.integration().telegram().chatId());
+                Long chatId = tradevisorProperties.integration().telegram().supergroup().chatId();
                 EditMessageText editMessage = new EditMessageText();
                 editMessage.setChatId(chatId.toString());
                 editMessage.setMessageId(Integer.parseInt(messageId));
                 editMessage.setText(text);
                 telegramApiClient.editMessageText(editMessage);
             } else {
-                sendMessage(text);
+                int defaultThreadId = tradevisorProperties.integration().telegram().supergroup().logsThreadId();
+                sendMessage(text, defaultThreadId);
             }
         } catch (Exception e) {
             log.warn("Не удалось обновить сообщение в Telegram: {}", text, e);
         }
     }
 
-    public void sendMessage(String text) {
+    public void sendMessage(String text, int threadId) {
         try {
-            Long chatId = Long.parseLong(tradevisorProperties.integration().telegram().chatId());
-            SendMessage message = sendSimpleMessage(chatId, text);
+            Long chatId = tradevisorProperties.integration().telegram().supergroup().chatId();
+            SendMessage message = sendSimpleMessage(chatId, threadId, text);
             telegramApiClient.sendAndGetMessage(message);
         } catch (Exception e) {
             log.warn("Не удалось отправить сообщение в Telegram: {}", text, e);

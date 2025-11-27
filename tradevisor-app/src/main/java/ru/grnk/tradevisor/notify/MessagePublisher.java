@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
+import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
@@ -13,6 +14,9 @@ import ru.grnk.tradevisor.integration.telegram.TelegramMessageService;
 import ru.grnk.tradevisor.notify.plot.PlotService;
 
 import java.util.Map;
+import java.util.Objects;
+
+import static java.util.Optional.ofNullable;
 
 @Component
 @RequiredArgsConstructor
@@ -22,6 +26,7 @@ public class MessagePublisher {
     private final PlotService plotService;
     private final TelegramMessageService telegramMessageService;
     private final TickersRepository tickersRepository;
+    private final TradevisorProperties tradevisorProperties;
 
     private final static Map<String, String> PROVIDER_TO_BASE_URL = Map.of("finam", "https://trading.finam.ru/profile/");
 
@@ -30,8 +35,24 @@ public class MessagePublisher {
         String image = plotService.saveCandlestickChartToFile(signal, true);
         if (image == null ) return;
         Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
-        telegramMessageService.sendMessage(image, getTitle(signal), getText(signal, ticker), signal.getId());
+        telegramMessageService.sendMessage(image, getTitle(signal), getText(signal, ticker), signal.getId(), getThreadId(ticker));
         signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.PUBLISHED);
+    }
+
+    private int getThreadId(Tickers ticker) {
+        int threadId = 0;
+        String lowerExchange = ofNullable(ticker.getExchange()).map(String::toLowerCase).orElse("");
+        if (Objects.equals(ticker.getProvider(), "bybit")) {
+            threadId = tradevisorProperties.integration().telegram().supergroup().cryptoThreadId();
+        } else if (lowerExchange.contains("moex") ||
+                lowerExchange.contains("spb_ru") ||
+                lowerExchange.contains("misx")
+        ) {
+            threadId = tradevisorProperties.integration().telegram().supergroup().rusThreadId();
+        } else {
+            threadId = tradevisorProperties.integration().telegram().supergroup().worldThreadId();
+        }
+        return threadId;
     }
 
     private static String getTitle(Signals signal) {

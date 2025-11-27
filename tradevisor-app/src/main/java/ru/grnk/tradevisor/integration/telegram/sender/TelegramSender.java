@@ -15,8 +15,8 @@ public class TelegramSender {
     private final TelegramApiClient telegramApiClient;
     private final TradevisorProperties tradevisorProperties;
 
-    public void sendMessage(String url, String title, String text, Integer id) {
-        Long chatId = Long.parseLong(tradevisorProperties.integration().telegram().chatId());
-        telegramApiClient.sendMessage(buildChartMessage(chatId, url, title, text, id));
+    public void sendMessage(String url, String title, String text, Integer id, Integer threadId) {
+        Long chatId = tradevisorProperties.integration().telegram().supergroup().chatId();
+        telegramApiClient.sendMessage(buildChartMessage(chatId, threadId, url, title, text, id));
     }
 }

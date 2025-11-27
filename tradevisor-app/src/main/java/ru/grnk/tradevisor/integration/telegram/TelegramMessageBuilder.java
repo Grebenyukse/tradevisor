@@ -115,9 +115,10 @@ public class TelegramMessageBuilder {
         return sendMessage;
     }
 
-    public static SendMessage buildChartMessage(Long chatId, String url, String title, String text, Integer signalId) {
+    public static SendMessage buildChartMessage(Long chatId, Integer threadId, String url, String title, String text, Integer signalId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId.toString());
+        sendMessage.setMessageThreadId(threadId);
         sendMessage.setText("<b>" + title + "</b>\n" + url + "\n" + text);
         sendMessage.enableHtml(true);
 
