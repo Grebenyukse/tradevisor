@@ -80,6 +80,16 @@ app:
       base-url: ${BASE_URL}
       webhook-path: "/"
       re-register: false
+      supergroup:
+        chat-id: ${SUPERGROUP_CHAT_ID}
+        positions-thread-id: ${POSITIONS_TOPIC_THREAD_ID}
+        orders-thread-id: ${ORDERS_TOPIC_THREAD_ID}
+        rus-thread-id: ${RUS_TOPIC_THREAD_ID}
+        world-thread-id: ${WORLD_TOPIC_THREAD_ID}
+        crypto-thread-id: ${CRYPTO_TOPIC_THREAD_ID}
+        logs-thread-id: ${LOGS_TOPIC_THREAD_ID}
+        statistics-thread-id: ${STATISTICS_TOPIC_THREAD_ID}
+        errors-thread-id: ${ERRORS_TOPIC_THREAD_ID}
     newsapi:
       enabled: false
       api-key: ${NEWS_API_KEY}
