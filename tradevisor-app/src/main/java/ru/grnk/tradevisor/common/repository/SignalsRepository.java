@@ -28,6 +28,7 @@ public class SignalsRepository {
     @Transactional
     public void updateSignalStatus(Integer signalId, TrvSignalStatus status) {
         dsl.update(SIGNALS).set(SIGNALS.STATUS, status.name())
+                .set(SIGNALS.UPDATED_AT, OffsetDateTime.now())
                 .where(SIGNALS.ID.eq(signalId))
                 .execute();
     }
@@ -61,6 +62,7 @@ public class SignalsRepository {
         OffsetDateTime cutoffTime = OffsetDateTime.now().minusDays(retentionDays);
         return dsl.update(SIGNALS)
                 .set(SIGNALS.STATUS, TrvSignalStatus.EXPIRED.name())
+                .set(SIGNALS.UPDATED_AT, OffsetDateTime.now())
                 .where(SIGNALS.STATUS.in(TrvSignalStatus.PUBLISHED.name(), TrvSignalStatus.CANCELLED.name()))
                 .and(SIGNALS.CREATED_AT.lt(cutoffTime))
                 .execute();
