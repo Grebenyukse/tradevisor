@@ -22,6 +22,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.sendSimpleMessage;
@@ -98,11 +99,15 @@ public class CalculateSignalServiceImpl {
                         if (candles.size() < s.barsRequiredToCalcStrategy()) return;
                         TrvCalculationResult result = s.calculate(candles);
                         if (result.direction() != TradingDirection.UNKNOWN) {
-                            signalsRepository.saveSignal(result, t.getTickerCode(), s.getStrategyUniqueName(), lastTickTime);
+                            String signalDescription = String.join(". ",
+                                    t.getTicker(), t.getExchange(), t.getProvider(),
+                                    Optional.ofNullable(result.description()).orElse("")
+                            );
+                            signalsRepository.saveSignal(result, t.getTickerCode(), s.getStrategyUniqueName(), lastTickTime, signalDescription);
                         }
                     });
                     processedCount++;
-                    if (processedCount % 10 == 0 || processedCount == totalTickersCount) {
+                    if (processedCount % 500 == 0 || processedCount == totalTickersCount) {
                         long currentTime = System.currentTimeMillis();
                         long lastUpdate = lastTelegramUpdate.get();
                         if (currentTime - lastUpdate >= MIN_UPDATE_INTERVAL) {

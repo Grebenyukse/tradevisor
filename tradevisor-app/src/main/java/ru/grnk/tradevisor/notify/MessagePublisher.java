@@ -15,6 +15,7 @@ import ru.grnk.tradevisor.notify.plot.PlotService;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
 
@@ -35,7 +36,7 @@ public class MessagePublisher {
         String image = plotService.saveCandlestickChartToFile(signal, true);
         if (image == null ) return;
         Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
-        telegramMessageService.sendMessage(image, getTitle(signal), getText(signal, ticker), signal.getId(), getThreadId(ticker));
+        telegramMessageService.sendMessage(image, getTitle(signal, ticker), getText(signal, ticker), signal.getId(), getThreadId(ticker));
         signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.PUBLISHED);
     }
 
@@ -55,8 +56,12 @@ public class MessagePublisher {
         return threadId;
     }
 
-    private static String getTitle(Signals signal) {
-        return signal.getTickerCode() + " " + TradingDirection.from(signal.getDirection()).name() + " " + signal.getName();
+    private static String getTitle(Signals signal, Tickers ticker) {
+        return String.join(". ",
+                ticker.getTicker(), ticker.getExchange(), ticker.getProvider(),
+                TradingDirection.from(signal.getDirection()).name(),
+                Optional.ofNullable(signal.getDescription()).orElse("")
+        );
     }
 
     private static String getText(Signals signal, Tickers ticker) {

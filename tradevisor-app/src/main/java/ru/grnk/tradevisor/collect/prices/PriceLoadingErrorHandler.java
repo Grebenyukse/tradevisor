@@ -26,6 +26,8 @@ public class PriceLoadingErrorHandler {
         }
         
         if (e.getMessage().contains("RESOURCE_EXHAUSTED") || 
+            e.getMessage().contains("429") ||
+            e.getMessage().contains("unauthenticated when loading ticker") ||
             e.getMessage().contains("Превышен лимит запросов в минуту")) {
             log.warn("RESOURCE EXHAUSTED for provider: {}", provider);
             return ErrorHandlerResult.RETRY_RESULT;

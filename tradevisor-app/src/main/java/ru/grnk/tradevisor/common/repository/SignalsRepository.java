@@ -78,7 +78,8 @@ public class SignalsRepository {
     public void saveSignal(TrvCalculationResult trvCalculationResult,
                            String tickerCode,
                            String strategyName,
-                           OffsetDateTime lastCandleTime
+                           OffsetDateTime lastCandleTime,
+                           String signalDescription
     ) {
         dsl.insertInto(SIGNALS,
                         SIGNALS.TICKER_CODE,
@@ -99,7 +100,7 @@ public class SignalsRepository {
                         trvCalculationResult.priceOpen(),
                         trvCalculationResult.stopLoss(),
                         trvCalculationResult.takeProfit(),
-                        trvCalculationResult.description(),
+                        signalDescription,
                         TrvSignalStatus.CREATED.name(),
                         lastCandleTime,
                         JSONB.valueOf(om.writeValueAsString(trvCalculationResult.lines()))

@@ -111,55 +111,50 @@ class YahooFinanceService {
     }
 
     public List<YahooCandle> fetchHistoricalData(String symbol, long from) {
-        try {
-            String period = "1h";
-            YahooChartResponse response = yahooFinanceClient.getHistoricalData(symbol, period, from);
-            if (response == null || response.chart() == null ||
-                    response.chart().result() == null || response.chart().result().isEmpty()) {
-                log.warn("No data received for symbol: {}", symbol);
-                return List.of();
-            }
-            YahooChartResponse.YahooChartResult result = response.chart().result().get(0);
-            List<Long> timestamps = result.timestamp() != null ? result.timestamp() : List.of();
-            if (result.indicators() == null || result.indicators().quote() == null ||
-                    result.indicators().quote().isEmpty()) {
-                log.warn("No quote data received for symbol: {}", symbol);
-                return List.of();
-            }
-            YahooChartResponse.YahooQuote quote = result.indicators().quote().get(0);
-            List<BigDecimal> opens = quote.open() != null ? quote.open() : List.of();
-            List<BigDecimal> highs = quote.high() != null ? quote.high() : List.of();
-            List<BigDecimal> lows = quote.low() != null ? quote.low() : List.of();
-            List<BigDecimal> closes = quote.close() != null ? quote.close() : List.of();
-            int size = Math.min(timestamps.size(),
-                    Math.min(opens.size(),
-                            Math.min(highs.size(),
-                                    Math.min(lows.size(), closes.size()))));
-            if (size == 0) {
-                log.warn("No valid data points for symbol: {}", symbol);
-                return List.of();
-            }
-            return IntStream.range(0, size)
-                    .mapToObj(i -> {
-                        Long timestamp = i < timestamps.size() ? timestamps.get(i) : null;
-                        BigDecimal open = i < opens.size() ? opens.get(i) : null;
-                        BigDecimal high = i < highs.size() ? highs.get(i) : null;
-                        BigDecimal low = i < lows.size() ? lows.get(i) : null;
-                        BigDecimal close = i < closes.size() ? closes.get(i) : null;
-
-                        return new YahooCandle(
-                                timestamp != null ? timestamp * 1000L : 0L, // Преобразуем в миллисекунды
-                                open != null ? open.floatValue() : 0f,
-                                high != null ? high.floatValue() : 0f,
-                                low != null ? low.floatValue() : 0f,
-                                close != null ? close.floatValue() : 0f
-                        );
-                    })
-                    .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            log.error("Failed to fetch historical data for symbol: {}", symbol, e);
+        String period = "1h";
+        YahooChartResponse response = yahooFinanceClient.getHistoricalData(symbol, period, from);
+        if (response == null || response.chart() == null ||
+                response.chart().result() == null || response.chart().result().isEmpty()) {
+            log.warn("No data received for symbol: {}", symbol);
             return List.of();
         }
+        YahooChartResponse.YahooChartResult result = response.chart().result().get(0);
+        List<Long> timestamps = result.timestamp() != null ? result.timestamp() : List.of();
+        if (result.indicators() == null || result.indicators().quote() == null ||
+                result.indicators().quote().isEmpty()) {
+            log.warn("No quote data received for symbol: {}", symbol);
+            return List.of();
+        }
+        YahooChartResponse.YahooQuote quote = result.indicators().quote().get(0);
+        List<BigDecimal> opens = quote.open() != null ? quote.open() : List.of();
+        List<BigDecimal> highs = quote.high() != null ? quote.high() : List.of();
+        List<BigDecimal> lows = quote.low() != null ? quote.low() : List.of();
+        List<BigDecimal> closes = quote.close() != null ? quote.close() : List.of();
+        int size = Math.min(timestamps.size(),
+                Math.min(opens.size(),
+                        Math.min(highs.size(),
+                                Math.min(lows.size(), closes.size()))));
+        if (size == 0) {
+            log.warn("No valid data points for symbol: {}", symbol);
+            return List.of();
+        }
+        return IntStream.range(0, size)
+                .mapToObj(i -> {
+                    Long timestamp = i < timestamps.size() ? timestamps.get(i) : null;
+                    BigDecimal open = i < opens.size() ? opens.get(i) : null;
+                    BigDecimal high = i < highs.size() ? highs.get(i) : null;
+                    BigDecimal low = i < lows.size() ? lows.get(i) : null;
+                    BigDecimal close = i < closes.size() ? closes.get(i) : null;
+
+                    return new YahooCandle(
+                            timestamp != null ? timestamp * 1000L : 0L, // Преобразуем в миллисекунды
+                            open != null ? open.floatValue() : 0f,
+                            high != null ? high.floatValue() : 0f,
+                            low != null ? low.floatValue() : 0f,
+                            close != null ? close.floatValue() : 0f
+                    );
+                })
+                .collect(Collectors.toList());
+
     }
 }
