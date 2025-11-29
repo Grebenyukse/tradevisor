@@ -16,7 +16,7 @@ import java.util.Objects;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = "app.collect.calendar.events.expiration.enabled")
+@ConditionalOnProperty(value = "app.collect.events.expiration")
 public class ExpirationCollectorImpl implements EventCollector {
 
     private final InvestApi investApi;

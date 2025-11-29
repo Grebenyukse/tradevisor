@@ -2,6 +2,7 @@ package ru.grnk.tradevisor.collect.events.news.newsapi;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -23,6 +24,7 @@ import static ru.grnk.tradevisor.common.util.ObjectIdHasher.calcHash;
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@ConditionalOnProperty(value = "app.collect.events.news")
 public class NewsapiServiceImpl {
     private final EventsRepository eventsRepository;
     private final RestTemplate restTemplate;

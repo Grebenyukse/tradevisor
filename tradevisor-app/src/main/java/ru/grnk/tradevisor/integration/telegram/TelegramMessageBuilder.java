@@ -146,8 +146,8 @@ public class TelegramMessageBuilder {
         downloadButton.setCallbackData("download/" + signalId);
 
         InlineKeyboardButton eventsButton = new InlineKeyboardButton();
-        downloadButton.setText("show events");
-        downloadButton.setCallbackData("events/" + signalId);
+        eventsButton.setText("show events");
+        eventsButton.setCallbackData("events/" + signalId);
 
         row.add(acceptButton);
         row.add(declineButton);

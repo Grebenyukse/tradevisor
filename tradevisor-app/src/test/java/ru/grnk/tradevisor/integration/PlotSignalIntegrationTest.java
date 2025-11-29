@@ -26,10 +26,22 @@ public class PlotSignalIntegrationTest extends BaseIntegrationTest {
     @DynamicPropertySource
     static void additionalConfig(DynamicPropertyRegistry registry) {
         registry.add("app.integration.tinkoff.enabled", () -> "true");
-        registry.add("app.calculate.fibo", () -> "true");
+        registry.add("app.integration.telegram.enabled", () -> "true");
+        registry.add("app.integration.telegram.re-register", () -> "false");
+        registry.add("app.integration.bybit.enabled", () -> "true");
+        registry.add("app.integration.yahoofinance.enabled", () -> "true");
+//        registry.add("app.integration.gigachat.enabled", () -> "true");
+        registry.add("app.integration.deepseek.enabled", () -> "true");
+//        registry.add("app.integration.proxyapi.enabled", () -> "true");
+        registry.add("app.integration.cloudru.enabled", () -> "true");
+//        registry.add("app.calculate.fibo", () -> "true");
         registry.add("app.calculate.bars_required_to_calculate_fibo", () -> 150);
         registry.add("app.notification.enabled", () -> "true");
-        registry.add("app.integration.telegram.re-register", () -> "false");
+        registry.add("app.collect.events.economic", () -> "true");
+//        registry.add("app.collect.prices.finam", () -> "true");
+//        registry.add("app.collect.prices.tinkoff", () -> "true");
+//        registry.add("app.collect.prices.bybit", () -> "true");
+//        registry.add("app.collect.prices.yahoofinance", () -> "true");
     }
 
     @Test

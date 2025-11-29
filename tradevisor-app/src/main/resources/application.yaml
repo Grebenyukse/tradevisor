@@ -81,6 +81,9 @@ app:
     retention_days: 30
     enabled: true
   integration:
+    cloudru:
+      enabled: false
+      key: ${CLOUDRU_API_KEY}
     proxyapi:
       enabled: false
       key: ${PROXY_API_KEY}

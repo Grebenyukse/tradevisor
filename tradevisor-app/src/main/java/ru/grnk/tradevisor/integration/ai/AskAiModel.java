@@ -5,4 +5,6 @@ public interface AskAiModel {
 
     String source();
 
+    default String basePrompt() { return null; }
+
 }

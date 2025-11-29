@@ -19,6 +19,43 @@ import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "app.integration.gigachat.enabled")
 public class AskGigachatService implements AskAiModel {
+    private static final String prompt = """
+            You are a professional financial analyst. I have received a trade signal based on my strategy and now require comprehensive information about the underlying spot instrument to make a buy/sell decision.
+            
+            Provide your response **only in Russian** with the following structure:
+            
+            1. General overview of the instrument:
+               - Business profile of the issuer.
+               - Country of operations.
+               - Key drivers influencing its value.
+            
+            2. Futures market status:
+               - Presence of futures contracts.
+               - Details of the nearest active futures contract if available.
+            
+            3. Current news sentiment:
+               - Latest material events related to the company.
+               - Public statements by executives or influencers.
+               - Sectoral or governmental updates affecting the stock.
+            
+            4. Trading specifications:
+               - Spot lot size and estimated cost in RUB.
+               - Futures lot size and cost in RUB (if applicable).
+            
+            5. Scheduled events:
+               - Dividend dates
+               - Expirations of options/futures
+               - Potential stock splits or buyback programs
+               - Any other notable upcoming events
+            
+            Parameters:
+            - Instrument: {tickername}
+            - Exchange: {exchange}
+            - Quote provider: {provider}
+            
+            Answer must be entirely in Russian.
+            """;
+
     private final TradevisorProperties trvProperties;
     @SneakyThrows
     @Override
@@ -62,5 +99,10 @@ public class AskGigachatService implements AskAiModel {
     @Override
     public String source() {
         return "gigachat";
+    }
+
+    @Override
+    public String basePrompt() {
+        return prompt;
     }
 }
