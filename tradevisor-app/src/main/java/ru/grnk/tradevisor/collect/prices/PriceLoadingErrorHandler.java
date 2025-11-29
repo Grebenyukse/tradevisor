@@ -20,14 +20,9 @@ public class PriceLoadingErrorHandler {
             return ErrorHandlerResult.SKIP_RESULT;
         }
         
-        if (e.getMessage().contains("Api token could not be verified")) {
-            log.error("unauthenticated when loading ticker: {}", ticker.getTickerCode());
-            return ErrorHandlerResult.SKIP_RESULT;
-        }
-        
         if (e.getMessage().contains("RESOURCE_EXHAUSTED") || 
             e.getMessage().contains("429") ||
-            e.getMessage().contains("unauthenticated when loading ticker") ||
+            e.getMessage().contains("UNAUTHENTICATED: Api token could not be verified") ||
             e.getMessage().contains("Превышен лимит запросов в минуту")) {
             log.warn("RESOURCE EXHAUSTED for provider: {}", provider);
             return ErrorHandlerResult.RETRY_RESULT;

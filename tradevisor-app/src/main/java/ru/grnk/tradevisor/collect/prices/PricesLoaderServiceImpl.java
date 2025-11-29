@@ -76,16 +76,10 @@ public class PricesLoaderServiceImpl {
             log.warn("No loader found for provider: {}", provider);
             return;
         }
-
-        int offset = 0;
         int processedForThisProvider = 0;
-        boolean resourceExhausted = false;
         long lastUpdate = System.currentTimeMillis();
-
         do {
-            List<Tickers> tickers = tickersRepository.getAllTickers(provider, TICKERS_BATCH_LOAD, offset);
-            resourceExhausted = false;
-
+            List<Tickers> tickers = tickersRepository.getAllTickers(provider, TICKERS_BATCH_LOAD, processedForThisProvider);
             for (Tickers ticker : tickers) {
                 try {
                     loader.loadPrices(ticker.getTickerCode());
@@ -93,8 +87,7 @@ public class PricesLoaderServiceImpl {
                     providerProcessedCount.merge(provider, 1, Integer::sum);
 
                     long now = System.currentTimeMillis();
-                    if (now - lastUpdate > 30000 || processedForThisProvider % 50 == 0) {
-                        // Отправляем промежуточное сообщение о прогрессе
+                    if (now - lastUpdate > 60000 || processedForThisProvider % 500 == 0) {
                         telegramService.sendProgressMessage(messageId,
                                 providerProcessedCount.values().stream().mapToInt(Integer::intValue).sum(),
                                 tickersRepository.getAllTickersCount(),
@@ -117,27 +110,19 @@ public class PricesLoaderServiceImpl {
                             providerProcessedCount.merge(provider, 1, Integer::sum);
                             continue;
                         case RETRY:
-                            resourceExhausted = true;
+                            try {
+                                Thread.sleep(60000); // Ждем минуту перед повторной попыткой
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                                throw new RuntimeException(ie);
+                            }
                             break;
                         case FAIL:
                             throw new RuntimeException(e);
                     }
                 }
             }
-
-            if (resourceExhausted) {
-                try {
-                    Thread.sleep(60000); // Ждем минуту перед повторной попыткой
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException(ie);
-                }
-            } else {
-                offset += tickers.size();
-            }
-
-        } while (!resourceExhausted && (offset < totalTickersForProvider));
-
+        } while (processedForThisProvider < totalTickersForProvider);
         log.info("Provider {} completed with {} tickers processed", provider, processedForThisProvider);
     }
 }

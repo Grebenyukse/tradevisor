@@ -5,7 +5,7 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>%d{ISO8601} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>%d{ISO8601} %-5level [%thread] %logger{36} \(%class{0}.java:%line\) - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -27,7 +27,7 @@
 
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>%d{ISO8601} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>%d{ISO8601} %-5level [%thread] %logger{36} \(%class{0}.java:%line\) - %msg%n</pattern>
         </encoder>
     </appender>
 
