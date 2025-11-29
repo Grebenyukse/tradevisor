@@ -125,7 +125,6 @@ public class YahooFinanceClient {
             return ObjectMapperUtils.readValue(bodyString, YahooChartResponse.class);
 
         } catch (Exception e ) {
-            log.error("Error fetching historical data for symbol: " + symbol, e);
             if (e.getMessage().contains("401") || e.getMessage().contains("403")) {
                 log.info("Refreshing crumb and cookies due to auth error");
                 refreshCrumbAndCookies();

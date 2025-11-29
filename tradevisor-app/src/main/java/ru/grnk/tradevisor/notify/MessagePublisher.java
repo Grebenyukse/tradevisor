@@ -59,8 +59,7 @@ public class MessagePublisher {
     private static String getTitle(Signals signal, Tickers ticker) {
         return String.join(". ",
                 ticker.getTicker(), ticker.getExchange(), ticker.getProvider(),
-                TradingDirection.from(signal.getDirection()).name(),
-                Optional.ofNullable(signal.getDescription()).orElse("")
+                TradingDirection.from(signal.getDirection()).name()
         );
     }
 
