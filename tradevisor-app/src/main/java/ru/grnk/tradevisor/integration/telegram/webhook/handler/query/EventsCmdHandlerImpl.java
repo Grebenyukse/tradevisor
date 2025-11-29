@@ -2,7 +2,9 @@ package ru.grnk.tradevisor.integration.telegram.webhook.handler.query;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.grnk.tradevisor.collect.events.EventCollector;
 import ru.grnk.tradevisor.collect.prices.TelegramNotificationService;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
@@ -30,8 +32,6 @@ public class EventsCmdHandlerImpl implements TgCallbackQueryHandler {
     private final TradevisorProperties tradevisorProperties;
     private final TelegramNotificationService telegramService;
 
-
-
     @Override
     public String commandStartsWith() {
         return "events/";
@@ -39,28 +39,67 @@ public class EventsCmdHandlerImpl implements TgCallbackQueryHandler {
 
     @Override
     public void handle(CallbackQuery callbackQuery) {
-        String callbackData = callbackQuery.getData();
-        Integer signalId = getSignalIdFromQuery(callbackData);
-        String messageId = "";
-        Signals signal = signalsRepository.findSignalBySignalId(signalId).orElseThrow();
-        Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
-        var infoMessage = collectors.stream()
-                .map(l -> l.collect(ticker))
-                .flatMap(List::stream)
-                .collect(Collectors.joining("\n\n"));
-        String linkToChartMessageFromEventsThread = String.format(TELEGRAM_MESSAGE_LINK,
-                tradevisorProperties.integration().telegram().supergroup().chatId(),
-                messageId);
+        try {
+            String callbackData = callbackQuery.getData();
+            Integer signalId = getSignalIdFromQuery(callbackData);
+            Message originalMessage = callbackQuery.getMessage();
+            if (originalMessage == null) {
+                throw new IllegalStateException("Original message is null");
+            }
+            Integer originalMessageId = originalMessage.getMessageId();
+            Long chatId = originalMessage.getChatId();
+            Signals signal = signalsRepository.findSignalBySignalId(signalId)
+                    .orElseThrow(() -> new IllegalArgumentException("Signal not found: " + signalId));
+            Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
+            var infoMessage = collectors.stream()
+                    .map(l -> l.collect(ticker))
+                    .flatMap(List::stream)
+                    .collect(Collectors.joining("\n\n"));
+            String eventsThreadChatId = tradevisorProperties.integration().telegram().supergroup().chatId().toString();
+            Integer eventsThreadId = tradevisorProperties.integration().telegram().supergroup().eventsThreadId();
+            Message eventsMessage = telegramApiClient.sendAndGetMessage(
+                    TelegramMessageBuilder.sendSimpleMessage(
+                            Long.parseLong(eventsThreadChatId),
+                            eventsThreadId,
+                            infoMessage
+                    )
+            );
+            if (eventsMessage == null) {
+                throw new IllegalStateException("Failed to send events message");
+            }
+            Integer eventsMessageId = eventsMessage.getMessageId();
+            String linkToEventsMessage = String.format(TELEGRAM_MESSAGE_LINK,
+                    eventsThreadChatId.replace("-100", ""), // Убираем префикс для ссылки
+                    eventsMessageId);
 
-        infoMessage += "\n сигнал: " + linkToChartMessageFromEventsThread;
-        var eventsMessage = telegramApiClient.sendAndGetMessage(TelegramMessageBuilder.sendSimpleMessage(
-                tradevisorProperties.integration().telegram().supergroup().chatId(),
-                tradevisorProperties.integration().telegram().supergroup().eventsThreadId(),
-                infoMessage));
-        String linkToEventsMessageFromChartThread = String.format(TELEGRAM_MESSAGE_LINK,
-                tradevisorProperties.integration().telegram().supergroup().chatId(),
-                eventsMessage.getMessageId());
-        String oldMessageWithChart = ""; // need to get somehow
-        telegramService.updateMessage(messageId, oldMessageWithChart + "\n инфо: " + linkToEventsMessageFromChartThread);
+            String linkToOriginalMessage = String.format(TELEGRAM_MESSAGE_LINK,
+                    chatId.toString().replace("-100", ""), // Убираем префикс для ссылки
+                    originalMessageId);
+
+            String updatedEventsMessageText = infoMessage + "\n\nСигнал: " + linkToOriginalMessage;
+            EditMessageText editEventsMessage = new EditMessageText();
+            editEventsMessage.setChatId(eventsThreadChatId);
+            editEventsMessage.setMessageId(eventsMessageId);
+            editEventsMessage.setText(updatedEventsMessageText);
+            telegramApiClient.editMessageText(editEventsMessage);
+
+            String originalMessageText = originalMessage.getText() != null ? originalMessage.getText() : "";
+            String updatedOriginalMessageText = originalMessageText + "\n\nИнфо: " + linkToEventsMessage;
+
+            EditMessageText editOriginalMessage = new EditMessageText();
+            editOriginalMessage.setChatId(chatId.toString());
+            editOriginalMessage.setMessageId(originalMessageId);
+            editOriginalMessage.setText(updatedOriginalMessageText);
+            telegramApiClient.editMessageText(editOriginalMessage);
+
+        } catch (Exception e) {
+            try {
+                String errorMessage = "Ошибка при обработке события: " + e.getMessage();
+                telegramService.sendMessage(errorMessage,
+                        tradevisorProperties.integration().telegram().supergroup().errorsThreadId());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 }

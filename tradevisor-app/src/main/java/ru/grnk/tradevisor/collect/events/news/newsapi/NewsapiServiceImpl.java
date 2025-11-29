@@ -23,12 +23,11 @@ import static ru.grnk.tradevisor.common.util.ObjectIdHasher.calcHash;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class NewsapiServiceImpl implements NewsCollector {
+public class NewsapiServiceImpl {
     private final EventsRepository eventsRepository;
     private final RestTemplate restTemplate;
     private final TradevisorProperties trvProperties;
 
-    @Override
     public List<NewsApiResponse> collect() {
        collectEconomicNews();
        return List.of();
