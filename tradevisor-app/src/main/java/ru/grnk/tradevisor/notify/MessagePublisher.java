@@ -3,19 +3,18 @@ package ru.grnk.tradevisor.notify;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
+import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
-import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
-import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.integration.telegram.TelegramMessageService;
 import ru.grnk.tradevisor.notify.plot.PlotService;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
 

@@ -148,8 +148,10 @@ public class TelegramNotificationService {
 
     public void sendErrorMessage(String messageId, Exception e) {
         try {
-            String errorMessage = "❌ Ошибка загрузки котировок: " + e.getMessage();
-            updateMessage(messageId, errorMessage);
+            Long chatId = tradevisorProperties.integration().telegram().supergroup().chatId();
+            Integer threadId = tradevisorProperties.integration().telegram().supergroup().errorsThreadId();
+            String errorMessage = String.format("❌ Ошибка загрузки котировок: https://t.me/c/%S/%s \n %s", chatId, messageId, e.getMessage()) ;
+            sendSimpleMessage(chatId, threadId, errorMessage);
         } catch (Exception ex) {
             log.warn("Не удалось отправить сообщение об ошибке в Telegram", ex);
         }
@@ -165,8 +167,8 @@ public class TelegramNotificationService {
                 editMessage.setText(text);
                 telegramApiClient.editMessageText(editMessage);
             } else {
-                int defaultThreadId = tradevisorProperties.integration().telegram().supergroup().logsThreadId();
-                sendMessage(text, defaultThreadId);
+                int errorsThreadId = tradevisorProperties.integration().telegram().supergroup().errorsThreadId();
+                sendMessage(text, errorsThreadId);
             }
         } catch (Exception e) {
             log.warn("Не удалось обновить сообщение в Telegram: {}", text, e);
