@@ -2,29 +2,17 @@ package ru.grnk.tradevisor.collect.events.economic;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import ru.grnk.tradevisor.collect.TrvSource;
-import ru.grnk.tradevisor.collect.events.EventCategory;
-import ru.grnk.tradevisor.collect.events.EventImpact;
-import ru.grnk.tradevisor.collect.events.TickerEvent;
 import ru.grnk.tradevisor.collect.events.EventCollector;
+import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 import ru.grnk.tradevisor.integration.ai.AskAiModel;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static ru.grnk.tradevisor.common.util.ObjectIdHasher.calcHash;
-import static ru.grnk.tradevisor.common.util.ObjectMapperUtils.readValue;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = "app.collect.calendar.economic-event.enabled")
 public class EconomicEventCollectorImpl implements EventCollector {
 
     private final List<AskAiModel> loaders;
@@ -37,21 +25,9 @@ public class EconomicEventCollectorImpl implements EventCollector {
             """;
 
     @Override
-    public List<TickerEvent> collect() {
+    public List<String> collect(Tickers ticker) {
         return loaders.stream()
                 .map(x -> x.ask(TRV_CALENDAR_PROMPT, 3))
-                .map(x -> Arrays.asList(readValue(x, AiCalendarResponseDto[].class)))
-                .flatMap(List::stream)
-                .flatMap(x -> x.tickers().stream()
-                        .map(y -> TickerEvent.builder()
-                                .id(calcHash(x.title(), x.description(), x.event_date(), y, x.impact()))
-                                .eventDate(OffsetDateTime.of(LocalDateTime.parse(x.event_date()), ZoneOffset.of("Moscow")))
-                                .category(EventCategory.ECONOMIC)
-                                .impact(EventImpact.HIGH)
-                                .source(TrvSource.AI)
-                                .instrumentUid(y)
-                                .content(x.title() + " " + x.description())
-                                .build()))
                 .collect(Collectors.toList());
     }
 }

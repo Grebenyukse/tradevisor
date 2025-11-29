@@ -145,33 +145,22 @@ public class TelegramMessageBuilder {
         downloadButton.setText("Download quotes");
         downloadButton.setCallbackData("download/" + signalId);
 
+        InlineKeyboardButton eventsButton = new InlineKeyboardButton();
+        downloadButton.setText("show events");
+        downloadButton.setCallbackData("events/" + signalId);
+
         row.add(acceptButton);
         row.add(declineButton);
         row.add(deleteButton);
 
         row2.add(downloadButton);
+        row2.add(eventsButton);
         rows.add(row);
         rows.add(row2);
 
         markup.setKeyboard(rows);
         sendMessage.setReplyMarkup(markup);
         return sendMessage;
-    }
-
-    public static SendDocument buildDocumentMessage(Long chatId) {
-        // Создаем содержимое файла
-        String fileContent = "пользователь запросил скачивание файла";
-        InputStream inputStream = new ByteArrayInputStream(fileContent.getBytes(StandardCharsets.UTF_8));
-
-        // Создаем InputFile из потока данных
-        InputFile inputFile = new InputFile(inputStream, "quotes.txt");
-
-        // Создаем объект для отправки документа
-        SendDocument sendDocument = new SendDocument();
-        sendDocument.setChatId(chatId.toString());
-        sendDocument.setDocument(inputFile);
-        sendDocument.setCaption("Файл с цитатами");
-        return sendDocument;
     }
 
 }

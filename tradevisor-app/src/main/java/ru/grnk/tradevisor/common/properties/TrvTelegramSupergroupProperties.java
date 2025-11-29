@@ -9,5 +9,6 @@ public record TrvTelegramSupergroupProperties(
         Integer cryptoThreadId,
         Integer logsThreadId,
         Integer errorsThreadId,
-        Integer statisticsThreadId
+        Integer statisticsThreadId,
+        Integer eventsThreadId
 ) {}

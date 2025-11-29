@@ -2,9 +2,8 @@ package ru.grnk.tradevisor.collect.events;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ru.grnk.tradevisor.collect.TrvCollector;
+import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
 
 import java.util.List;
 
@@ -13,18 +12,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EventsService {
 
-    private final List<EventCollector> loaders;
-    private final EventsRepository eventsRepository;
+    private final List<EventCollector> collectors;
 
-    @Scheduled(cron = "${app.collect.events.cron}")
-    public void updateCalendar() {
-        try {
-            loaders.stream()
-                    .map(TrvCollector::collect)
-                    .flatMap(List::stream)
-                    .forEach(eventsRepository::saveEvent);
-        } catch (Exception e) {
-            log.error("ошибка загрузки календаря ", e);
-        }
+    public List<String> updateCalendar(Tickers ticker) {
+        return collectors.stream()
+                .map(l -> l.collect(ticker))
+                .flatMap(List::stream)
+                .toList();
     }
 }
