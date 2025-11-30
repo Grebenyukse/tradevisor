@@ -76,7 +76,7 @@ public class EventsCmdHandlerImpl implements TgCallbackQueryHandler {
                     chatId.toString().replace("-100", ""), // Убираем префикс для ссылки
                     originalMessageId);
 
-            String updatedEventsMessageText = infoMessage + "\n\nСигнал: " + linkToOriginalMessage;
+            String updatedEventsMessageText = infoMessage + "\n\n<a href=\""+ linkToOriginalMessage + "\">Перейти к сигналу</a>";
             EditMessageText editEventsMessage = new EditMessageText();
             editEventsMessage.setChatId(eventsThreadChatId);
             editEventsMessage.setMessageId(eventsMessageId);
@@ -84,7 +84,7 @@ public class EventsCmdHandlerImpl implements TgCallbackQueryHandler {
             telegramApiClient.editMessageText(editEventsMessage);
 
             String originalMessageText = originalMessage.getText() != null ? originalMessage.getText() : "";
-            String updatedOriginalMessageText = originalMessageText + "\n\nИнфо: " + linkToEventsMessage;
+            String updatedOriginalMessageText = originalMessageText + "\n\n<a href=\"" + linkToEventsMessage + "\">AI отчёт</a>";
 
             EditMessageText editOriginalMessage = new EditMessageText();
             editOriginalMessage.setChatId(chatId.toString());

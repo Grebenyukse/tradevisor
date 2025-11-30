@@ -3,6 +3,6 @@ package ru.grnk.tradevisor.common.properties;
 public record TrvTradeProperties(
         Integer limits,
         Boolean enabled,
-        String cron
+        String delay
 ) {
 }

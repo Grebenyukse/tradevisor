@@ -18,7 +18,7 @@ public class PublishSignalsService {
     private final MessagePublisher messagePublisher;
     private final SignalsRepository signalsRepository;
 
-    @Scheduled(cron = "${app.notification.cron}")
+    @Scheduled(fixedRateString = "${app.notification.delay}")
     public void doWork() {
         log.info("start signals publishing");
         signalsRepository.findUnpublishedSignals()

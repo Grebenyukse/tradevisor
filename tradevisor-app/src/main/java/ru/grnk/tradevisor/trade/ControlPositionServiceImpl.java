@@ -25,7 +25,7 @@ public class ControlPositionServiceImpl implements TradeService {
 
     private final SignalsRepository signalsRepository;
 
-    @Scheduled(cron = "${app.trade.cron}")
+    @Scheduled(fixedRateString = "${app.trade.delay}")
     @Override
     public void doWork() {
 

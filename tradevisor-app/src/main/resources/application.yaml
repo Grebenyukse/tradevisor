@@ -46,36 +46,32 @@ spring:
 
 app:
   collect:                    # сбор информации для анализа
-    ai-score:
-      cron: 1 * * * * *
-      enabled: false
     events:                   # события, влияющие на ценную бумагу
-      cron: 1 * * * * *       # период сбора информации
       dividends: false        # выплата дивидендов
       economic: false         # макроэкономика и прочие
       expiration: false       # экспирация
       reports: false
       news: false
     prices:
-      cron: 1 * * * * *
+      delay: PT60M
       finam: true
       tinkoff: true
       bybit: true
       yahoofinance: true
   calculate:
-    cron: 15 * * * * *
+    delay: PT30M
     fibo: true
     bars_required_to_calculate_fibo: 150
     gap: false
     min_touches_count: 2
     batch-size: 1000
   trade:
-    cron: 1 * * * * *
+    delay: PT15M
     limits: 1
     enabled: false
   notification:
     enabled: true
-    cron: 1 * * * * *
+    delay: PT1M
   cleanup:
     cron: 0 0 0 1 * ?
     retention_days: 30

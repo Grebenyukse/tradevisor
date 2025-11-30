@@ -45,7 +45,7 @@ public class CalculateSignalServiceImpl {
     private final AtomicLong lastTelegramUpdate = new AtomicLong(0);
     private static final long MIN_UPDATE_INTERVAL = 5000;
 
-    @Scheduled(cron = "${app.calculate.cron}")
+    @Scheduled(fixedRateString = "${app.calculate.delay}")
     public void doWork() {
         log.info("calculate all signals mf");
         int totalTickersCount = tickersRepository.getUnpublishedTickersCount();

@@ -26,7 +26,7 @@ public class PricesLoaderServiceImpl {
     private final TelegramNotificationService telegramService;
 
     @SneakyThrows
-    @Scheduled(cron = "${app.collect.prices.cron}")
+    @Scheduled(fixedRateString = "${app.collect.prices.delay}")
     public void doWork() {
         loaders.forEach(PricesLoader::initTickers);
         log.info("start collecting prices");

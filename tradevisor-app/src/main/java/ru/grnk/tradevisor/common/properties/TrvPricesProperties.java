@@ -1,7 +1,7 @@
 package ru.grnk.tradevisor.common.properties;
 
 public record TrvPricesProperties(
-        String cron,
+        String delay,
         Boolean finam,
         Boolean tinkoff,
         Boolean bybit,
