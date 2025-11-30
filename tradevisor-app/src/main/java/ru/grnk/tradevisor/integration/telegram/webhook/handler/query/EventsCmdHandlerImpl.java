@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import ru.grnk.tradevisor.collect.events.EventCollector;
 import ru.grnk.tradevisor.collect.prices.TelegramNotificationService;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
@@ -81,6 +82,7 @@ public class EventsCmdHandlerImpl implements TgCallbackQueryHandler {
             editEventsMessage.setChatId(eventsThreadChatId);
             editEventsMessage.setMessageId(eventsMessageId);
             editEventsMessage.setText(updatedEventsMessageText);
+            editEventsMessage.setParseMode(ParseMode.HTML);
             telegramApiClient.editMessageText(editEventsMessage);
 
             String originalMessageText = originalMessage.getText() != null ? originalMessage.getText() : "";
@@ -90,6 +92,7 @@ public class EventsCmdHandlerImpl implements TgCallbackQueryHandler {
             editOriginalMessage.setChatId(chatId.toString());
             editOriginalMessage.setMessageId(originalMessageId);
             editOriginalMessage.setText(updatedOriginalMessageText);
+            editOriginalMessage.setParseMode(ParseMode.HTML);
             telegramApiClient.editMessageText(editOriginalMessage);
 
         } catch (Exception e) {
