@@ -32,7 +32,7 @@ public class TelegramApiClient {
     private final RestTemplate restTemplate;
     private final TradevisorProperties tradevisorProperties;
     private final ObjectMapper om;
-    public final static String TELEGRAM_MESSAGE_LINK = "https://t.me/c/%S/%s"; // chatId, messageId
+    public final static String TELEGRAM_MESSAGE_LINK = "https://t.me/c/%S/%s/%s"; // chatId, threadId, messageId
 
 
     @PostConstruct

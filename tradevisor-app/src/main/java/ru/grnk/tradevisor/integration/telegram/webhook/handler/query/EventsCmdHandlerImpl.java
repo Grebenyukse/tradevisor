@@ -48,6 +48,7 @@ public class EventsCmdHandlerImpl implements TgCallbackQueryHandler {
                 throw new IllegalStateException("Original message is null");
             }
             Integer originalMessageId = originalMessage.getMessageId();
+            Integer originalMessageThreadId = originalMessage.getMessageThreadId();
             Long chatId = originalMessage.getChatId();
             Signals signal = signalsRepository.findSignalBySignalId(signalId)
                     .orElseThrow(() -> new IllegalArgumentException("Signal not found: " + signalId));
@@ -71,10 +72,12 @@ public class EventsCmdHandlerImpl implements TgCallbackQueryHandler {
             Integer eventsMessageId = eventsMessage.getMessageId();
             String linkToEventsMessage = String.format(TELEGRAM_MESSAGE_LINK,
                     eventsThreadChatId.replace("-100", ""), // Убираем префикс для ссылки
+                    eventsThreadId,
                     eventsMessageId);
 
             String linkToOriginalMessage = String.format(TELEGRAM_MESSAGE_LINK,
                     chatId.toString().replace("-100", ""), // Убираем префикс для ссылки
+                    originalMessageThreadId,
                     originalMessageId);
 
             String updatedEventsMessageText = infoMessage + "\n\n<a href=\""+ linkToOriginalMessage + "\">Перейти к сигналу</a>";
