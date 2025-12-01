@@ -34,6 +34,26 @@ public class SignalsRepository {
     }
 
     @Transactional
+    public List<Signals> findSignalsByStatuses(List<String> statuses) {
+        return dsl.select().from(SIGNALS)
+                .where(SIGNALS.STATUS.in(statuses))
+                .orderBy(SIGNALS.CREATED_AT)
+                .fetchStreamInto(Signals.class)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void cancelExpiredSignals(List<Integer> ids) {
+        dsl.update(SIGNALS)
+                .set(SIGNALS.STATUS, TrvSignalStatus.CANCELLED.name())
+                .set(SIGNALS.UPDATED_AT, OffsetDateTime.now())
+                .where(SIGNALS.ID.in(ids))
+                .execute();
+    }
+
+
+
+    @Transactional
     public List<Signals> findUnpublishedSignals() {
         return dsl.select().from(SIGNALS)
                 .where(SIGNALS.STATUS.eq(TrvSignalStatus.CREATED.name()))
@@ -69,9 +89,14 @@ public class SignalsRepository {
     }
 
     @Transactional
-    public void cancelExpiredSignals(List<Integer> ids) {
-        dsl.delete(SIGNALS).where(SIGNALS.ID.in(ids)).execute();
+    public List<Signals> findAcceptedSignals() {
+        return dsl.select().from(SIGNALS)
+                .where(SIGNALS.STATUS.in(TrvSignalStatus.CONFIRMED.name()))
+                .orderBy(SIGNALS.CREATED_AT)
+                .fetchStreamInto(Signals.class)
+                .collect(Collectors.toList());
     }
+
 
     @SneakyThrows
     @Transactional

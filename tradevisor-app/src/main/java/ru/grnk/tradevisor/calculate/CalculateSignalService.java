@@ -30,7 +30,7 @@ import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.sen
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CalculateSignalServiceImpl {
+public class CalculateSignalService {
 
     private final TickersRepository tickersRepository;
     private final MarketDataRepository marketDataRepository;
