@@ -167,9 +167,8 @@ public class ControlPositionService {
         var position = client.getAvgPositionByTicker(signal.getTickerCode());
         List<TrvOrder> orders = client.getOrdersByTicker(signal.getTickerCode());
         if (position == null) {
-            // позиции нет. сигнал в статусе executed. но ордеров не 3.
             if (orders.size() != 3) {
-                log.warn("неверное количество ордеров для сигнала {}. удаляем все оставшиеся ордера и откатываем сигнал в статус confirmed.", signal.getId());
+                log.warn("позиции нет. сигнал в статусе executed. но ордеров не 3. неверное количество ордеров для сигнала {}. удаляем все оставшиеся ордера и откатываем сигнал в статус confirmed.", signal.getId());
                 orders.forEach(client::deleteOrder);
                 signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.CONFIRMED);
             }
