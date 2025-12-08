@@ -9,6 +9,7 @@ public record TrvOrder(
         float activation,
         float price,
         float lot,
-        boolean isGtc
+        boolean isGtc,
+        String status
 ) {
 }

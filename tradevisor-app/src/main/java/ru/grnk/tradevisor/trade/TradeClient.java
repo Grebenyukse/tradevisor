@@ -19,10 +19,6 @@ public interface TradeClient {
 
     Float getMinLotForTicker(String tickerCode);
 
-    Integer getDigitsForTicker(String tickerCode);
-
-    Boolean isShortAllowedForTicker(String tickerCode);
-
     List<TrvOrder> getOrdersByTicker(String tickerCode);
 
     TrvPosition getAvgPositionByTicker(String tickerCode);
