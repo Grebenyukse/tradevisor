@@ -125,21 +125,7 @@ public class ControlPositionService {
         }
         // сигнал жив, ордеров нет, позиций нет, сигнал подтвержден пользователем -> выставляем ордера
         // 1. определяем размер лота
-        String tickerCodeForSpot = client.findTickerForSpot(signal.getTickerCode());
-        if (tickerCodeForSpot == null) {
-            log.error("не удалось определить тикер для торговли {}. далее только ручные операции. SignalId: {}",
-                    signal.getTickerCode(), signal.getId());
-        }
-        Integer lot = getInteger(signal, client, tickerCodeForSpot);
-        // 2. размещаем ордера
-        client.openPosition(TrvPosition.builder()
-                        .tickerCode(tickerCodeForSpot)
-                        .direction(signal.getDirection().intValue())
-                        .price(signal.getPriceOpen())
-                        .lot(lot)
-                        .sl(signal.getStopLoss())
-                        .tp(signal.getTakeProfit())
-                .build());
+        client.openPosition(signal);
         // 3. меняем статус сигнала на исполнено
         signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.EXECUTED);
         publishSignalsService.publishOrder(signal);

@@ -1,5 +1,6 @@
 package ru.grnk.tradevisor.trade;
 
+import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
 
@@ -25,7 +26,7 @@ public interface TradeClient {
 
     void setOrder(TrvOrder order);
 
-    void openPosition(TrvPosition position);
+    void openPosition(Signals signal);
 
     void deleteOrder(TrvOrder order);
 
