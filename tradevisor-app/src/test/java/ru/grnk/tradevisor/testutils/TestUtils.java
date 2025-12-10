@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 
 public class TestUtils {
 
-    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(40000);
+    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(300);
     private static final Duration DEFAULT_POLL_INTERVAL = Duration.ofMillis(100);
 
     public static List<MarketData> generateCandles(float[] lows, float[] highs) {

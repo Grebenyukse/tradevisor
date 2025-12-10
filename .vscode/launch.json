@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Launch TradeVisorApplication",
+      "request": "launch",
+      "mainClass": "ru.grnk.tradevisor.TradeVisorApplication",
+      "projectName": "tradevisor-app",
+      "cwd": "${workspaceFolder}/tradevisor-app",
+      "console": "internalConsole",
+      "stopOnEntry": false,
+      "args": ""
+    },
+    {
+      "type": "java",
+      "name": "Debug TradeVisorApplication",
+      "request": "launch",
+      "mainClass": "ru.grnk.tradevisor.TradeVisorApplication",
+      "projectName": "tradevisor-app",
+      "cwd": "${workspaceFolder}/tradevisor-app",
+      "console": "internalConsole",
+      "stopOnEntry": false,
+      "args": "",
+      "vmArgs": "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+    }
+  ]
+}

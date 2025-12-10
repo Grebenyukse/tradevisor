@@ -16,11 +16,11 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    liquibaseRuntime("org.liquibase:liquibase-core:4.3.1")
+    liquibaseRuntime("org.liquibase:liquibase-core:4.26.0")
     liquibaseRuntime("org.liquibase:liquibase-groovy-dsl:3.0.2")
     liquibaseRuntime("ch.qos.logback:logback-core:1.2.9")
     liquibaseRuntime("ch.qos.logback:logback-classic:1.2.9")
-    liquibaseRuntime("org.postgresql:postgresql:42.3.3")
+    liquibaseRuntime("org.postgresql:postgresql:42.7.1")
     liquibaseRuntime("info.picocli:picocli:4.6.1")
     liquibaseRuntime("org.yaml:snakeyaml:1.30")
     implementation("info.picocli:picocli:4.6.1")

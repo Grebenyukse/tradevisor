@@ -1,0 +1,33 @@
+{
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "C:\\Users\\grebe\\.jdks\\ms-21.0.8"
+    }
+  ],
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.maven.downloadSources": true,
+  "java.referencesCodeLens.enabled": true,
+  "java.implementationsCodeLens.enabled": true,
+  "java.format.enabled": true,
+  "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+  "java.format.settings.profile": "GoogleStyle",
+  "java.saveActions.organizeImports": true,
+  "java.symbols.includeSourceMethodDeclarations": true,
+  "files.exclude": {
+    "**/bin": true,
+    "**/build": true,
+    "**/.gradle": true
+  },
+  "java.project.referencedLibraries": {
+    "include": [
+      "lib/**/*.jar",
+      "tradevisor-app/lib/**/*.jar",
+      "tradevisor-db/lib/**/*.jar"
+    ],
+    "exclude": [
+      "lib/sources/**"
+    ]
+  }
+}

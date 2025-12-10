@@ -8,7 +8,7 @@ plugins {
 
 group 'ru.tradevisor'
 version '1.0-SNAPSHOT'
-sourceCompatibility = '17'
+sourceCompatibility = '21'
 
 configurations {
     compileOnly {
@@ -17,13 +17,13 @@ configurations {
 }
 
 ext {
-    set('testcontainersVersion', "1.16.3")
+    set('testcontainersVersion', "1.19.7")
     set('jooq.version', "3.16.4")
 }
 
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2021.0.1"
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.1"
         mavenBom "org.testcontainers:testcontainers-bom:${testcontainersVersion}"
 
     }
@@ -47,7 +47,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
     implementation "org.springframework.boot:spring-boot-autoconfigure"
     implementation 'org.telegram:telegrambots-meta:6.8.0'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
@@ -56,6 +55,9 @@ dependencies {
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'io.github.cdimascio:dotenv-java:2.3.2'
     implementation "org.jfree:jfreechart:1.5.4"
+
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+    compileOnly 'javax.annotation:javax.annotation-api:1.3.2'
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     compileOnly 'org.projectlombok:lombok'
@@ -74,7 +76,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
-    implementation 'org.liquibase:liquibase-core:4.3.1'
+    implementation 'org.liquibase:liquibase-core:4.26.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'

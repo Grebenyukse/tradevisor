@@ -41,7 +41,7 @@ import java.text.DecimalFormat;
                 "server.port=8080"
         })
 @Testcontainers
-abstract class BaseIntegrationTest {
+public abstract class BaseIntegrationTest {
 
     private static final int POSTGRES_PORT = 5432;
     protected static final String TEST_TICKER = "TEST_TICKER";
