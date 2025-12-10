@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 import ru.grnk.tradevisor.integration.bybit.dto.BybitOrdersResponse;
 import ru.grnk.tradevisor.integration.bybit.dto.BybitWalletBalanceResponse;
 import ru.grnk.tradevisor.integration.bybit.BybitTickerRs;
@@ -251,14 +252,14 @@ public class BybitTradeClientImpl implements TradeClient {
     }
 
     @Override
-    public void openPosition(TrvPosition position) {
+    public void openPosition(Signals signal) {
         // For spot trading, opening a position means placing a buy order
         TrvOrder order = new TrvOrder(
-                position.tickerCode(),
-                position.direction(),
-                position.price(),
-                position.price(),
-                position.lot(),
+                signal.getTickerCode(),
+                signal.getDirection(),
+                signal.getPriceOpen(),
+                signal.getTakeProfit(),
+               1,
                 true,
                 "NEW"
         );
@@ -266,6 +267,10 @@ public class BybitTradeClientImpl implements TradeClient {
     }
 
     @Override
+    public void deleteOrders(String tickerCode) {
+
+    }
+
     public void deleteOrder(TrvOrder order) {
         try {
             String timestamp = String.valueOf(Instant.now().toEpochMilli());

@@ -6,7 +6,7 @@ import lombok.Builder;
 public record TrvOrder(
         String tickerCode,
         int direction,
-        float activation,
+        Float activation,
         float price,
         float lot,
         boolean isGtc,

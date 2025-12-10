@@ -29,7 +29,6 @@ import static ru.grnk.tradevisor.common.util.TimeUtils.convertToTimestamp;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(value = "app.collect.prices.finam")
 public class FinamGrpcClientService implements PricesLoader {
 
     public static final int MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK = 720;
@@ -56,7 +55,7 @@ public class FinamGrpcClientService implements PricesLoader {
         exchangesRs.getExchangesList().forEach(finamMetainfoRepository::saveFinamExchange);
     }
 
-    private BearerToken getBearer() {
+    public BearerToken getBearer() {
         TrvFinamProperties finamProperties = properties.integration().finam();
         var authRs = authServiceBlockingStub.auth(AuthRequest.newBuilder()
                 .setSecret(finamProperties.secret())

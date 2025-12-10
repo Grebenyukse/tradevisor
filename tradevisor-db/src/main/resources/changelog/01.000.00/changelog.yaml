@@ -25,3 +25,6 @@ databaseChangeLog:
   - include:
       file: 2025-08-03-trv-6-add-finam-meta.sql
       relativeToChangelogFile: true
+  - include:
+      file: 2025-12-09-trv-7-add-tickers-link.sql
+      relativeToChangelogFile: true

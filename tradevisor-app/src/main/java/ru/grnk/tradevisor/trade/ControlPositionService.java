@@ -155,7 +155,7 @@ public class ControlPositionService {
         if (position == null) {
             if (orders.size() != 3) {
                 log.warn("позиции нет. сигнал в статусе executed. но ордеров не 3. неверное количество ордеров для сигнала {}. удаляем все оставшиеся ордера и откатываем сигнал в статус confirmed.", signal.getId());
-                orders.forEach(client::deleteOrder);
+                client.deleteOrders(ticker.getTickerCode());
                 signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.CONFIRMED);
             }
             // позиции нет. сигнал в статусе executed. три ордера выставлено. проверяем что сигнал не заэкспарился.
@@ -167,12 +167,12 @@ public class ControlPositionService {
             var strategyCalculationResult = strategy.calculate(candles);
             if (strategyCalculationResult.direction().directionCode() != signal.getDirection()) {
                 log.info("предпосылки торгового сигнала нарушены. удаляем ордера. сигнал переводим в стату  SignalId: {}", signal.getId());
-                orders.forEach(client::deleteOrder);
+                client.deleteOrders(ticker.getTickerCode());
             }
         } else {
             if (orders.size() != 2L) {
                 log.warn("позиция выставлена. ожидается 2 ордера но их не 2. значит нет takeProfit или stopLoss. удаляем ордера и перевыставляем sl и tp заново");
-                orders.forEach(client::deleteOrder);
+                client.deleteOrders(ticker.getTickerCode());
                 client.setOrder(TrvOrder
                         .builder()
                                 .tickerCode(ticker.getTickerCode())
