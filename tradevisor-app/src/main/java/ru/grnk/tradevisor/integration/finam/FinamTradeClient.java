@@ -78,7 +78,6 @@ public class FinamTradeClient implements TradeClient {
     public String findTickerForSpot(String tickerCode) {
         try {
             Tickers spotTicker = tickersRepository.findTickerByTickerCode(tickerCode);
-//            Tickers tradeTicker = spotTicker.getTradeTickerCode();
             return spotTicker.getTicker();
         } catch (Exception e) {
             log.error("Error finding futures contract for spot ticker: {}", tickerCode, e);
@@ -267,66 +266,7 @@ public class FinamTradeClient implements TradeClient {
     }
 
     public int calculatePositionSize(String spotTicker, float priceOpen, float stopLoss, float takeProfit) {
-//            // Step 4: Determine spot ticker and exchange
-//            String[] parts = spotTicker.replace("@finam", "").split("@");
-//            String spotTickerCode = parts[0];
-//            String exchange = parts.length > 1 ? parts[1] : "MICEX";
-//
-//            // Step 5: Find futures contract
-//            String futuresTicker = findTickerForSpot(spotTicker);
-//            if (futuresTicker == null) {
-//                log.warn("No suitable futures contract found for spot ticker: {}", spotTicker);
-//                return 0; // Manual trading required
-//            }
-//
-//            // Step 6: Get guarantee provision (GO) for futures contract
-//            float go = getGuaranteeProvision(futuresTicker);
-//
-//            // Step 7: Get current prices and calculate k-spot
-//            float futuresPrice = getCurrentPrice(futuresTicker);
-//            float spotPrice = getCurrentPrice(spotTickerCode);
-//            float kSpot = futuresPrice / spotPrice;
-//
-//            // Step 8: Adjust prices with k-spot
-//            float positionPriceOpen = priceOpen * kSpot;
-//            float positionStopLoss = stopLoss * kSpot;
-//            float positionTakeProfit = takeProfit * kSpot;
-//
-//            // Step 9: Calculate profit factor
-//            float profitFactor = positionTakeProfit / positionStopLoss;
-//
-//            // Step 10: Calculate balanced profit factor price open
-//            float balancedProfitFactorPriceOpen = (positionTakeProfit + positionStopLoss) / 2;
-//
-//            // Step 11: Select position price open
-//            float selectedPriceOpen = profitFactor < 1 ? balancedProfitFactorPriceOpen : positionPriceOpen;
-//
-//            // Step 12: Get free money
-//            float freeMoney = getFreeMargin();
-//
-//            // Step 13: Get target risk level
-//            float targetRisk = getTargetRiskFromConfig();
-//
-//            // Step 14: Calculate free money after trade
-//            float freeMoneyAfterTrade = freeMoney * (1 - targetRisk);
-//
-//            // Step 15: Calculate max lots
-//            int maxLots = (int) (freeMoneyAfterTrade / go);
-//
-//            // Step 16: Calculate stop loss per lot in money
-//            float stopLossPerLotMoney = Math.abs(selectedPriceOpen - positionStopLoss);
-//
-//            // Step 17: Calculate lot target with error factor
-//            float errorFactor = getErrorFactorFromConfig();
-//            float lotTarget = ((freeMoneyAfterTrade * (1 - targetRisk)) / go) * (1 - errorFactor);
-//
-//            // Step 18: Determine trade lots
-//            int tradeLots = Math.min(Math.round(lotTarget), maxLots);
-//
-//            log.info("Position calculation: spot={}, futures={}, GO={}, freeMoney={}, maxLots={}, tradeLots={}",
-//                    spotTickerCode, futuresTicker, go, freeMoney, maxLots, tradeLots);
-
-            return 1;
+        return 1;
     }
 
 

@@ -25,7 +25,7 @@ import static ru.grnk.tradevisor.common.util.MathUtils.round;
 @RequiredArgsConstructor
 public class QuickChartService {
 
-    private static final String imageDir = "C:\\Users\\grebe\\IdeaProjects\\tradevisor\\tradevisor-app\\src\\main\\resources\\images";
+    private static final String imageDir = "src/main/resources/images";
     private static final String QUICKCHART_URL = "https://quickchart.io/chart/create";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 

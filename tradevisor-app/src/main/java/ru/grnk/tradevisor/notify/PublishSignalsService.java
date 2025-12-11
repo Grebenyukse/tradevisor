@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
 
-import javax.annotation.PostConstruct;
-
 @Service
 @Slf4j
 @RequiredArgsConstructor

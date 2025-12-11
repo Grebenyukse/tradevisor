@@ -28,12 +28,11 @@ public class PlotRepository {
                 .fetchStreamInto(OHLCData.class)
                 .toList();
 
-        var tickerInfo = dsl.select(
-                Tickers.TICKERS.TICKER,
-                Tickers.TICKERS.TICKER_CODE
-        );
-
-
+        // Removed unused tickerInfo query
+        // var tickerInfo = dsl.select(
+        //         Tickers.TICKERS.TICKER,
+        //         Tickers.TICKERS.TICKER_CODE
+        // );
 
         return List.of();
     }
