@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.notify.plot;
+package ru.grnk.tradevisor.common.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;

@@ -1,9 +1,10 @@
-package ru.grnk.tradevisor.collect.events;
+package ru.grnk.tradevisor.common.repository;
 
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.grnk.tradevisor.collect.events.TickerEvent;
 
 import java.sql.Timestamp;
 
