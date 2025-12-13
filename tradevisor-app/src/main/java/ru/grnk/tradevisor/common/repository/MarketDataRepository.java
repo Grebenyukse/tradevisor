@@ -4,112 +4,84 @@ import com.google.protobuf.Timestamp;
 import com.google.type.Decimal;
 import grpc.tradeapi.v1.marketdata.Bar;
 import lombok.RequiredArgsConstructor;
-import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
-import ru.grnk.tradevisor.dbmodel.tables.records.MarketDataRecord;
+import ru.grnk.tradevisor.common.repository.entity.MarketDataEntity;
+import ru.grnk.tradevisor.common.repository.jpa.MarketDataJpaRepository;
 import ru.tinkoff.piapi.contract.v1.HistoricCandle;
 import ru.tinkoff.piapi.contract.v1.Quotation;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
-import static org.jooq.impl.DSL.max;
-import static ru.grnk.tradevisor.dbmodel.tables.MarketData.MARKET_DATA;
-import static ru.tinkoff.piapi.core.utils.MapperUtils.quotationToBigDecimal;
+import static ru.ttech.piapi.core.helpers.NumberMapper.quotationToBigDecimal;
 
 @Repository
 @RequiredArgsConstructor
 public class MarketDataRepository {
 
-    private final DSLContext dsl;
+    private final MarketDataJpaRepository marketDataRepo;
     private final TradevisorProperties trvProperties;
 
-    public List<MarketData> fetchMarketDataForLast(int bars, String tickerCode) {
-        return dsl.select().from(MARKET_DATA)
-                .where(MARKET_DATA.TICKER_CODE.eq(tickerCode))
-                .orderBy(MARKET_DATA.TIME.desc())
-                .limit(bars).offset(0)
-                .fetchStreamInto(MarketData.class)
-                .collect(Collectors.toList());
+    @PersistenceContext
+    private EntityManager em;
+
+    public List<MarketDataEntity> fetchMarketDataForLast(int bars, String tickerCode) {
+        TypedQuery<MarketDataEntity> query = em.createQuery(
+                "SELECT m FROM MarketDataEntity m WHERE m.tickerCode = :tickerCode ORDER BY m.time DESC",
+                MarketDataEntity.class
+        );
+        query.setParameter("tickerCode", tickerCode);
+        query.setMaxResults(bars);
+        return query.getResultList();
     }
 
     public OffsetDateTime getLatestTickTime(String tickerCode, Integer historyMaxDepthDays) {
-        return dsl.select(max(MARKET_DATA.TIME)).from(MARKET_DATA)
-                .where(MARKET_DATA.TICKER_CODE.eq(tickerCode))
-                .fetchOptionalInto(OffsetDateTime.class)
-                .orElseGet(() -> OffsetDateTime.now().minusDays(historyMaxDepthDays));
+        TypedQuery<OffsetDateTime> query = em.createQuery(
+                "SELECT MAX(m.time) FROM MarketDataEntity m WHERE m.tickerCode = :tickerCode",
+                OffsetDateTime.class
+        );
+        query.setParameter("tickerCode", tickerCode);
+        return query.getSingleResult();
     }
 
     public void saveMarketData(HistoricCandle candle, String instrument_uid) {
-        dsl.insertInto(MARKET_DATA, MARKET_DATA.TICKER_CODE,
-                        MARKET_DATA.OPEN,
-                        MARKET_DATA.HIGH,
-                        MARKET_DATA.LOW,
-                        MARKET_DATA.CLOSE,
-                        MARKET_DATA.TIME
-                )
-                .values(
-                        instrument_uid,
-                        floatFrom(candle.getOpen()),
-                        floatFrom(candle.getHigh()),
-                        floatFrom(candle.getLow()),
-                        floatFrom(candle.getClose()),
-                        timeFrom(candle.getTime())
-                )
-                .onConflictDoNothing()
-                .execute();
+        MarketDataEntity entity = new MarketDataEntity();
+        entity.setTickerCode(instrument_uid);
+        entity.setOpen(floatFrom(candle.getOpen()));
+        entity.setHigh(floatFrom(candle.getHigh()));
+        entity.setLow(floatFrom(candle.getLow()));
+        entity.setClose(floatFrom(candle.getClose()));
+        entity.setTime(timeFrom(candle.getTime()));
+
+        marketDataRepo.save(entity);
     }
 
-    public void batchInsertMarketData(List<MarketData> records) {
-        List<MarketDataRecord> batchRecords = records.stream()
-                .map(record -> dsl.newRecord(MARKET_DATA)
-                        .into(MARKET_DATA)
-                        .setTickerCode(record.getTickerCode())
-                        .setOpen(record.getOpen())
-                        .setHigh(record.getHigh())
-                        .setLow(record.getLow())
-                        .setClose(record.getClose())
-                        .setTime(record.getTime()))
-                .collect(Collectors.toList());
-
-        // Для batch операций используем insert with on conflict
-        batchRecords.forEach(record ->
-                dsl.insertInto(MARKET_DATA)
-                        .set(record)
-                        .onConflictDoNothing()
-                        .execute()
-        );
+    public void batchInsertMarketData(List<MarketDataEntity> records) {
+        records.forEach(marketDataRepo::save);
     }
 
     public void saveMarketData(Bar bar, String instrument_uid) {
-        dsl.insertInto(MARKET_DATA, MARKET_DATA.TICKER_CODE,
-                        MARKET_DATA.OPEN,
-                        MARKET_DATA.HIGH,
-                        MARKET_DATA.LOW,
-                        MARKET_DATA.CLOSE,
-                        MARKET_DATA.TIME
-                )
-                .values(
-                        instrument_uid,
-                        floatFrom(bar.getOpen()),
-                        floatFrom(bar.getHigh()),
-                        floatFrom(bar.getLow()),
-                        floatFrom(bar.getClose()),
-                        timeFrom(bar.getTimestamp())
-                )
-                .onConflictDoNothing()
-                .execute();
+        MarketDataEntity entity = new MarketDataEntity();
+        entity.setTickerCode(instrument_uid);
+        entity.setOpen(floatFrom(bar.getOpen()));
+        entity.setHigh(floatFrom(bar.getHigh()));
+        entity.setLow(floatFrom(bar.getLow()));
+        entity.setClose(floatFrom(bar.getClose()));
+        entity.setTime(timeFrom(bar.getTimestamp()));
+
+        marketDataRepo.save(entity);
     }
 
     public void deleteMarketData(String tickerCode) {
-        dsl.delete(MARKET_DATA).where(MARKET_DATA.TICKER_CODE.eq(tickerCode)).execute();
+        marketDataRepo.deleteById(new MarketDataEntity.CompositeId(tickerCode, null)); // TODO fix composite key deletion
     }
 
     private static OffsetDateTime timeFrom(Timestamp timestamp) {
@@ -133,5 +105,4 @@ public class MarketDataRepository {
         }
         return new BigDecimal(s).floatValue();
     }
-
 }

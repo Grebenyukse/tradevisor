@@ -1,126 +1,67 @@
 plugins {
-    id 'org.springframework.boot'
-    id 'io.spring.dependency-management'
+    id 'org.springframework.boot' version "${springBootVersion}"
+    id 'io.spring.dependency-management' version "${springDependencyMgmtVersion}"
     id 'java'
     id 'jacoco'
     id 'org.jsonschema2dataclass' version '2.1.0'
-    id 'pmd'
-    id 'com.github.spotbugs' version '5.0.13'
-}
-
-group 'ru.tradevisor'
-version '1.0-SNAPSHOT'
-sourceCompatibility = '21'
-
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
-}
-
-ext {
-    set('testcontainersVersion', "1.19.7")
-    set('jooq.version', "3.16.4")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.1"
-        mavenBom "org.testcontainers:testcontainers-bom:${testcontainersVersion}"
-
-    }
-}
-
-
-repositories {
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
     implementation project(':tinkoff-api')
     implementation project(':finam-api')
     implementation project(':tradevisor-db')
-    implementation("chat.giga:gigachat-java:0.1.7")
-    implementation ('io.netty:netty-all:4.1.100.Final') {
+
+    implementation 'chat.giga:gigachat-java:0.1.7'
+    implementation('io.netty:netty-all') {
         exclude group: 'io.netty', module: 'netty-transport-epoll'
     }
-    implementation 'com.github.RussianInvestments:invest-api-java-sdk:1.30'
+    implementation 'com.github.RussianInvestments:invest-api-java-sdk'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
     implementation 'org.telegram:telegrambots-meta:6.8.0'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     implementation 'me.tongfei:progressbar:0.9.5'
     implementation 'net.logstash.logback:logstash-logback-encoder:7.0.1'
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'io.github.cdimascio:dotenv-java:2.3.2'
     implementation "org.jfree:jfreechart:1.5.4"
 
-    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
-    compileOnly 'javax.annotation:javax.annotation-api:1.3.2'
-
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.apache.httpcomponents.client5:httpclient5:5.3'
+
+    testImplementation 'org.apache.httpcomponents.client5:httpclient5'
     implementation 'org.apache.commons:commons-lang3'
 
-    implementation 'org.jooq:jooq'
-    implementation 'ch.qos.logback:logback-classic:1.2.6'
-
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.postgresql:postgresql'
+    implementation 'jakarta.persistence:jakarta.persistence-api'
+    implementation 'jakarta.annotation:jakarta.annotation-api'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
-    implementation 'org.liquibase:liquibase-core:4.26.0'
-
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation 'org.awaitility:awaitility:4.2.0'
-}
-
-// Задача для очистки Docker окружения
-task cleanDocker(type: Exec) {
-    group = 'Docker'
-    description = 'Очистка Docker окружения перед запуском тестов'
-    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
-        commandLine 'cmd', '/c', 'scripts\\clean-docker.bat'
-    } else {
-        commandLine 'bash', 'scripts/clean-docker.sh'
-    }
-    doFirst {
-        file('scripts').mkdirs()
-    }
-    ignoreExitValue = true
-}
-
-task prepareForTests {
-    group = 'Verification'
-    description = 'Подготовка окружения для запуска тестов'
-    dependsOn cleanDocker
+    testImplementation 'org.awaitility:awaitility'
 }
 
 test {
-    dependsOn prepareForTests
     useJUnitPlatform()
-//    environment "TESTCONTAINERS_REUSE_ENABLE", "true"
-//    environment "TESTCONTAINERS_RYUK_DISABLED", "true"
     testLogging {
         events "passed", "skipped", "failed"
     }
 }
 
 task integrationTest(type: Test) {
-    group = 'Verification'
-    description = 'Запуск интеграционных тестов с очисткой Docker'
-    dependsOn prepareForTests
     useJUnitPlatform {
         includeTags 'integration'
     }
@@ -131,125 +72,5 @@ task integrationTest(type: Test) {
     }
 }
 
-bootJar {
-    enabled(true)
-}
-
-jar {
-    enabled(false)
-}
-
-// PMD Configuration
-pmd {
-    toolVersion = '6.55.0'
-    ruleSetFiles = files("config/pmd/ruleset.xml")
-    ruleSets = [] // Disable default rulesets to use only our custom rules
-    incrementalAnalysis = true
-}
-
-// SpotBugs Configuration
-spotbugs {
-    toolVersion = '4.7.3'
-    effort = 'max'  // Thorough analysis
-    reportLevel = 'low'  // Report all issues including low priority
-    excludeFilter = file("config/spotbugs/exclude.xml")  // Optional exclusions
-}
-
-// Create comprehensive code inspection task
-task inspectCode {
-    group = 'Verification'
-    description = 'Identify unused code, imports, variables and other warnings'
-    
-    dependsOn(
-        'compileJava',
-        'pmdMain',
-        'spotbugsMain'
-    )
-    
-    doLast {
-        println "=== Code Inspection Summary ==="
-        println "1. Run './gradlew pmdMain' for detailed PMD report"
-        println "2. Run './gradlew spotbugsMain' for detailed SpotBugs report"
-        println "3. Check build/reports/pmd/ and build/reports/spotbugs/ for HTML reports"
-    }
-}
-
-// Enhanced PMD ruleset (create config/pmd/ruleset.xml)
-/*
-<?xml version="1.0" encoding="UTF-8"?>
-<ruleset name="Custom Rules"
-         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
-    <description>Custom rules for finding unused elements</description>
-    
-    <!-- Java unused code rules -->
-    <rule ref="category/java/bestpractices.xml/UnusedImports"/>
-    <rule ref="category/java/bestpractices.xml/UnusedLocalVariable"/>
-    <rule ref="category/java/bestpractices.xml/UnusedPrivateField"/>
-    <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod"/>
-    <rule ref="category/java/codestyle.xml/UnnecessaryImport"/>
-    <rule ref="category/java/design.xml/UselessOverridingMethod"/>
-    
-    <!-- Additional useful rules -->
-    <rule ref="category/java/errorprone.xml/EmptyCatchBlock"/>
-    <rule ref="category/java/errorprone.xml/EmptyIfStmt"/>
-    <rule ref="category/java/performance.xml/RedundantFieldInitializer"/>
-</ruleset>
-*/
-
-// Make test tasks depend on inspection
-test.dependsOn inspectCode
-
-// Quick console output task for immediate feedback
-task quickLint {
-    group = 'Verification'
-    description = 'Quick check for common code issues'
-    
-    doLast {
-        if (System.getProperty('os.name').toLowerCase().contains('windows')) {
-            println "Skipping quickLint on Windows (requires grep)"
-        } else {
-            exec {
-                commandLine 'grep', '-r', '--include=*.java',
-                    'TODO\\|FIXME\\|unused\\|Unused', 'src/'
-            }
-        }
-    }
-}
-
-generateJsonSchema2DataClass {
-    dependencies {
-        implementation 'javax.validation:validation-api:1.1.0.CR2'
-        implementation 'javax.validation:validation-api:2.0.1.Final'
-    }
-
-    jsonSchema2Pojo {
-        targetPackage = 'com.sberbank.bcpcli.notification.core.generated.model'
-        removeOldOutput = true
-        generateBuilders = true
-        includeConstructors = true
-        includeAllPropertiesConstructor = true
-        useLongIntegers = true
-        initializeCollections = false
-        includeJsr303Annotations = true
-        useJodaDates = false
-        useJodaLocalDates = false
-        useJodaLocalTimes = false
-        useBigDecimals = true
-        dateType = 'java.time.LocalDate'
-        formatDates = true
-        formatDateTimes = true
-        includeCopyConstructor = true
-    }
-    generateJsonSchema2DataClass.dependsOn clean
-}
-
-tasks.register('makeScriptsExecutable', Exec) {
-    if (!System.getProperty('os.name').toLowerCase().contains('windows')) {
-        commandLine 'chmod', '+x', 'scripts/clean-docker.sh'
-    }
-    onlyIf { !System.getProperty('os.name').toLowerCase().contains('windows') }
-}
-
-cleanDocker.dependsOn makeScriptsExecutable
+bootJar.enabled = true
+jar.enabled = false

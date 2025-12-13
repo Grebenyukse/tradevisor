@@ -1,0 +1,44 @@
+plugins {
+    id 'java'
+    id 'org.liquibase.gradle' version '2.2.0'
+}
+
+dependencies {
+    implementation 'org.yaml:snakeyaml:1.30.0'
+    implementation 'info.picocli:picocli:4.6.1'
+    liquibaseRuntime 'org.liquibase:liquibase-core:4.3.1'
+    liquibaseRuntime 'org.liquibase:liquibase-groovy-dsl:3.0.2'
+    liquibaseRuntime 'ch.qos.logback:logback-core:1.2.9'
+    liquibaseRuntime 'ch.qos.logback:logback-classic:1.2.9'
+    liquibaseRuntime 'org.postgresql:postgresq:42.3.3l'
+    liquibaseRuntime 'info.picocli:picocli:4.6.1'
+    liquibaseRuntime 'org.yaml:snakeyaml:1.30'
+
+
+}
+
+liquibase {
+    activities {
+        main {
+            arguments = [
+                    url: project.property("db.url"),
+                    changeLogFile: 'src/main/resources/changelog/changelog-master.yaml',
+                    username: project.property("db.username"),
+                    password: project.property("db.password"),
+                    defaultSchemaName: project.property("db.schema"),
+                    liquibaseSchemaName: project.property("db.liquibaseSchemaName"),
+                    logLevel: 'debug'
+            ]
+        }
+    }
+}
+
+task liquibaseChangelogArchive(type: Zip) {
+    from "$buildDir/resources/main/changelog/"
+    archiveFileName = "sql.zip"
+    destinationDirectory = file("$buildDir/dist")
+}
+
+build.finalizedBy liquibaseChangelogArchive
+
+// УДАЛЕНО: блок liquibaseJooq который вызывал ошибку

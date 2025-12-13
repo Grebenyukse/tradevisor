@@ -3,100 +3,90 @@ package ru.grnk.tradevisor.common.repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.jooq.DSLContext;
-import org.jooq.JSONB;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
+import ru.grnk.tradevisor.common.repository.entity.SignalsEntity;
+import ru.grnk.tradevisor.common.repository.jpa.SignalsJpaRepository;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static ru.grnk.tradevisor.dbmodel.tables.Signals.SIGNALS;
-
 @Repository
 @RequiredArgsConstructor
 public class SignalsRepository {
 
-    private final DSLContext dsl;
+    private final SignalsJpaRepository signalsRepo;
     private final ObjectMapper om;
 
     @Transactional
     public void updateSignalStatus(Integer signalId, TrvSignalStatus status) {
-        dsl.update(SIGNALS).set(SIGNALS.STATUS, status.name())
-                .set(SIGNALS.UPDATED_AT, OffsetDateTime.now())
-                .where(SIGNALS.ID.eq(signalId))
-                .execute();
+        Optional<SignalsEntity> opt = signalsRepo.findById(signalId);
+        if (opt.isPresent()) {
+            SignalsEntity entity = opt.get();
+            entity.setStatus(status.name());
+            entity.setUpdatedAt(OffsetDateTime.now());
+            signalsRepo.save(entity);
+        }
     }
 
     @Transactional
-    public List<Signals> findSignalsByStatuses(List<String> statuses) {
-        return dsl.select().from(SIGNALS)
-                .where(SIGNALS.STATUS.in(statuses))
-                .orderBy(SIGNALS.CREATED_AT)
-                .fetchStreamInto(Signals.class)
-                .collect(Collectors.toList());
+    public List<SignalsEntity> findSignalsByStatuses(List<String> statuses) {
+        return signalsRepo.findByStatusInOrderByCreatedAtAsc(statuses);
     }
 
     @Transactional
     public void cancelExpiredSignals(List<Integer> ids) {
-        dsl.update(SIGNALS)
-                .set(SIGNALS.STATUS, TrvSignalStatus.CANCELLED.name())
-                .set(SIGNALS.UPDATED_AT, OffsetDateTime.now())
-                .where(SIGNALS.ID.in(ids))
-                .execute();
-    }
-
-
-
-    @Transactional
-    public List<Signals> findUnpublishedSignals() {
-        return dsl.select().from(SIGNALS)
-                .where(SIGNALS.STATUS.eq(TrvSignalStatus.CREATED.name()))
-                .orderBy(SIGNALS.CREATED_AT)
-                .fetchStreamInto(Signals.class)
-                .collect(Collectors.toList());
-    }
-
-    public Optional<Signals> findSignalBySignalId(Integer id) {
-        return dsl.select().from(SIGNALS)
-                .where(SIGNALS.ID.eq(id))
-                .fetchOptionalInto(Signals.class);
+        List<SignalsEntity> entities = signalsRepo.findAllById(ids);
+        entities.forEach(e -> {
+            e.setStatus(TrvSignalStatus.CANCELLED.name());
+            e.setUpdatedAt(OffsetDateTime.now());
+        });
+        signalsRepo.saveAll(entities);
     }
 
     @Transactional
-    public List<Signals> findPublishedSignals() {
-        return dsl.select().from(SIGNALS)
-                .where(SIGNALS.STATUS.in(TrvSignalStatus.CREATED.name(), TrvSignalStatus.PUBLISHED.name()))
-                .orderBy(SIGNALS.CREATED_AT)
-                .fetchStreamInto(Signals.class)
-                .collect(Collectors.toList());
+    public List<SignalsEntity> findUnpublishedSignals() {
+        return signalsRepo.findByStatusEqualsOrderByCreatedAtAsc(TrvSignalStatus.CREATED.name());
+    }
+
+    public Optional<SignalsEntity> findSignalBySignalId(Integer id) {
+        return signalsRepo.findById(id);
+    }
+
+    @Transactional
+    public List<SignalsEntity> findPublishedSignals() {
+        return signalsRepo.findByStatusInOrderByCreatedAtAsc(
+                List.of(TrvSignalStatus.CREATED.name(), TrvSignalStatus.PUBLISHED.name())
+        );
     }
 
     @Transactional
     public int expirePublishedSignals(int retentionDays) {
         OffsetDateTime cutoffTime = OffsetDateTime.now().minusDays(retentionDays);
-        return dsl.update(SIGNALS)
-                .set(SIGNALS.STATUS, TrvSignalStatus.EXPIRED.name())
-                .set(SIGNALS.UPDATED_AT, OffsetDateTime.now())
-                .where(SIGNALS.STATUS.in(TrvSignalStatus.PUBLISHED.name(), TrvSignalStatus.CANCELLED.name()))
-                .and(SIGNALS.CREATED_AT.lt(cutoffTime))
-                .execute();
+        List<SignalsEntity> expired = signalsRepo.findExpiredSignals(
+                List.of(TrvSignalStatus.PUBLISHED.name(), TrvSignalStatus.CANCELLED.name()),
+                cutoffTime
+        );
+
+        expired.forEach(e -> {
+            e.setStatus(TrvSignalStatus.EXPIRED.name());
+            e.setUpdatedAt(OffsetDateTime.now());
+        });
+
+        signalsRepo.saveAll(expired);
+        return expired.size();
     }
 
     @Transactional
-    public List<Signals> findAcceptedSignals() {
-        return dsl.select().from(SIGNALS)
-                .where(SIGNALS.STATUS.in(TrvSignalStatus.CONFIRMED.name()))
-                .orderBy(SIGNALS.CREATED_AT)
-                .fetchStreamInto(Signals.class)
-                .collect(Collectors.toList());
+    public List<SignalsEntity> findAcceptedSignals() {
+        return signalsRepo.findByStatusInOrderByCreatedAtAsc(
+                List.of(TrvSignalStatus.CONFIRMED.name())
+        );
     }
-
 
     @SneakyThrows
     @Transactional
@@ -106,36 +96,23 @@ public class SignalsRepository {
                            OffsetDateTime lastCandleTime,
                            String signalDescription
     ) {
-        dsl.insertInto(SIGNALS,
-                        SIGNALS.TICKER_CODE,
-                        SIGNALS.NAME,
-                        SIGNALS.DIRECTION,
-                        SIGNALS.PRICE_OPEN,
-                        SIGNALS.STOP_LOSS,
-                        SIGNALS.TAKE_PROFIT,
-                        SIGNALS.DESCRIPTION,
-                        SIGNALS.STATUS,
-                        SIGNALS.CREATED_AT,
-                        SIGNALS.STRATEGY_PROPS
-                )
-                .values(
-                        tickerCode,
-                        strategyName,
-                        trvCalculationResult.direction().directionCode(),
-                        trvCalculationResult.priceOpen(),
-                        trvCalculationResult.stopLoss(),
-                        trvCalculationResult.takeProfit(),
-                        signalDescription,
-                        TrvSignalStatus.CREATED.name(),
-                        lastCandleTime,
-                        JSONB.valueOf(om.writeValueAsString(trvCalculationResult.lines()))
-                )
-                .onConflictDoNothing()
-                .execute();
+        SignalsEntity entity = new SignalsEntity();
+        entity.setTickerCode(tickerCode);
+        entity.setName(strategyName);
+        entity.setDirection(trvCalculationResult.direction().directionCode());
+        entity.setPriceOpen(trvCalculationResult.priceOpen());
+        entity.setStopLoss(trvCalculationResult.stopLoss());
+        entity.setTakeProfit(trvCalculationResult.takeProfit());
+        entity.setDescription(signalDescription);
+        entity.setStatus(TrvSignalStatus.CREATED.name());
+        entity.setCreatedAt(lastCandleTime);
+        entity.setStrategyProps(om.writeValueAsString(trvCalculationResult.lines()));
+
+        signalsRepo.save(entity);
     }
 
     @Transactional
     public void deleteAllSignals() {
-        dsl.delete(SIGNALS).execute();
+        signalsRepo.deleteAll();
     }
 }

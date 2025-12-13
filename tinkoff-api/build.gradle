@@ -1,45 +1,35 @@
 plugins {
     id 'java'
-    id 'org.openapi.generator' version '7.0.1'
-}
-
-sourceCompatibility = '21'
-
-jar {
-    enabled(true)
-}
-
-repositories {
-    mavenCentral()
+    id 'org.openapi.generator' version '6.4.0'
 }
 
 dependencies {
-    implementation 'org.springframework:spring-context:6.1.5'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.15.2'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
-    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
-    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
-    implementation 'io.swagger.core.v3:swagger-annotations:2.2.15'
+    implementation 'org.springframework:spring-context'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'jakarta.validation:validation-api:2.0.1.Final'
+    implementation 'jakarta.annotation:jakarta.annotation-api:1.3.5'
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.8'
 
 
 }
 
 openApiGenerate {
     generatorName = "spring"
-    inputSpec = "${projectDir}/src/main/resources/openapi.yaml"
-    outputDir = "${buildDir}/generated/sources/openapi"
-    modelPackage = "com.sberbank.bcpcli.notification.generated.openapi.dto"
+    inputSpec = "$projectDir/src/main/resources/openapi.yaml"
+    outputDir = "$buildDir/generated/sources/openapi"
+    modelPackage = "ru.grnk.tradevisor.notification.generated.openapi.dto"
     globalProperties = [
             apis: "false",
             models: ""
     ]
     configOptions = [
             dateLibrary: "java8",
-            openApiNullable: "false",
-            useJakartaEe: "true"
+            openApiNullable: "false"
     ]
-    sourceSets.main.java.srcDirs += ["${buildDir}/generated/sources/openapi"]
-    openapiNormalizer = ["REF_AS_PARENT_IN_ALLOF": "true"]
+    openapiNormalizer = [
+            REF_AS_PARENT_IN_ALLOF: "true"
+    ]
 }
 
 compileJava.dependsOn tasks.openApiGenerate
