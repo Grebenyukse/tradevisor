@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @Table(name = "events", schema = "tradevisor")
-public class EventsEntity {
+public class Events {
 
     @Id
     @Column(name = "hash_id")
@@ -35,10 +35,5 @@ public class EventsEntity {
 
     @Column(name = "content")
     private String content;
-
-    // Constructors
-    public EventsEntity() {}
-
-    // Getters and Setters
 
 }

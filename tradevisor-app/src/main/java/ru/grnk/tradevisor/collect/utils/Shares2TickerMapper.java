@@ -1,6 +1,6 @@
 package ru.grnk.tradevisor.collect.utils;
 
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.tinkoff.piapi.contract.v1.Future;
 import ru.tinkoff.piapi.contract.v1.Share;
 
@@ -11,36 +11,38 @@ import java.time.ZoneId;
 public class Shares2TickerMapper {
 
     public static Tickers from(Share share) {
-        return new Tickers()
-                .setCurrency(share.getCurrency())
-                .setDescription(share.getName())
-                .setTicker(share.getTicker())
-                .setExchange(share.getExchange())
-                .setExpiration(null)
-                .setGo(null)
-                .setLot(share.getLot())
-                .setTickerCode(share.getUid())
-                .setFigi(share.getFigi())
-                .setMarketType("акции")
-                .setPrecision(1);
+        return Tickers.builder()
+                .currency(share.getCurrency())
+                .description(share.getName())
+                .ticker(share.getTicker())
+                .exchange(share.getExchange())
+                .expiration(null)
+                .go(null)
+                .lot(share.getLot())
+                .tickerCode(share.getUid())
+                .figi(share.getFigi())
+                .marketType("акции")
+                .precision(1)
+                .build();
 
     }
 
     public static Tickers from(Future future) {
-        return new Tickers()
-                .setCurrency(future.getCurrency())
-                .setDescription(future.getName())
-                .setTicker(future.getTicker())
-                .setExchange(future.getExchange())
-                .setExpiration(
+        return Tickers.builder()
+                .currency(future.getCurrency())
+                .description(future.getName())
+                .ticker(future.getTicker())
+                .exchange(future.getExchange())
+                .expiration(
                         LocalDateTime.ofInstant(Instant.ofEpochSecond(future.getExpirationDate().getSeconds()),
                         ZoneId.systemDefault())
                 )
-                .setGo(null)
-                .setLot(future.getLot())
-                .setTickerCode(future.getUid())
-                .setFigi(future.getFigi())
-                .setMarketType("фьючерсы")
-                .setPrecision(1);
+                .go(null)
+                .lot(future.getLot())
+                .tickerCode(future.getUid())
+                .figi(future.getFigi())
+                .marketType("фьючерсы")
+                .precision(1)
+                .build();
     }
 }

@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
 
 import java.time.LocalDateTime;
 import java.util.List;

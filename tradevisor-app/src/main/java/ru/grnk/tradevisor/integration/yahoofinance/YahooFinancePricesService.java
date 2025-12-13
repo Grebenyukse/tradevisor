@@ -8,8 +8,8 @@ import ru.grnk.tradevisor.collect.prices.PricesLoader;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
+import ru.grnk.tradevisor.common.repository.entity.MarketData;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.integration.yahoofinance.dto.YahooCandle;
 import ru.grnk.tradevisor.integration.yahoofinance.dto.YahooTickerInfo;
 
@@ -77,28 +77,30 @@ public class YahooFinancePricesService implements PricesLoader {
     }
 
     private Tickers createTicker(YahooTickerInfo tickerInfo) {
-        return new Tickers()
-                .setTicker(tickerInfo.symbol())
-                .setTickerCode(tickerInfo.symbol())
-                .setCurrency("USD")
-                .setExchange(tickerInfo.exchange())
-                .setExpiration(null)
-                .setFigi(tickerInfo.symbol())
-                .setDescription(tickerInfo.name())
-                .setPrecision(2)
-                .setMarketType(tickerInfo.type())
-                .setLot(1)
-                .setProvider("yahoofinance");
+        return Tickers.builder()
+                .ticker(tickerInfo.symbol())
+                .tickerCode(tickerInfo.symbol())
+                .currency("USD")
+                .exchange(tickerInfo.exchange())
+                .expiration(null)
+                .figi(tickerInfo.symbol())
+                .description(tickerInfo.name())
+                .precision(2)
+                .marketType(tickerInfo.type())
+                .lot(1)
+                .provider("yahoofinance")
+                .build();
     }
 
     private MarketData from(YahooCandle candle, String tickerCode) {
-        return new MarketData()
-                .setTime(Instant.ofEpochMilli(candle.timestamp()).atZone(ZoneId.of("UTC")).toOffsetDateTime())
-                .setOpen(candle.open())
-                .setHigh(candle.high())
-                .setLow(candle.low())
-                .setClose(candle.close())
-                .setTickerCode(tickerCode);
+        return MarketData.builder()
+                .time(Instant.ofEpochMilli(candle.timestamp()).atZone(ZoneId.of("UTC")).toOffsetDateTime())
+                .open(candle.open())
+                .high(candle.high())
+                .low(candle.low())
+                .close(candle.close())
+                .tickerCode(tickerCode)
+                .build();
     }
 
 }

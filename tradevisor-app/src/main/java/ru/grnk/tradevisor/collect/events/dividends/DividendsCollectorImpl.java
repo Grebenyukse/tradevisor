@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.events.EventCollector;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.tinkoff.piapi.core.InvestApi;
 
 import java.util.List;

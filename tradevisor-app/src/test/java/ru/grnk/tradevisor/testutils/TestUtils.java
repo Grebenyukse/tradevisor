@@ -1,7 +1,7 @@
 package ru.grnk.tradevisor.testutils;
 
 import org.awaitility.Awaitility;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
+import ru.grnk.tradevisor.common.repository.entity.MarketData;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -23,13 +23,14 @@ public class TestUtils {
         var list = new java.util.ArrayList<MarketData>();
 
         for (int i = 0; i < lows.length; i++) {
-            list.add(new MarketData()
-                    .setTickerCode(tickerCode)
-                    .setLow(lows[i])
-                    .setOpen(getRandFloat(lows[i], highs[i]))
-                    .setClose(getRandFloat(lows[i], highs[i]))
-                    .setHigh(highs[i])
-                    .setTime(OffsetDateTime.now().minusHours((long) i * hoursInterval)));
+            list.add(MarketData.builder()
+                    .tickerCode(tickerCode)
+                    .low(lows[i])
+                    .open(getRandFloat(lows[i], highs[i]))
+                    .close(getRandFloat(lows[i], highs[i]))
+                    .high(highs[i])
+                    .time(OffsetDateTime.now().minusHours((long) i * hoursInterval))
+                    .build());
         }
         return list;
     }

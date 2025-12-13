@@ -1,6 +1,6 @@
 package ru.grnk.tradevisor.collect;
 
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
 
 import java.util.List;
 

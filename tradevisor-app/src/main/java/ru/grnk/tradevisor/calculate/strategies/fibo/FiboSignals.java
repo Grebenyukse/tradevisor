@@ -8,7 +8,7 @@ import ru.grnk.tradevisor.calculate.strategies.IStrategy;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
+import ru.grnk.tradevisor.common.repository.entity.MarketData;
 
 import java.util.List;
 

@@ -15,7 +15,7 @@ import java.util.List;
 @Getter
 @Entity
 @Table(name = "signals", schema = "tradevisor")
-public class SignalsEntity implements Serializable {
+public class Signals implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

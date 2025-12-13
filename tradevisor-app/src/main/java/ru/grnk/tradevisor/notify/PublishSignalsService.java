@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
+import ru.grnk.tradevisor.common.repository.entity.Signals;
 
 import jakarta.annotation.PostConstruct;
 

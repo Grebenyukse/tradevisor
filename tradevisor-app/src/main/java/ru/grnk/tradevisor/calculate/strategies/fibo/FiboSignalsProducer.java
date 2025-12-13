@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.grnk.tradevisor.calculate.strategies.dto.Marker;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.calculate.strategies.dto.TrvCalculationResult;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
+import ru.grnk.tradevisor.common.repository.entity.MarketData;
 import ru.grnk.tradevisor.notify.plot.dto.ChartLineDto;
 
 import java.time.OffsetDateTime;
