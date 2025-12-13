@@ -6,14 +6,15 @@ import grpc.tradeapi.v1.marketdata.Bar;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
-import ru.grnk.tradevisor.common.repository.entity.MarketDataEntity;
-import ru.grnk.tradevisor.common.repository.jpa.MarketDataJpaRepository;
+import ru.grnk.tradevisor.common.repository.entity.MarketData;
+import ru.grnk.tradevisor.common.repository.jpa.MarketDataJpa;
 import ru.tinkoff.piapi.contract.v1.HistoricCandle;
 import ru.tinkoff.piapi.contract.v1.Quotation;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -27,16 +28,16 @@ import static ru.ttech.piapi.core.helpers.NumberMapper.quotationToBigDecimal;
 @RequiredArgsConstructor
 public class MarketDataRepository {
 
-    private final MarketDataJpaRepository marketDataRepo;
+    private final MarketDataJpa marketDataRepo;
     private final TradevisorProperties trvProperties;
 
     @PersistenceContext
     private EntityManager em;
 
-    public List<MarketDataEntity> fetchMarketDataForLast(int bars, String tickerCode) {
-        TypedQuery<MarketDataEntity> query = em.createQuery(
-                "SELECT m FROM MarketDataEntity m WHERE m.tickerCode = :tickerCode ORDER BY m.time DESC",
-                MarketDataEntity.class
+    public List<MarketData> fetchMarketDataForLast(int bars, String tickerCode) {
+        TypedQuery<MarketData> query = em.createQuery(
+                "SELECT m FROM MarketData m WHERE m.tickerCode = :tickerCode ORDER BY m.time DESC",
+                MarketData.class
         );
         query.setParameter("tickerCode", tickerCode);
         query.setMaxResults(bars);
@@ -45,7 +46,7 @@ public class MarketDataRepository {
 
     public OffsetDateTime getLatestTickTime(String tickerCode, Integer historyMaxDepthDays) {
         TypedQuery<OffsetDateTime> query = em.createQuery(
-                "SELECT MAX(m.time) FROM MarketDataEntity m WHERE m.tickerCode = :tickerCode",
+                "SELECT MAX(m.time) FROM MarketData m WHERE m.tickerCode = :tickerCode",
                 OffsetDateTime.class
         );
         query.setParameter("tickerCode", tickerCode);
@@ -53,35 +54,35 @@ public class MarketDataRepository {
     }
 
     public void saveMarketData(HistoricCandle candle, String instrument_uid) {
-        MarketDataEntity entity = new MarketDataEntity();
-        entity.setTickerCode(instrument_uid);
-        entity.setOpen(floatFrom(candle.getOpen()));
-        entity.setHigh(floatFrom(candle.getHigh()));
-        entity.setLow(floatFrom(candle.getLow()));
-        entity.setClose(floatFrom(candle.getClose()));
-        entity.setTime(timeFrom(candle.getTime()));
-
+        MarketData entity = MarketData.builder()
+                .tickerCode(instrument_uid)
+                .open(floatFrom(candle.getOpen()))
+                .high(floatFrom(candle.getHigh()))
+                .low(floatFrom(candle.getLow()))
+                .close(floatFrom(candle.getClose()))
+                .time(timeFrom(candle.getTime()))
+                .build();
         marketDataRepo.save(entity);
     }
 
-    public void batchInsertMarketData(List<MarketDataEntity> records) {
+    public void batchInsertMarketData(List<MarketData> records) {
         records.forEach(marketDataRepo::save);
     }
 
     public void saveMarketData(Bar bar, String instrument_uid) {
-        MarketDataEntity entity = new MarketDataEntity();
-        entity.setTickerCode(instrument_uid);
-        entity.setOpen(floatFrom(bar.getOpen()));
-        entity.setHigh(floatFrom(bar.getHigh()));
-        entity.setLow(floatFrom(bar.getLow()));
-        entity.setClose(floatFrom(bar.getClose()));
-        entity.setTime(timeFrom(bar.getTimestamp()));
-
+        MarketData entity = MarketData.builder()
+                .tickerCode(instrument_uid)
+                .open(floatFrom(bar.getOpen()))
+                .high(floatFrom(bar.getHigh()))
+                .low(floatFrom(bar.getLow()))
+                .close(floatFrom(bar.getClose()))
+                .time(timeFrom(bar.getTimestamp()))
+                .build();
         marketDataRepo.save(entity);
     }
 
     public void deleteMarketData(String tickerCode) {
-        marketDataRepo.deleteById(new MarketDataEntity.CompositeId(tickerCode, null)); // TODO fix composite key deletion
+        marketDataRepo.deleteById(new MarketData.CompositeId(tickerCode, null)); // TODO fix composite key deletion
     }
 
     private static OffsetDateTime timeFrom(Timestamp timestamp) {

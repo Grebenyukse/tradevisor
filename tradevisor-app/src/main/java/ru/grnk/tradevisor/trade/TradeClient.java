@@ -1,6 +1,6 @@
 package ru.grnk.tradevisor.trade;
 
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
+import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
 

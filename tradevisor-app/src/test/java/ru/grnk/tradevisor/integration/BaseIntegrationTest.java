@@ -8,7 +8,6 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -50,9 +49,6 @@ abstract class BaseIntegrationTest {
 
     @Autowired
     protected TradevisorProperties properties;
-
-    @Autowired
-    protected DSLContext dsl;
 
     @Autowired
     protected MarketDataRepository marketDataRepository;

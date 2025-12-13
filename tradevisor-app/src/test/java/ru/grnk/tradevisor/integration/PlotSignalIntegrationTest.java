@@ -6,7 +6,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.integration.testconfig.DotenvTestConfig;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
+import ru.grnk.tradevisor.common.repository.entity.MarketData;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -64,15 +64,16 @@ public class PlotSignalIntegrationTest extends BaseIntegrationTest {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSXX");
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.replace("\"", "").split(",");
-                MarketData marketData = new MarketData();
-                marketData.setTickerCode(parts[0]); // ticker_code
                 String dateTimeStr = parts[1]; // time
                 OffsetDateTime time = OffsetDateTime.parse(dateTimeStr, formatter);
-                marketData.setTime(time);
-                marketData.setOpen(Float.parseFloat(parts[2]));
-                marketData.setHigh(Float.parseFloat(parts[3]));
-                marketData.setLow(Float.parseFloat(parts[4]));
-                marketData.setClose(Float.parseFloat(parts[5]));
+                var marketData = MarketData.builder()
+                        .tickerCode(parts[0])
+                        .time(time)
+                        .open(Float.parseFloat(parts[2]))
+                        .high(Float.parseFloat(parts[3]))
+                        .low(Float.parseFloat(parts[4]))
+                        .close(Float.parseFloat(parts[5]))
+                        .build();
                 marketDataList.add(marketData);
             }
         } catch (Exception e) {

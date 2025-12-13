@@ -6,8 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
+import ru.grnk.tradevisor.common.repository.entity.Signals;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.integration.telegram.TelegramMessageService;
 import ru.grnk.tradevisor.notify.plot.PlotService;
 

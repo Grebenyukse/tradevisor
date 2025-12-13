@@ -12,7 +12,7 @@ import java.io.Serializable;
 @Getter
 @Entity
 @Table(name = "finam_exchanges", schema = "tradevisor")
-public class FinamExchangesEntity implements Serializable {
+public class FinamExchanges implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

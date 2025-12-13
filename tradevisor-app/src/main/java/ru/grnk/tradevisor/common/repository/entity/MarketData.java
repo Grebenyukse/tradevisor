@@ -13,8 +13,8 @@ import java.time.OffsetDateTime;
 @Getter
 @Entity
 @Table(name = "market_data", schema = "tradevisor")
-@IdClass(MarketDataEntity.CompositeId.class)
-public class MarketDataEntity implements Serializable {
+@IdClass(MarketData.CompositeId.class)
+public class MarketData implements Serializable {
 
     @Id
     @Column(name = "ticker_code")

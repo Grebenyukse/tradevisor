@@ -6,8 +6,8 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Signals;
+import ru.grnk.tradevisor.common.repository.entity.MarketData;
+import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
 import ru.grnk.tradevisor.notify.plot.PlotService;
 

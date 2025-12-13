@@ -9,8 +9,8 @@ import ru.grnk.tradevisor.collect.prices.PricesLoader;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.MarketData;
-import ru.grnk.tradevisor.dbmodel.tables.pojos.Tickers;
+import ru.grnk.tradevisor.common.repository.entity.MarketData;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -35,12 +35,12 @@ public class BybitPricesService implements PricesLoader {
     public void loadPrices(String tickerCode) {
         var startTime = findStartTime(tickerCode);
         var endTime = convertToTimestamp(ZonedDateTime.now());
-        var intervalInHours = (endTime.getSeconds() - startTime.getSeconds())/60;
+        var intervalInHours = (endTime.getSeconds() - startTime.getSeconds()) / 60;
         if (intervalInHours < 5) {
             return;
         }
         var candles = bybitClient.fetchHourlyCandles(tickerCode, startTime.getSeconds(), 500);
-        var res  = candles.stream()
+        var res = candles.stream()
                 .map(x -> from(x, tickerCode))
                 .collect(toList());
         marketDataRepository.batchInsertMarketData(res);
@@ -67,27 +67,29 @@ public class BybitPricesService implements PricesLoader {
     }
 
     private static Tickers from(BybitTickerRs.SymbolInfo bybitTicker) {
-        return new Tickers()
-                .setTicker(bybitTicker.symbol())
-                .setTickerCode(bybitTicker.symbol() + "@" + "bybit")
-                .setCurrency(bybitTicker.baseCoin())
-                .setExchange("bybit")
-                .setExpiration(null)
-                .setFigi(bybitTicker.symbol() + "@" + "bybit")
-                .setDescription(bybitTicker.status())
-                .setPrecision(bybitTicker.lotSizeFilter().basePrecision().precision())
-                .setLot(1)
-                .setProvider("bybit");
+        return Tickers.builder()
+                .ticker(bybitTicker.symbol())
+                .tickerCode(bybitTicker.symbol() + "@" + "bybit")
+                .currency(bybitTicker.baseCoin())
+                .exchange("bybit")
+                .expiration(null)
+                .figi(bybitTicker.symbol() + "@" + "bybit")
+                .description(bybitTicker.status())
+                .precision(bybitTicker.lotSizeFilter().basePrecision().precision())
+                .lot(1)
+                .provider("bybit")
+                .build();
     }
 
     private static MarketData from(BybitMarketdataRs.Candlestick candlestick, String tickerCode) {
-        return new MarketData()
-                .setTime(Instant.ofEpochMilli(candlestick.openTime()).atZone(ZoneId.of("Europe/Moscow")).toOffsetDateTime())
-                .setOpen(candlestick.openPrice())
-                .setHigh(candlestick.highPrice())
-                .setLow(candlestick.lowPrice())
-                .setClose(candlestick.closePrice())
-                .setTickerCode(tickerCode);
+        return MarketData.builder()
+                .time(Instant.ofEpochMilli(candlestick.openTime()).atZone(ZoneId.of("Europe/Moscow")).toOffsetDateTime())
+                .open(candlestick.openPrice())
+                .high(candlestick.highPrice())
+                .low(candlestick.lowPrice())
+                .close(candlestick.closePrice())
+                .tickerCode(tickerCode)
+                .build();
     }
 
 }

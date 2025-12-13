@@ -3,40 +3,41 @@ package ru.grnk.tradevisor.common.repository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
-import ru.grnk.tradevisor.common.repository.entity.TickersEntity;
-import ru.grnk.tradevisor.common.repository.jpa.TickersJpaRepository;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
+import ru.grnk.tradevisor.common.repository.jpa.TickersJpa;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
 public class TickersRepository {
 
-    private final TickersJpaRepository tickersRepo;
+    private final TickersJpa tickersRepo;
 
     @PersistenceContext
     private EntityManager em;
 
-    public TickersEntity findTickerByTickerCode(String tickerCode) {
+    public Tickers findTickerByTickerCode(String tickerCode) {
         return tickersRepo.findById(tickerCode).orElseThrow();
     }
 
-    public List<TickersEntity> getAllTickers() {
-        TypedQuery<TickersEntity> query = em.createQuery(
-                "SELECT t FROM TickersEntity t WHERE t.status IS NULL ORDER BY t.loadPriority DESC",
-                TickersEntity.class
+    public List<Tickers> getAllTickers() {
+        TypedQuery<Tickers> query = em.createQuery(
+                "SELECT t FROM Tickers t WHERE t.status IS NULL ORDER BY t.loadPriority DESC",
+                Tickers.class
         );
         return query.getResultList();
     }
 
     public Integer getAllTickersCount() {
         TypedQuery<Long> query = em.createQuery(
-                "SELECT COUNT(*) FROM TickersEntity t WHERE t.status IS NULL AND t.provider IS NOT NULL",
+                "SELECT COUNT(*) FROM Tickers t WHERE t.status IS NULL AND t.provider IS NOT NULL",
                 Long.class
         );
         return query.getSingleResult().intValue();
@@ -44,17 +45,17 @@ public class TickersRepository {
 
     public Integer getProviderTickersCount(String provider) {
         TypedQuery<Long> query = em.createQuery(
-                "SELECT COUNT(*) FROM TickersEntity t WHERE t.status IS NULL AND t.provider = :provider",
+                "SELECT COUNT(*) FROM Tickers t WHERE t.status IS NULL AND t.provider = :provider",
                 Long.class
         );
         query.setParameter("provider", provider);
         return query.getSingleResult().intValue();
     }
 
-    public List<TickersEntity> getAllTickers(String provider, Integer limit, Integer offset) {
-        TypedQuery<TickersEntity> query = em.createQuery(
-                "SELECT t FROM TickersEntity t WHERE t.status IS NULL AND t.provider = :provider ORDER BY t.loadPriority DESC",
-                TickersEntity.class
+    public List<Tickers> getAllTickers(String provider, Integer limit, Integer offset) {
+        TypedQuery<Tickers> query = em.createQuery(
+                "SELECT t FROM Tickers t WHERE t.status IS NULL AND t.provider = :provider ORDER BY t.loadPriority DESC",
+                Tickers.class
         );
         query.setParameter("provider", provider);
         query.setFirstResult(offset);
@@ -64,7 +65,7 @@ public class TickersRepository {
 
     public Map<String, Integer> getTickersCountByProvider() {
         TypedQuery<Object[]> query = em.createQuery(
-                "SELECT t.provider, COUNT(*) FROM TickersEntity t WHERE t.status IS NULL GROUP BY t.provider",
+                "SELECT t.provider, COUNT(*) FROM Tickers t WHERE t.status IS NULL GROUP BY t.provider",
                 Object[].class
         );
         return query.getResultList().stream()
@@ -74,7 +75,7 @@ public class TickersRepository {
     public int getUnpublishedTickersCount() {
         TypedQuery<Long> query = em.createQuery(
                 """
-                SELECT COUNT(*) FROM TickersEntity t
+                SELECT COUNT(*) FROM Tickers t
                 WHERE NOT EXISTS (
                     SELECT 1 FROM SignalsEntity s
                     WHERE s.tickerCode = t.tickerCode
@@ -93,10 +94,10 @@ public class TickersRepository {
         return query.getSingleResult().intValue();
     }
 
-    public List<TickersEntity> getUnpublishedTickersBatch(int limit, int offset) {
-        TypedQuery<TickersEntity> query = em.createQuery(
+    public List<Tickers> getUnpublishedTickersBatch(int limit, int offset) {
+        TypedQuery<Tickers> query = em.createQuery(
                 """
-                SELECT t FROM TickersEntity t
+                SELECT t FROM Tickers t
                 WHERE NOT EXISTS (
                     SELECT 1 FROM SignalsEntity s
                     WHERE s.tickerCode = t.tickerCode
@@ -104,7 +105,7 @@ public class TickersRepository {
                 )
                   AND t.status IS NULL
                 ORDER BY t.loadPriority DESC
-                """, TickersEntity.class
+                """, Tickers.class
         );
         query.setParameter("statuses", List.of(
                 TrvSignalStatus.CREATED.name(),
@@ -118,7 +119,7 @@ public class TickersRepository {
         return query.getResultList();
     }
 
-    public void saveInstrument(TickersEntity ticker, String provider) {
+    public void saveInstrument(Tickers ticker, String provider) {
         ticker.setProvider(provider);
         tickersRepo.save(ticker);
     }
@@ -132,9 +133,9 @@ public class TickersRepository {
     }
 
     public int markTickerFailedByUser(String tickerCode, String reason) {
-        Optional<TickersEntity> opt = tickersRepo.findById(tickerCode);
+        Optional<Tickers> opt = tickersRepo.findById(tickerCode);
         if (opt.isPresent()) {
-            TickersEntity entity = opt.get();
+            Tickers entity = opt.get();
             entity.setStatus(reason);
             tickersRepo.save(entity);
             return 1;

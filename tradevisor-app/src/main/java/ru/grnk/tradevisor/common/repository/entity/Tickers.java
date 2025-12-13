@@ -1,17 +1,19 @@
 package ru.grnk.tradevisor.common.repository.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+@Builder
 @Setter
 @Getter
 @Entity
 @Table(name = "tickers", schema = "tradevisor")
-public class TickersEntity implements Serializable {
+public class Tickers implements Serializable {
 
     @Id
     @Column(name = "ticker_code")
