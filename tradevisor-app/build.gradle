@@ -1,56 +1,29 @@
 plugins {
-    id 'org.springframework.boot'
-    id 'io.spring.dependency-management'
+    id 'org.springframework.boot' version "${springBootVersion}"
+    id 'io.spring.dependency-management' version "${springDependencyMgmtVersion}"
     id 'java'
     id 'jacoco'
     id 'org.jsonschema2dataclass' version '2.1.0'
-}
-
-group 'ru.tradevisor'
-version '1.0-SNAPSHOT'
-sourceCompatibility = '17'
-
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
-}
-
-ext {
-    set('testcontainersVersion', "1.16.3")
-    set('jooq.version', "3.16.4")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2021.0.1"
-        mavenBom "org.testcontainers:testcontainers-bom:${testcontainersVersion}"
-
-    }
-}
-
-
-repositories {
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
     implementation project(':tinkoff-api')
     implementation project(':finam-api')
     implementation project(':tradevisor-db')
-    implementation("chat.giga:gigachat-java:0.1.7")
-    implementation ('io.netty:netty-all:4.1.100.Final') {
+
+    implementation 'chat.giga:gigachat-java:0.1.7'
+    implementation('io.netty:netty-all') {
         exclude group: 'io.netty', module: 'netty-transport-epoll'
     }
-    implementation 'com.github.RussianInvestments:invest-api-java-sdk:1.30'
+    implementation 'com.github.RussianInvestments:invest-api-java-sdk'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
-    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
     implementation 'org.telegram:telegrambots-meta:6.8.0'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     implementation 'me.tongfei:progressbar:0.9.5'
     implementation 'net.logstash.logback:logstash-logback-encoder:7.0.1'
     implementation 'commons-io:commons-io:2.11.0'
@@ -62,61 +35,33 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.apache.httpcomponents.client5:httpclient5:5.3'
+
+    testImplementation 'org.apache.httpcomponents.client5:httpclient5'
     implementation 'org.apache.commons:commons-lang3'
 
-    implementation 'org.jooq:jooq'
-    implementation 'ch.qos.logback:logback-classic:1.2.6'
-
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.postgresql:postgresql'
+    implementation 'jakarta.persistence:jakarta.persistence-api'
+    implementation 'jakarta.annotation:jakarta.annotation-api'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
-    implementation 'org.liquibase:liquibase-core:4.3.1'
-
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation 'org.awaitility:awaitility:4.2.0'
-}
-
-// Задача для очистки Docker окружения
-task cleanDocker(type: Exec) {
-    group = 'Docker'
-    description = 'Очистка Docker окружения перед запуском тестов'
-    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
-        commandLine 'cmd', '/c', 'scripts\\clean-docker.bat'
-    } else {
-        commandLine 'bash', 'scripts/clean-docker.sh'
-    }
-    doFirst {
-        file('scripts').mkdirs()
-    }
-    ignoreExitValue = true
-}
-
-task prepareForTests {
-    group = 'Verification'
-    description = 'Подготовка окружения для запуска тестов'
-    dependsOn cleanDocker
+    testImplementation 'org.awaitility:awaitility'
 }
 
 test {
-    dependsOn prepareForTests
     useJUnitPlatform()
-//    environment "TESTCONTAINERS_REUSE_ENABLE", "true"
-//    environment "TESTCONTAINERS_RYUK_DISABLED", "true"
     testLogging {
         events "passed", "skipped", "failed"
     }
 }
 
 task integrationTest(type: Test) {
-    group = 'Verification'
-    description = 'Запуск интеграционных тестов с очисткой Docker'
-    dependsOn prepareForTests
     useJUnitPlatform {
         includeTags 'integration'
     }
@@ -127,46 +72,5 @@ task integrationTest(type: Test) {
     }
 }
 
-bootJar {
-    enabled(true)
-}
-
-jar {
-    enabled(false)
-}
-
-generateJsonSchema2DataClass {
-    dependencies {
-        implementation 'javax.validation:validation-api:1.1.0.CR2'
-        implementation 'javax.validation:validation-api:2.0.1.Final'
-    }
-
-    jsonSchema2Pojo {
-        targetPackage = 'com.sberbank.bcpcli.notification.core.generated.model'
-        removeOldOutput = true
-        generateBuilders = true
-        includeConstructors = true
-        includeAllPropertiesConstructor = true
-        useLongIntegers = true
-        initializeCollections = false
-        includeJsr303Annotations = true
-        useJodaDates = false
-        useJodaLocalDates = false
-        useJodaLocalTimes = false
-        useBigDecimals = true
-        dateType = 'java.time.LocalDate'
-        formatDates = true
-        formatDateTimes = true
-        includeCopyConstructor = true
-    }
-    generateJsonSchema2DataClass.dependsOn clean
-}
-
-tasks.register('makeScriptsExecutable', Exec) {
-    if (!System.getProperty('os.name').toLowerCase().contains('windows')) {
-        commandLine 'chmod', '+x', 'scripts/clean-docker.sh'
-    }
-    onlyIf { !System.getProperty('os.name').toLowerCase().contains('windows') }
-}
-
-cleanDocker.dependsOn makeScriptsExecutable
+bootJar.enabled = true
+jar.enabled = false

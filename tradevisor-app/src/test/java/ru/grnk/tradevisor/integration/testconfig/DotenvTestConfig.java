@@ -3,7 +3,7 @@ package ru.grnk.tradevisor.integration.testconfig;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.context.annotation.Configuration;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 @Configuration
 public class DotenvTestConfig {

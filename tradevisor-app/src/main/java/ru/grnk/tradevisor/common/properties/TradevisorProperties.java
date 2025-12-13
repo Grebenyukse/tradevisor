@@ -3,7 +3,7 @@ package ru.grnk.tradevisor.common.properties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @ConfigurationProperties(prefix = "app", ignoreUnknownFields = false)
 @Validated

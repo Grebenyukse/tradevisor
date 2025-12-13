@@ -14,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import ru.grnk.tradevisor.common.util.ObjectMapperUtils;
 import ru.grnk.tradevisor.integration.yahoofinance.dto.YahooChartResponse;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

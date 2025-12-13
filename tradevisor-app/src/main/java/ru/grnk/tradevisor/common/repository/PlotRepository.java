@@ -1,40 +1,34 @@
 package ru.grnk.tradevisor.common.repository;
 
 import lombok.RequiredArgsConstructor;
-import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
-import ru.grnk.tradevisor.dbmodel.tables.MarketData;
-import ru.grnk.tradevisor.dbmodel.tables.Tickers;
 import ru.grnk.tradevisor.notify.plot.dto.OHLCData;
 import ru.grnk.tradevisor.notify.plot.dto.PlotRecord;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import java.util.List;
 
-@RequiredArgsConstructor
 @Repository
+@RequiredArgsConstructor
 public class PlotRepository {
 
-    private final DSLContext dsl;
+    @PersistenceContext
+    private EntityManager em;
 
     public List<PlotRecord> getTickerPlotInfo(String uuid) {
-        var ohlcd =  dsl.select(
-                MarketData.MARKET_DATA.OPEN,
-                MarketData.MARKET_DATA.HIGH,
-                MarketData.MARKET_DATA.LOW,
-                MarketData.MARKET_DATA.CLOSE,
-                MarketData.MARKET_DATA.TIME
-                ).from(MarketData.MARKET_DATA)
-                .where(MarketData.MARKET_DATA.TICKER_CODE.eq(uuid))
-                .fetchStreamInto(OHLCData.class)
-                .toList();
-
-        var tickerInfo = dsl.select(
-                Tickers.TICKERS.TICKER,
-                Tickers.TICKERS.TICKER_CODE
+        TypedQuery<OHLCData> query = em.createQuery(
+                "SELECT new ru.grnk.tradevisor.notify.plot.dto.OHLCData(" +
+                        "m.open, m.high, m.low, m.close, m.time)" +
+                        "FROM MarketDataEntity m WHERE m.tickerCode = :uuid",
+                OHLCData.class
         );
+        query.setParameter("uuid", uuid);
+        List<OHLCData> ohlcList = query.getResultList();
 
-
-
-        return List.of();
+        // Здесь можно добавить логику получения tickerInfo через TickersEntity
+        // Но пока просто возвращаем пустой список, как было ранее
+        return List.of(); // Заглушка
     }
 }

@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    dependencies {
+        implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+        implementation platform("org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}")
+        implementation platform("org.testcontainers:testcontainers-bom:${testcontainersVersion}")
+
+        constraints {
+            implementation "org.projectlombok:lombok:${lombokVersion}"
+            implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+            implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+            implementation "org.postgresql:postgresql:${postgresqlVersion}"
+            implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+            implementation "com.github.RussianInvestments:invest-api-java-sdk:${tinkoffInvestApiVersion}"
+        }
+    }
+}
