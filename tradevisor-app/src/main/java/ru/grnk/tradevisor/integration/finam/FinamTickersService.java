@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
-import ru.grnk.tradevisor.integration.finam.repository.FinamMetainfoRepository;
+import ru.grnk.tradevisor.common.repository.FinamMetainfoRepository;
 
 @Service
 @RequiredArgsConstructor

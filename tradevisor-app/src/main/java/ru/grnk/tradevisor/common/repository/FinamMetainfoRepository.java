@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.integration.finam.repository;
+package ru.grnk.tradevisor.common.repository;
 
 
 import grpc.tradeapi.v1.assets.Asset;

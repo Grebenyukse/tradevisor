@@ -12,16 +12,14 @@ import grpc.tradeapi.v1.marketdata.MarketDataServiceGrpc;
 import grpc.tradeapi.v1.marketdata.TimeFrame;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.prices.PricesLoader;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
-import ru.grnk.tradevisor.integration.finam.repository.FinamMetainfoRepository;
+import ru.grnk.tradevisor.common.repository.FinamMetainfoRepository;
 
-import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
 import static ru.grnk.tradevisor.common.util.TimeUtils.convertToTimestamp;
