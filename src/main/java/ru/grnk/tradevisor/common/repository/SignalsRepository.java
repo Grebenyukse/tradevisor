@@ -19,7 +19,6 @@ import java.util.Optional;
 public class SignalsRepository {
 
     private final SignalsJpa signalsRepo;
-    private final ObjectMapper om;
 
     @Transactional
     public void updateSignalStatus(Integer signalId, TrvSignalStatus status) {
@@ -28,7 +27,7 @@ public class SignalsRepository {
             Signals entity = opt.get();
             entity.setStatus(status.name());
             entity.setUpdatedAt(OffsetDateTime.now());
-            signalsRepo.save(entity);
+            signalsRepo.saveAndFlush(entity);
         }
     }
 
@@ -100,7 +99,7 @@ public class SignalsRepository {
                 .createdAt(lastCandleTime)
                 .strategyProps(trvCalculationResult.lines())
                 .build();
-        signalsRepo.save(entity);
+        signalsRepo.saveAndFlush(entity);
     }
 
     @Transactional

@@ -2,6 +2,7 @@ package ru.grnk.tradevisor.common.repository.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnTransformer;
 import ru.grnk.tradevisor.notify.plot.dto.ChartLineDto;
 
 import java.io.Serializable;
@@ -53,6 +54,7 @@ public class Signals implements Serializable {
 
     @Column(name = "strategy_props", columnDefinition = "jsonb")
     @Convert(converter = ChartLineListToJsonbConverter.class)
+    @ColumnTransformer(write = "?::jsonb")
     private List<ChartLineDto> strategyProps;
 
 }

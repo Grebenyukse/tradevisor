@@ -42,7 +42,7 @@ app:
       bybit: false
       yahoofinance: false
   calculate:
-    delay: PT30M
+    delay: PT10S
     fibo: false
     bars_required_to_calculate_fibo: 10
     gap: false
