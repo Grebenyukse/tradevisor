@@ -126,7 +126,7 @@ app:
       enabled: true
       token: ${TINKOFF_INVEST_TOKEN}
       host: "invest-public-api.tinkoff.ru:443"
-      history-max-depth-days: 30
+      history-max-depth-days: 10
     finam:
       enabled: true
       secret: ${FINAM_API_KEY}
@@ -134,14 +134,14 @@ app:
       host: api.finam.ru
       port: 443
       account-id: ${FINAM_ACCOUNT_KEY}
-      history-max-depth-days: 30
+      history-max-depth-days: 10
     bybit:
       enabled: true
       key: ${BYBIT_KEY}
       secret: ${BYBIT_SECRET}
       url: https://api.bybit.com
-      history-max-depth-days: 30
+      history-max-depth-days: 10
     yahoofinance:
       enabled: true
       url: https://query1.finance.yahoo.com
-      history-max-depth-days: 30
+      history-max-depth-days: 10

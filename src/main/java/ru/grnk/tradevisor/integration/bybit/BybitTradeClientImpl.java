@@ -9,17 +9,17 @@ import org.springframework.web.client.RestTemplate;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.integration.bybit.dto.BybitOrdersResponse;
 import ru.grnk.tradevisor.integration.bybit.dto.BybitWalletBalanceResponse;
-import ru.grnk.tradevisor.integration.bybit.BybitTickerRs;
 import ru.grnk.tradevisor.trade.TradeClient;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor

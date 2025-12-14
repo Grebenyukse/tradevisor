@@ -23,14 +23,14 @@ public class TestUtils {
         var list = new java.util.ArrayList<MarketData>();
 
         for (int i = 0; i < lows.length; i++) {
-            list.add(MarketData.builder()
-                    .tickerCode(tickerCode)
-                    .low(lows[i])
-                    .open(getRandFloat(lows[i], highs[i]))
-                    .close(getRandFloat(lows[i], highs[i]))
-                    .high(highs[i])
-                    .time(OffsetDateTime.now().minusHours((long) i * hoursInterval))
-                    .build());
+            list.add(new MarketData(
+                    tickerCode,
+                    OffsetDateTime.now().minusHours((long) i * hoursInterval),
+                    getRandFloat(lows[i], highs[i]),
+                    highs[i],
+                    lows[i],
+                    getRandFloat(lows[i], highs[i]))
+            );
         }
         return list;
     }

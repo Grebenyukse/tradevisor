@@ -1,5 +1,6 @@
 package ru.grnk.tradevisor.integration;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -56,28 +57,34 @@ public class PlotSignalIntegrationTest extends BaseIntegrationTest {
     private List<MarketData> loadMarketDataFromCsv() {
         List<MarketData> marketDataList = new ArrayList<>();
         String filePath = "csv/market_data_202511242153.csv";
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            reader.readLine();
-            String line;
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSXX");
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.replace("\"", "").split(",");
-                String dateTimeStr = parts[1]; // time
-                OffsetDateTime time = OffsetDateTime.parse(dateTimeStr, formatter);
-                var marketData = MarketData.builder()
-                        .tickerCode(parts[0])
-                        .time(time)
-                        .open(Float.parseFloat(parts[2]))
-                        .high(Float.parseFloat(parts[3]))
-                        .low(Float.parseFloat(parts[4]))
-                        .close(Float.parseFloat(parts[5]))
-                        .build();
-                marketDataList.add(marketData);
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath)) {
+            assert inputStream != null;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                reader.readLine();
+                String line;
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSXX");
+                while ((line = reader.readLine()) != null) {
+                    var marketData = getMarketData(line, formatter);
+                    marketDataList.add(marketData);
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException("Error reading CSV file: " + e.getMessage(), e);
         }
         return marketDataList;
+    }
+
+    private static @NotNull MarketData getMarketData(String line, DateTimeFormatter formatter) {
+        String[] parts = line.replace("\"", "").split(",");
+        String dateTimeStr = parts[1]; // time
+        OffsetDateTime time = OffsetDateTime.parse(dateTimeStr, formatter);
+        return new MarketData(
+                parts[0],
+                time,
+                Float.parseFloat(parts[2]),
+                Float.parseFloat(parts[3]),
+                Float.parseFloat(parts[4]),
+                Float.parseFloat(parts[5])
+            );
     }
 }

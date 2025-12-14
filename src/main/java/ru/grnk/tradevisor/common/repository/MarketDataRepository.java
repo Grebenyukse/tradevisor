@@ -5,6 +5,7 @@ import com.google.type.Decimal;
 import grpc.tradeapi.v1.marketdata.Bar;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.entity.MarketData;
 import ru.grnk.tradevisor.common.repository.jpa.MarketDataJpa;
@@ -22,6 +23,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 
+import static java.util.Optional.ofNullable;
 import static ru.tinkoff.piapi.core.utils.MapperUtils.quotationToBigDecimal;
 
 @Repository
@@ -50,35 +52,38 @@ public class MarketDataRepository {
                 OffsetDateTime.class
         );
         query.setParameter("tickerCode", tickerCode);
-        return query.getSingleResult();
+        var minEndTime = OffsetDateTime.now().minusDays(historyMaxDepthDays);
+        return ofNullable(query.getSingleResult())
+                .filter(x -> x.getSecond() > minEndTime.getSecond())
+                .orElse(minEndTime);
     }
 
+    @Transactional
     public void saveMarketData(HistoricCandle candle, String instrument_uid) {
-        MarketData entity = MarketData.builder()
-                .tickerCode(instrument_uid)
-                .open(floatFrom(candle.getOpen()))
-                .high(floatFrom(candle.getHigh()))
-                .low(floatFrom(candle.getLow()))
-                .close(floatFrom(candle.getClose()))
-                .time(timeFrom(candle.getTime()))
-                .build();
-        marketDataRepo.saveAndFlush(entity);
+        marketDataRepo.insertIgnore(instrument_uid,
+                timeFrom(candle.getTime()),
+                floatFrom(candle.getOpen()),
+                floatFrom(candle.getHigh()),
+                floatFrom(candle.getLow()),
+                floatFrom(candle.getClose())
+        );
     }
 
+    @Transactional
     public void batchInsertMarketData(List<MarketData> records) {
         records.forEach(marketDataRepo::save);
     }
 
+    @Transactional
     public void saveMarketData(Bar bar, String instrument_uid) {
-        MarketData entity = MarketData.builder()
-                .tickerCode(instrument_uid)
-                .open(floatFrom(bar.getOpen()))
-                .high(floatFrom(bar.getHigh()))
-                .low(floatFrom(bar.getLow()))
-                .close(floatFrom(bar.getClose()))
-                .time(timeFrom(bar.getTimestamp()))
-                .build();
-        marketDataRepo.save(entity);
+        marketDataRepo.insertIgnore(
+                instrument_uid,
+                timeFrom(bar.getTimestamp()),
+                floatFrom(bar.getOpen()),
+                floatFrom(bar.getHigh()),
+                floatFrom(bar.getLow()),
+                floatFrom(bar.getClose())
+        );
     }
 
     public void deleteMarketData(String tickerCode) {

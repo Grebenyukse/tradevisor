@@ -55,7 +55,7 @@ public class QuickChartService {
                 .build();
         String requestBody = objectMapper.writeValueAsString(requestDto);
         if (printRequest) {
-            log.info("Request to load requestBody: {}", requestBody);
+            log.debug("Request to load requestBody: {}", requestBody);
         }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

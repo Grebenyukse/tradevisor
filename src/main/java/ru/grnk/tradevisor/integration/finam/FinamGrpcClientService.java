@@ -8,6 +8,7 @@ import grpc.tradeapi.v1.assets.ExchangesRequest;
 import grpc.tradeapi.v1.auth.AuthRequest;
 import grpc.tradeapi.v1.auth.AuthServiceGrpc;
 import grpc.tradeapi.v1.marketdata.BarsRequest;
+import grpc.tradeapi.v1.marketdata.BarsResponse;
 import grpc.tradeapi.v1.marketdata.MarketDataServiceGrpc;
 import grpc.tradeapi.v1.marketdata.TimeFrame;
 import lombok.RequiredArgsConstructor;
@@ -71,16 +72,23 @@ public class FinamGrpcClientService implements PricesLoader {
         if (intervalInHours < 5) {
             return;
         }
-        var marketDataRs = marketDataServiceBlockingStub
-                .withCallCredentials(bearer)
-                .bars(BarsRequest.newBuilder()
-                        .setInterval(Interval.newBuilder()
-                                .setStartTime(startTime)
-                                .setEndTime(endTime)
-                                .build())
-                        .setSymbol(symbol)
-                        .setTimeframe(TimeFrame.TIME_FRAME_H1)
-                        .build());
+        BarsResponse marketDataRs;
+        try {
+            marketDataRs = marketDataServiceBlockingStub
+                    .withCallCredentials(bearer)
+                    .bars(BarsRequest.newBuilder()
+                            .setInterval(Interval.newBuilder()
+                                    .setStartTime(startTime)
+                                    .setEndTime(endTime)
+                                    .build())
+                            .setSymbol(symbol)
+                            .setTimeframe(TimeFrame.TIME_FRAME_H1)
+                            .build());
+        } catch (Exception e) {
+           log.error("ошибка временного интервала, startTime:{}, endTime:{}", startTime, endTime);
+           throw new RuntimeException(e);
+        }
+
         marketDataRs.getBarsList().stream().forEach(b -> marketDataRepository.saveMarketData(b, tickerCode));
         if(marketDataRs.getBarsList().isEmpty() && intervalInHours > MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK) {
             tickersRepository.markTickerFailedByQuotes(tickerCode);

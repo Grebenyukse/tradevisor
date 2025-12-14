@@ -82,14 +82,14 @@ public class BybitPricesService implements PricesLoader {
     }
 
     private static MarketData from(BybitMarketdataRs.Candlestick candlestick, String tickerCode) {
-        return MarketData.builder()
-                .time(Instant.ofEpochMilli(candlestick.openTime()).atZone(ZoneId.of("Europe/Moscow")).toOffsetDateTime())
-                .open(candlestick.openPrice())
-                .high(candlestick.highPrice())
-                .low(candlestick.lowPrice())
-                .close(candlestick.closePrice())
-                .tickerCode(tickerCode)
-                .build();
+        return new MarketData(
+                tickerCode,
+                Instant.ofEpochMilli(candlestick.openTime()).atZone(ZoneId.of("Europe/Moscow")).toOffsetDateTime(),
+                candlestick.openPrice(),
+                candlestick.highPrice(),
+                candlestick.lowPrice(),
+                candlestick.closePrice()
+        );
     }
 
 }
