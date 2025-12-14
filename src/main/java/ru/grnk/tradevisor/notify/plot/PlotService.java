@@ -42,8 +42,7 @@ public class PlotService {
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();
         if (ohlcData.isEmpty()) return null;
         Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
-        var signalLines = om.readValue(signal.getStrategyProps().toString(), ChartLineDto[].class);
-        List<ChartLineDto> lines = new ArrayList<>(Arrays.asList(signalLines));
+        List<ChartLineDto> lines =  signal.getStrategyProps();
         ChartLineDto stopLoss = ChartLineDto.builder()
                 .fromUtc(ohlcData.get(0).date())
                 .toUtc(ohlcData.get(ohlcData.size()-1).date())
