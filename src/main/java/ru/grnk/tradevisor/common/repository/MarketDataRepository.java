@@ -62,7 +62,7 @@ public class MarketDataRepository {
                 .close(floatFrom(candle.getClose()))
                 .time(timeFrom(candle.getTime()))
                 .build();
-        marketDataRepo.save(entity);
+        marketDataRepo.saveAndFlush(entity);
     }
 
     public void batchInsertMarketData(List<MarketData> records) {
