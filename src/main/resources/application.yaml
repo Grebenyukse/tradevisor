@@ -29,6 +29,9 @@ management:
           - prometheus
 
 spring:
+  autoconfigure:
+    exclude:
+      - ru.ttech.piapi.springboot.configuration.InvestAutoConfiguration
   sleuth:
     enabled: true
   zipkin:
