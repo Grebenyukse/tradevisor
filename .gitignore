@@ -6,23 +6,8 @@
 /.gigaide/gigaide.properties
 todo.txt
 **/.testenv
-tradevisor-app/src/test/resources/config/.testenv
+src/test/resources/config/.testenv
 /logs/
-
-# Java class files
-*.class
-bin/
-
-# Other common build artifacts
-target/
-!.mvn/wrapper/maven-wrapper.jar
-
-# IDE specific files
-*.swp
-*.lock
-.DS_Store
-Thumbs.db
-
-# Gradle wrapper files
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
+**/*.class
+/.gigaide/
+/out/

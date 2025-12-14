@@ -1,0 +1,123 @@
+server:
+  port: 8080
+
+logging:
+  config: classpath:config/logback.xml
+  level:
+    ROOT: debug
+    org.jooq.Constants.org.jooq.Constants: WARN
+    reactor.netty.http.client: INFO
+
+spring:
+  autoconfigure:
+    exclude:
+      - ru.ttech.piapi.springboot.configuration.InvestAutoConfiguration
+  sleuth:
+    enabled: true
+  zipkin:
+    base-url: http://localhost:9411
+    enabled: false #включать при работающем локально jaeger-клиенте
+  application:
+    name: tradevisor
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: test
+    password: test
+  liquibase:
+    changeLog: classpath:changelog/changelog-master.yaml
+    enabled: false
+
+app:
+  collect:                    # сбор информации для анализа
+    events:                   # события, влияющие на ценную бумагу
+      dividends: false        # выплата дивидендов
+      economic: false         # макроэкономика и прочие
+      expiration: false       # экспирация
+      reports: false
+      news: false
+    prices:
+      delay: PT60M
+      finam: false
+      tinkoff: false
+      bybit: false
+      yahoofinance: false
+  calculate:
+    delay: PT10S
+    fibo: false
+    bars_required_to_calculate_fibo: 10
+    gap: false
+    min_touches_count: 2
+    batch-size: 1000
+  trade:
+    delay: PT15M
+    limits: 1
+    enabled: false
+  notification:
+    enabled: false
+    delay: PT1M
+  cleanup:
+    cron: 0 0 0 1 * ?
+    retention_days: 30
+    enabled: false
+  integration:
+    cloudru:
+      enabled: false
+      key: ${CLOUDRU_API_KEY}
+    proxyapi:
+      enabled: false
+      key: ${PROXY_API_KEY}
+      url: https://api.proxyapi.ru/deepseek/chat/completions
+    deepseek:
+      enabled: false
+      url: https://api.deepseek.com/v1/chat/completions
+      key: ${DEEPSEEK_KEY}
+    gigachat:
+      enabled: false
+      client-id: ${GIGACHAT_CLIENT_ID}
+      client-secret: ${GIGACHAT_CLIENT_SECRET}
+    telegram:
+      enabled: false
+      chat-id: ${CHAT_ID}
+      chat-token: ${CHAT_TOKEN}
+      base-url: ${BASE_URL}
+      webhook-path: "/"
+      re-register: false
+      supergroup:
+        chat-id: ${SUPERGROUP_CHAT_ID}
+        positions-thread-id: ${POSITIONS_TOPIC_THREAD_ID}
+        orders-thread-id: ${ORDERS_TOPIC_THREAD_ID}
+        rus-thread-id: ${RUS_TOPIC_THREAD_ID}
+        world-thread-id: ${WORLD_TOPIC_THREAD_ID}
+        crypto-thread-id: ${CRYPTO_TOPIC_THREAD_ID}
+        logs-thread-id: ${LOGS_TOPIC_THREAD_ID}
+        statistics-thread-id: ${STATISTICS_TOPIC_THREAD_ID}
+        errors-thread-id: ${ERRORS_TOPIC_THREAD_ID}
+        events-thread-id: ${EVENTS_THREAD_ID}
+    newsapi:
+      enabled: false
+      api-key: ${NEWS_API_KEY}
+      url: "https://newsapi.org/v2/top-headlines?category=business"
+      page-size: 50
+    tinkoff:
+      enabled: false
+      token: ${TINKOFF_INVEST_TOKEN}
+      host: "invest-public-api.tinkoff.ru:443"
+      history-max-depth-days: 1
+    finam:
+      enabled: false
+      secret: ${FINAM_API_KEY}
+      url: https://api.finam.ru/v1
+      host: api.finam.ru
+      port: 443
+      account-id: ${FINAM_ACCOUNT_KEY}
+      history-max-depth-days: 150
+    bybit:
+      enabled: false
+      key: ${BYBIT_KEY}
+      secret: ${BYBIT_SECRET}
+      url: https://api.bybit.com
+      history-max-depth-days: 30
+    yahoofinance:
+      enabled: false
+      url: https://query1.finance.yahoo.com
+      history-max-depth-days: 30

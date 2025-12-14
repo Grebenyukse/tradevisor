@@ -1,0 +1,128 @@
+package ru.grnk.tradevisor.collect.prices;
+
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import ru.grnk.tradevisor.common.repository.TickersRepository;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class PricesLoaderServiceImpl {
+
+    public static final Integer TICKERS_BATCH_LOAD = 1000;
+    private final TickersRepository tickersRepository;
+    private final List<PricesLoader> loaders;
+    private final PriceLoadingErrorHandler errorHandler;
+    private final TelegramNotificationService telegramService;
+
+    @SneakyThrows
+    @Scheduled(fixedRateString = "${app.collect.prices.delay}")
+    public void doWork() {
+        loaders.forEach(PricesLoader::initTickers);
+        log.info("start collecting prices");
+        LocalDateTime startTime = LocalDateTime.now();
+        String messageId = telegramService.sendInitialMessage("🔄 Загрузка тикеров...");
+        Integer totalTickersCount = tickersRepository.getAllTickersCount();
+        if (totalTickersCount == 0) {
+            log.info("Нет тикеров для загрузки");
+            telegramService.updateMessage(messageId, "📭 Нет тикеров для загрузки котировок");
+            return;
+        }
+        Map<String, Integer> provider2TickersCount = tickersRepository.getTickersCountByProvider();
+        Map<String, Integer> providerProcessedCount = new ConcurrentHashMap<>();
+        provider2TickersCount.keySet().forEach(provider -> providerProcessedCount.put(provider, 0));
+        telegramService.sendStartMessage(messageId, totalTickersCount, provider2TickersCount, startTime);
+        try {
+            Map<String, PricesLoader> providerToLoader = loaders.stream()
+                    .collect(Collectors.toMap(PricesLoader::getProvider, loader -> loader));
+            provider2TickersCount.keySet().parallelStream()
+                    .forEach(provider -> processProvider(
+                            provider,
+                            providerToLoader.get(provider),
+                            provider2TickersCount.get(provider),
+                            providerProcessedCount,
+                            messageId,
+                            startTime
+                    ));
+            telegramService.sendFinalMessage(messageId,
+                    providerProcessedCount.values().stream().mapToInt(Integer::intValue).sum(),
+                    totalTickersCount,
+                    provider2TickersCount,
+                    providerProcessedCount,
+                    startTime);
+        } catch (Exception e) {
+            log.error("Ошибка загрузки котировок", e);
+            telegramService.sendErrorMessage(messageId, e);
+            throw new RuntimeException("Ошибка загрузки котировок", e);
+        }
+        log.info("historic candles loaded");
+    }
+
+    private void processProvider(String provider, PricesLoader loader,
+                                 Integer totalTickersForProvider,
+                                 Map<String, Integer> providerProcessedCount,
+                                 String messageId, LocalDateTime startTime) {
+        if (loader == null) {
+            log.warn("No loader found for provider: {}", provider);
+            return;
+        }
+        int processedForThisProvider = 0;
+        long lastUpdate = System.currentTimeMillis();
+        do {
+            List<Tickers> tickers = tickersRepository.getAllTickers(provider, TICKERS_BATCH_LOAD, processedForThisProvider);
+            for (Tickers ticker : tickers) {
+                try {
+                    loader.loadPrices(ticker.getTickerCode());
+                    processedForThisProvider++;
+                    providerProcessedCount.merge(provider, 1, Integer::sum);
+
+                    long now = System.currentTimeMillis();
+                    if (now - lastUpdate > 60000 || processedForThisProvider % 500 == 0) {
+                        telegramService.sendProgressMessage(messageId,
+                                providerProcessedCount.values().stream().mapToInt(Integer::intValue).sum(),
+                                tickersRepository.getAllTickersCount(),
+                                provider,
+                                ticker.getTicker() + "@" + ticker.getExchange(),
+                                (int) providerProcessedCount.keySet().stream().filter(p ->
+                                        providerProcessedCount.get(p) >= tickersRepository.getTickersCountByProvider().get(p)).count(),
+                                providerProcessedCount.size(),
+                                tickersRepository.getTickersCountByProvider(),
+                                providerProcessedCount,
+                                startTime);
+                        lastUpdate = now;
+                    }
+
+                } catch (Exception e) {
+                    PriceLoadingErrorHandler.ErrorHandlerResult result = errorHandler.handleError(e, ticker, provider);
+                    switch (result.getAction()) {
+                        case SKIP:
+                            processedForThisProvider++;
+                            providerProcessedCount.merge(provider, 1, Integer::sum);
+                            continue;
+                        case RETRY:
+                            try {
+                                Thread.sleep(60000); // Ждем минуту перед повторной попыткой
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                                throw new RuntimeException(ie);
+                            }
+                            break;
+                        case FAIL:
+                            throw new RuntimeException(e);
+                    }
+                }
+            }
+        } while (processedForThisProvider < totalTickersForProvider);
+        log.info("Provider {} completed with {} tickers processed", provider, processedForThisProvider);
+    }
+}
