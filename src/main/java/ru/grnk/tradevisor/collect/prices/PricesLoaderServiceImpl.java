@@ -110,19 +110,25 @@ public class PricesLoaderServiceImpl {
                             providerProcessedCount.merge(provider, 1, Integer::sum);
                             continue;
                         case RETRY:
-                            try {
-                                Thread.sleep(60000); // Ждем минуту перед повторной попыткой
-                            } catch (InterruptedException ie) {
-                                Thread.currentThread().interrupt();
-                                throw new RuntimeException(ie);
-                            }
+                            sleep();
                             break;
                         case FAIL:
-                            throw new RuntimeException(e);
+                            log.error("неизвестная ошибка ", e);
+                            sleep();
+                            break;
                     }
                 }
             }
         } while (processedForThisProvider < totalTickersForProvider);
         log.info("Provider {} completed with {} tickers processed", provider, processedForThisProvider);
+    }
+
+    private static void sleep() {
+        try {
+            Thread.sleep(60000); // Ждем минуту перед повторной попыткой
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(ie);
+        }
     }
 }

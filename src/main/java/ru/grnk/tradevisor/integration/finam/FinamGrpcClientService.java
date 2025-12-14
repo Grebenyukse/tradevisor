@@ -75,7 +75,6 @@ public class FinamGrpcClientService implements PricesLoader {
             return;
         }
         BarsResponse marketDataRs;
-        try {
             marketDataRs = marketDataServiceBlockingStub
                     .withCallCredentials(bearer)
                     .bars(BarsRequest.newBuilder()
@@ -86,11 +85,6 @@ public class FinamGrpcClientService implements PricesLoader {
                             .setSymbol(symbol)
                             .setTimeframe(TimeFrame.TIME_FRAME_H1)
                             .build());
-        } catch (Exception e) {
-           log.error("ошибка временного интервала, startTime:{}, endTime:{}", startTime, endTime);
-           throw new RuntimeException(e);
-        }
-
         marketDataRs.getBarsList().stream().forEach(b -> marketDataRepository.saveMarketData(b, tickerCode));
         if(marketDataRs.getBarsList().isEmpty() && intervalInHours > MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK) {
             tickersRepository.markTickerFailedByQuotes(tickerCode);
