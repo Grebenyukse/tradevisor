@@ -6,8 +6,6 @@ import lombok.*;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
 
-@Builder
-@Setter
 @Getter
 @Entity
 @Table(name = "market_data", schema = "tradevisor")
@@ -36,32 +34,13 @@ public class MarketData implements Serializable {
     @Column(name = "close")
     private Float close;
 
-    // Composite ID Class
+    @EqualsAndHashCode
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
     public static class CompositeId implements Serializable {
         private String tickerCode;
         private OffsetDateTime time;
-
-        // Default constructor, equals, hashCode required for composite key
-        public CompositeId() {}
-        public CompositeId(String tickerCode, OffsetDateTime time) {
-            this.tickerCode = tickerCode;
-            this.time = time;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof CompositeId)) return false;
-            CompositeId that = (CompositeId) o;
-            return tickerCode.equals(that.tickerCode) && time.equals(that.time);
-        }
-
-        @Override
-        public int hashCode() {
-            return tickerCode.hashCode() ^ time.hashCode();
-        }
     }
-
-    // Getters and Setters
-
 }

@@ -2,6 +2,7 @@ package ru.grnk.tradevisor.trade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
@@ -27,6 +28,7 @@ import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.PUBLISHED;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(value = "app.trade.enabled")
 public class ControlPositionService {
 
     private final TickersRepository tickersRepository;

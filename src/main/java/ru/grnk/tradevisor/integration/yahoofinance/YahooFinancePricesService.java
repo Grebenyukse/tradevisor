@@ -93,14 +93,14 @@ public class YahooFinancePricesService implements PricesLoader {
     }
 
     private MarketData from(YahooCandle candle, String tickerCode) {
-        return MarketData.builder()
-                .time(Instant.ofEpochMilli(candle.timestamp()).atZone(ZoneId.of("UTC")).toOffsetDateTime())
-                .open(candle.open())
-                .high(candle.high())
-                .low(candle.low())
-                .close(candle.close())
-                .tickerCode(tickerCode)
-                .build();
+        return new MarketData(
+                tickerCode,
+                Instant.ofEpochMilli(candle.timestamp()).atZone(ZoneId.of("UTC")).toOffsetDateTime(),
+                candle.open(),
+                candle.high(),
+                candle.low(),
+                candle.close()
+        );
     }
 
 }

@@ -4,15 +4,15 @@ import com.google.type.Decimal;
 import grpc.tradeapi.v1.Side;
 import grpc.tradeapi.v1.accounts.AccountsServiceGrpc;
 import grpc.tradeapi.v1.accounts.GetAccountRequest;
-import grpc.tradeapi.v1.assets.AssetsServiceGrpc;
-import grpc.tradeapi.v1.marketdata.MarketDataServiceGrpc;
+import grpc.tradeapi.v1.auth.AuthRequest;
+import grpc.tradeapi.v1.auth.AuthServiceGrpc;
 import grpc.tradeapi.v1.orders.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
-import org.jfree.chart.axis.Tick;
 import org.springframework.stereotype.Component;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
+import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
@@ -35,12 +35,17 @@ public class FinamTradeClient implements TradeClient {
     private final TradevisorProperties tradevisorProperties;
     private final AccountsServiceGrpc.AccountsServiceBlockingStub accountsServiceBlockingStub;
     private final OrdersServiceGrpc.OrdersServiceBlockingStub ordersServiceBlockingStub;
-    private final AssetsServiceGrpc.AssetsServiceBlockingStub assetsServiceBlockingStub;
-    private final MarketDataServiceGrpc.MarketDataServiceBlockingStub marketDataServiceBlockingStub;
-    private final FinamGrpcClientService finamGrpcClientService;
+    private final AuthServiceGrpc.AuthServiceBlockingStub authServiceBlockingStub;
     private final TickersRepository tickersRepository;
     private final RtsService rtsService;
 
+    public BearerToken getBearer() {
+        TrvFinamProperties finamProperties = tradevisorProperties.integration().finam();
+        var authRs = authServiceBlockingStub.auth(AuthRequest.newBuilder()
+                .setSecret(finamProperties.secret())
+                .build());
+        return new BearerToken(authRs.getToken());
+    }
 
     @Override
     public String provider() {
@@ -49,7 +54,7 @@ public class FinamTradeClient implements TradeClient {
 
     @Override
     public Float getBalance() {
-        var bearer = finamGrpcClientService.getBearer();
+        var bearer = getBearer();
         var accountRs = accountsServiceBlockingStub
                 .withCallCredentials(bearer)
                 .getAccount(GetAccountRequest.newBuilder()
@@ -65,7 +70,7 @@ public class FinamTradeClient implements TradeClient {
 
     @Override
     public Float getFreeMargin() {
-        var bearer = finamGrpcClientService.getBearer();
+        var bearer = getBearer();
         var accountRs = accountsServiceBlockingStub
                 .withCallCredentials(bearer)
                 .getAccount(GetAccountRequest.newBuilder()
@@ -101,7 +106,7 @@ public class FinamTradeClient implements TradeClient {
 
     @Override
     public List<TrvOrder> getOrdersByTicker(String tickerCode) {
-        var bearer = finamGrpcClientService.getBearer();
+        var bearer = getBearer();
         String symbol = tickerCode.replace("@finam", "");
         var orders = ordersServiceBlockingStub.withCallCredentials(bearer)
                 .getOrders(OrdersRequest.newBuilder()
@@ -113,7 +118,7 @@ public class FinamTradeClient implements TradeClient {
     @Override
     public TrvPosition getAvgPositionByTicker(String tickerCode) {
         Tickers ticker = tickersRepository.findTickerByTickerCode(tickerCode);
-        var bearer = finamGrpcClientService.getBearer();
+        var bearer = getBearer();
         var accountResponse = accountsServiceBlockingStub
                 .withCallCredentials(bearer)
                 .getAccount(GetAccountRequest.newBuilder()
@@ -177,7 +182,7 @@ public class FinamTradeClient implements TradeClient {
 
     @Override
     public void setOrder(TrvOrder order) {
-        var bearer = finamGrpcClientService.getBearer();
+        var bearer = getBearer();
         Order orderToPlace;
         if (order.activation() == null) {
             orderToPlace = Order.newBuilder()
@@ -218,7 +223,7 @@ public class FinamTradeClient implements TradeClient {
 
     @Override
     public void deleteOrders(String tickerCode) {
-        var bearer = finamGrpcClientService.getBearer();
+        var bearer = getBearer();
         OrdersResponse  orders = ordersServiceBlockingStub.withCallCredentials(bearer)
                 .getOrders(OrdersRequest.newBuilder()
                         .setAccountId(tradevisorProperties.integration().finam().accountId())
@@ -239,7 +244,7 @@ public class FinamTradeClient implements TradeClient {
 
     @Override
     public Boolean closeAll() {
-        var bearer = finamGrpcClientService.getBearer();
+        var bearer = getBearer();
         ordersServiceBlockingStub
                 .withCallCredentials(bearer)
                 .getOrders(OrdersRequest.newBuilder()
