@@ -60,13 +60,13 @@ app:
       reports: false
       news: false
     prices:
-      delay: PT60M
+      delay: PT10M
       finam: true
       tinkoff: true
       bybit: true
       yahoofinance: true
   calculate:
-    delay: PT30M
+    delay: PT10M
     fibo: true
     bars_required_to_calculate_fibo: 150
     gap: false
@@ -85,7 +85,7 @@ app:
     enabled: true
   integration:
     cloudru:
-      enabled: false
+      enabled: true
       key: ${CLOUDRU_API_KEY}
     proxyapi:
       enabled: false
