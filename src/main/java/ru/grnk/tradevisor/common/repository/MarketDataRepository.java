@@ -31,7 +31,6 @@ import static ru.tinkoff.piapi.core.utils.MapperUtils.quotationToBigDecimal;
 public class MarketDataRepository {
 
     private final MarketDataJpa marketDataRepo;
-    private final TradevisorProperties trvProperties;
 
     @PersistenceContext
     private EntityManager em;
@@ -71,7 +70,14 @@ public class MarketDataRepository {
 
     @Transactional
     public void batchInsertMarketData(List<MarketData> records) {
-        records.forEach(marketDataRepo::save);
+        records.forEach(x -> marketDataRepo.insertIgnore(
+                x.getTickerCode(),
+                x.getTime(),
+                x.getOpen(),
+                x.getHigh(),
+                x.getLow(),
+                x.getClose()
+        ));
     }
 
     @Transactional

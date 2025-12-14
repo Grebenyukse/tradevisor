@@ -13,6 +13,7 @@ import grpc.tradeapi.v1.marketdata.MarketDataServiceGrpc;
 import grpc.tradeapi.v1.marketdata.TimeFrame;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.prices.PricesLoader;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
@@ -28,6 +29,7 @@ import static ru.grnk.tradevisor.common.util.TimeUtils.convertToTimestamp;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(value = "app.collect.prices.finam")
 public class FinamGrpcClientService implements PricesLoader {
 
     public static final int MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK = 720;
