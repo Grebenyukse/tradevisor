@@ -60,7 +60,7 @@ app:
       reports: false
       news: false
     prices:
-      delay: PT10M
+      delay: PT1M
       finam: true
       tinkoff: true
       bybit: true

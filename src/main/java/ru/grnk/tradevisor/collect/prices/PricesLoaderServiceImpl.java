@@ -87,7 +87,7 @@ public class PricesLoaderServiceImpl {
                     providerProcessedCount.merge(provider, 1, Integer::sum);
 
                     long now = System.currentTimeMillis();
-                    if (now - lastUpdate > 60000 || processedForThisProvider % 500 == 0) {
+                    if (now - lastUpdate > 60000) {
                         telegramService.sendProgressMessage(messageId,
                                 providerProcessedCount.values().stream().mapToInt(Integer::intValue).sum(),
                                 tickersRepository.getAllTickersCount(),
@@ -101,7 +101,6 @@ public class PricesLoaderServiceImpl {
                                 startTime);
                         lastUpdate = now;
                     }
-
                 } catch (Exception e) {
                     PriceLoadingErrorHandler.ErrorHandlerResult result = errorHandler.handleError(e, ticker, provider);
                     switch (result.getAction()) {
@@ -113,7 +112,7 @@ public class PricesLoaderServiceImpl {
                             sleep();
                             break;
                         case FAIL:
-                            log.error("неизвестная ошибка ", e);
+                            log.error("ticker: {}. provider: {}. неизвестная ошибка. ", ticker, provider, e);
                             sleep();
                             break;
                     }
