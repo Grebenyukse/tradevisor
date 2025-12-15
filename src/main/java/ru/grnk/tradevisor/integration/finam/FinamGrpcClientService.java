@@ -56,14 +56,6 @@ public class FinamGrpcClientService implements PricesLoader {
         exchangesRs.getExchangesList().forEach(finamMetainfoRepository::saveFinamExchange);
     }
 
-    public BearerToken getBearer() {
-        TrvFinamProperties finamProperties = properties.integration().finam();
-        var authRs = authServiceBlockingStub.auth(AuthRequest.newBuilder()
-                .setSecret(finamProperties.secret())
-                .build());
-        return new BearerToken(authRs.getToken());
-    }
-
     public void loadHistoryForSymbol(String tickerCode) {
         var symbol = tickerCode;
         log.debug("load prices for {}", symbol);
@@ -89,6 +81,14 @@ public class FinamGrpcClientService implements PricesLoader {
         if(marketDataRs.getBarsList().isEmpty() && intervalInHours > MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK) {
             tickersRepository.markTickerFailedByQuotes(tickerCode);
         }
+    }
+
+    private BearerToken getBearer() {
+        TrvFinamProperties finamProperties = properties.integration().finam();
+        var authRs = authServiceBlockingStub.auth(AuthRequest.newBuilder()
+                .setSecret(finamProperties.secret())
+                .build());
+        return new BearerToken(authRs.getToken());
     }
 
     private Timestamp  findStartTime(String symbol, int historyMaxDepthDays) {

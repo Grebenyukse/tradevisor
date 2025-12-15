@@ -107,12 +107,15 @@ public class FinamTradeClient implements TradeClient {
     @Override
     public List<TrvOrder> getOrdersByTicker(String tickerCode) {
         var bearer = getBearer();
-        String symbol = tickerCode.replace("@finam", "");
         var orders = ordersServiceBlockingStub.withCallCredentials(bearer)
                 .getOrders(OrdersRequest.newBuilder()
                         .setAccountId(tradevisorProperties.integration().finam().accountId())
                         .build());
-        throw new NotImplementedException();
+        if (orders.getOrdersList().isEmpty()) {
+            return List.of();
+        } else {
+            throw new NotImplementedException();
+        }
     }
 
     @Override

@@ -104,9 +104,14 @@ public class ControlPositionService {
 
     public void openPosition(Signals signal) {
         Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
-        var client = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))
-                .findFirst()
-                .orElseThrow();
+        var clientOptional = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))
+                .findFirst();
+        if (clientOptional.isEmpty()) {
+            log.warn("провайдер {} для сигнала signalId:{} по ticker_code: {} не активен. невозможно выполнить торговую операцию.",
+                    ticker.getProvider(), signal.getId(), signal.getTickerCode());
+            return;
+        }
+        var client = clientOptional.get();
         // проверяем сохранились ли предусловия для открытия позиции
         var strategy = strategies.stream().filter(s -> Objects.equals(s.getStrategyUniqueName(), signal.getName())).findFirst().orElseThrow();
         var candles = marketDataRepository.fetchMarketDataForLast(strategy.barsRequiredToCalcStrategy(), signal.getTickerCode());
@@ -114,6 +119,7 @@ public class ControlPositionService {
         if (strategyCalculationResult.direction().directionCode() != signal.getDirection()) {
             log.info("отменен сигнал {} по причине нарушения базовых условий стратегии {}", signal.getId(), strategy.getStrategyUniqueName());
             signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.CANCELLED);
+            return;
         }
         // проверяем есть ли открытые ордера по тикеру
         List<TrvOrder> orders = client.getOrdersByTicker(signal.getTickerCode());
@@ -128,9 +134,7 @@ public class ControlPositionService {
             return;
         }
         // сигнал жив, ордеров нет, позиций нет, сигнал подтвержден пользователем -> выставляем ордера
-        // 1. определяем размер лота
         client.openPosition(signal);
-        // 3. меняем статус сигнала на исполнено
         signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.EXECUTED);
         publishSignalsService.publishOrder(signal);
     }
