@@ -24,6 +24,8 @@ import java.util.Objects;
 import static java.util.stream.Collectors.*;
 import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.CREATED;
 import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.PUBLISHED;
+import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.CONFIRMED;
+import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.EXECUTED;
 
 @Slf4j
 @Service
@@ -45,8 +47,8 @@ public class ControlPositionService {
                 List.of(
                         CREATED.name(),
                         PUBLISHED.name(),
-                        TrvSignalStatus.CONFIRMED.name(),
-                        TrvSignalStatus.EXECUTED.name()
+                        CONFIRMED.name(),
+                        EXECUTED.name()
                 )
         );
         SortedSignals result = allRelevantSignals.stream()

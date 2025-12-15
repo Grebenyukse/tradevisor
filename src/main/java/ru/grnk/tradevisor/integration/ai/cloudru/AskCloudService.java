@@ -77,39 +77,28 @@ public class AskCloudService implements AskAiModel {
 
     private static final String prompt = """
             Act as a financial analyst. Based on a trading signal from my strategy, I need detailed information about a specific spot trading instrument to decide whether to buy or sell.
-            
                         Please provide the following information **in Russian only**:
-            
                         1. Brief description of the financial instrument:
                            - What does the issuer do?
                            - Which country does it operate in?
                            - What are the main factors affecting its price?
-            
-                        2. Futures availability:
-                           - Are there any futures contracts for this instrument?
-                           - If so, specify the nearest actively traded futures contract.
-            
-                        3. News background:
+                        2. News background:
                            - Recent relevant news about the asset.
                            - Statements from key market participants (e.g., Twitter/X posts, interviews).
                            - Industry or government developments that could impact the price.
-            
-                        4. Lot size and cost in RUB:
+                        3. Lot size and cost in RUB:
                            - For spot trading: lot size and approximate cost in rubles.
                            - For futures (if available): same details.
-            
-                        5. Upcoming economic events:
+                        4. Upcoming economic events:
                            - Dividend payments
                            - Contract expirations
                            - Stock splits
                            - Share buybacks
                            - Other major corporate or market events
-            
                         Input parameters:
                         - Ticker: {tickername}
                         - Exchange: {exchange}
                         - Data Provider: {provider}
-            
                         Respond strictly in Russian.
             """;
 

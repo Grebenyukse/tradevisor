@@ -11,7 +11,9 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface SignalsJpa extends JpaRepository<Signals, Integer> {
+
     List<Signals> findByStatusInOrderByCreatedAtAsc(List<String> statuses);
+
     List<Signals> findByStatusEqualsOrderByCreatedAtAsc(String status);
 
     @Modifying
