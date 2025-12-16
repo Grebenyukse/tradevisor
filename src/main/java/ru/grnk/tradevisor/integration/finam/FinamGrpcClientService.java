@@ -21,6 +21,7 @@ import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.FinamMetainfoRepository;
+import ru.grnk.tradevisor.integration.rts.RtsService;
 
 import java.time.ZonedDateTime;
 
@@ -40,6 +41,7 @@ public class FinamGrpcClientService implements PricesLoader {
     private  final FinamMetainfoRepository finamMetainfoRepository;
     private final MarketDataRepository marketDataRepository;
     private final TickersRepository tickersRepository;
+    private final RtsService rtsService;
 
     public void initTickers() {
         if (tickersRepository.getProviderTickersCount("finam") > 0) return;
@@ -47,6 +49,7 @@ public class FinamGrpcClientService implements PricesLoader {
         var assetsRs = assetsServiceBlockingStub.withCallCredentials(getBearer())
                 .assets(AssetsRequest.newBuilder().build());
         assetsRs.getAssetsList().forEach(finamMetainfoRepository::saveFinamAsset);
+        rtsService.initWhiteList();
     }
 
     private void initExchanges() {

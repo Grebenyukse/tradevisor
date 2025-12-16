@@ -14,6 +14,10 @@ public class RtsService {
 
     private final RtsClient rtsClient;
 
+    public void initWhiteList() {
+        // do implementation here;
+    }
+
     /**
      * Gets guarantee security (initial margin) for futures contract
      *
@@ -95,14 +99,5 @@ public class RtsService {
         
         log.warn("No matching ticker found in securities data for ticker: {}", ticker);
         return 0.0f;
-    }
-    
-    /**
-     * Test method to verify the functionality with a known ticker
-     * This can be used for manual testing
-     */
-    public static void main(String[] args) {
-        // This is just for manual testing purposes
-        System.out.println("RtsService test placeholder");
     }
 }
