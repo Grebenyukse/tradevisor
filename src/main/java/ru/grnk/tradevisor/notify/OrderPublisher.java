@@ -28,7 +28,7 @@ public class OrderPublisher {
     public void publishOrder(Signals signal) {
         String image = plotService.saveCandlestickChartToFile(signal, true);
         if (image == null ) return;
-        Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
+        Tickers ticker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
         telegramMessageService.sendMessage(image, getTitle(signal, ticker), getText(signal, ticker), signal.getId(),
                 tradevisorProperties.integration().telegram().supergroup().ordersThreadId());
     }

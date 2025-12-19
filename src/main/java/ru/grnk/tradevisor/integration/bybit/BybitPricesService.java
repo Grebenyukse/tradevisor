@@ -58,7 +58,7 @@ public class BybitPricesService implements PricesLoader {
         var tickers = bybitClient.fetchAllTickers();
         tickers.stream()
                 .map(BybitPricesService::from)
-                .forEach(x -> tickersRepository.saveInstrument(x, "bybit"));
+                .forEach(tickersRepository::saveInstrument);
     }
 
     private Timestamp findStartTime(String symbol) {

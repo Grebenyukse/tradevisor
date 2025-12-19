@@ -16,8 +16,6 @@ import ru.grnk.tradevisor.notify.plot.dto.OHLCData;
 import ru.grnk.tradevisor.notify.plot.dto.PlotRecord;
 import ru.grnk.tradevisor.notify.plot.quickchart.QuickChartService;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -41,7 +39,7 @@ public class PlotService {
         );
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();
         if (ohlcData.isEmpty()) return null;
-        Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
+        Tickers ticker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
         List<ChartLineDto> lines =  signal.getStrategyProps();
         ChartLineDto stopLoss = ChartLineDto.builder()
                 .fromUtc(ohlcData.get(0).date())

@@ -74,7 +74,7 @@ app:
   trade:
     delay: PT1M
     limits: 1
-    enabled: true
+    enabled: false
   notification:
     enabled: true
     delay: PT1M

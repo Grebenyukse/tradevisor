@@ -52,7 +52,7 @@ public class EventsCmdHandlerImpl implements TgCallbackQueryHandler {
             Long chatId = originalMessage.getChatId();
             Signals signal = signalsRepository.findSignalBySignalId(signalId)
                     .orElseThrow(() -> new IllegalArgumentException("Signal not found: " + signalId));
-            Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
+            Tickers ticker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
             var infoMessage = collectors.stream()
                     .map(l -> l.collect(ticker))
                     .flatMap(List::stream)

@@ -82,7 +82,7 @@ public class FinamTradeClient implements TradeClient {
     @Override
     public String findTickerForSpot(String tickerCode) {
         try {
-            Tickers spotTicker = tickersRepository.findTickerByTickerCode(tickerCode);
+            Tickers spotTicker = tickersRepository.getTickerByTickerCode(tickerCode);
             return spotTicker.getTicker();
         } catch (Exception e) {
             log.error("Error finding futures contract for spot ticker: {}", tickerCode, e);
@@ -92,7 +92,7 @@ public class FinamTradeClient implements TradeClient {
 
     @Override
     public Float getTickPriceForTicker(String tickerCode) {
-        Tickers ticker = tickersRepository.findTickerByTickerCode(tickerCode);
+        Tickers ticker = tickersRepository.getTickerByTickerCode(tickerCode);
         var tickPrice = ticker.getLot() * Math.pow(10, -1 * ticker.getPrecision());
         var currencyMultiplier = Objects.equals(ticker.getCurrency(), "RUB") ? 1 : 90;  // средний курс доллара на год
         return (float) tickPrice * currencyMultiplier;
@@ -120,7 +120,7 @@ public class FinamTradeClient implements TradeClient {
 
     @Override
     public TrvPosition getAvgPositionByTicker(String tickerCode) {
-        Tickers ticker = tickersRepository.findTickerByTickerCode(tickerCode);
+        Tickers ticker = tickersRepository.getTickerByTickerCode(tickerCode);
         var bearer = getBearer();
         var accountResponse = accountsServiceBlockingStub
                 .withCallCredentials(bearer)
@@ -267,8 +267,8 @@ public class FinamTradeClient implements TradeClient {
 
     @Override
     public void openPosition(Signals signal) {
-        Tickers signalTicker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
-        Tickers tradeTicker = tickersRepository.findTickerByTickerCode(signalTicker.getTradeTickerCode());
+        Tickers signalTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
+        Tickers tradeTicker = tickersRepository.getTickerByTickerCode(signalTicker.getTradeTickerCode());
         Float go = rtsService.getGoForFutures(tradeTicker.getTicker());
         // ...
     }

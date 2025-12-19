@@ -40,7 +40,7 @@ public class YahooFinancePricesService implements PricesLoader {
         for (YahooTickerInfo symbol : tickers) {
             try {
                 Tickers ticker = createTicker(symbol);
-                tickersRepository.saveInstrument(ticker, "yahoofinance");
+                tickersRepository.saveInstrument(ticker);
             } catch (Exception e) {
                 log.warn("Failed to initialize ticker: " + symbol, e);
             }

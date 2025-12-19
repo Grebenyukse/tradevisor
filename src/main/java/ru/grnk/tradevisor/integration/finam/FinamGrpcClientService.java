@@ -4,7 +4,6 @@ import com.google.protobuf.Timestamp;
 import com.google.type.Interval;
 import grpc.tradeapi.v1.assets.AssetsRequest;
 import grpc.tradeapi.v1.assets.AssetsServiceGrpc;
-import grpc.tradeapi.v1.assets.ExchangesRequest;
 import grpc.tradeapi.v1.auth.AuthRequest;
 import grpc.tradeapi.v1.auth.AuthServiceGrpc;
 import grpc.tradeapi.v1.marketdata.BarsRequest;
@@ -18,13 +17,13 @@ import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.prices.PricesLoader;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
+import ru.grnk.tradevisor.common.repository.FinamMetainfoRepository;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
-import ru.grnk.tradevisor.common.repository.FinamMetainfoRepository;
-import ru.grnk.tradevisor.integration.rts.RtsService;
 
 import java.time.ZonedDateTime;
 
+import static ru.grnk.tradevisor.collect.prices.Futures2SpotMap.FINAM_PRELOAD_EXCHANGES_MIC;
 import static ru.grnk.tradevisor.common.util.TimeUtils.convertToTimestamp;
 
 @Service
@@ -41,22 +40,15 @@ public class FinamGrpcClientService implements PricesLoader {
     private  final FinamMetainfoRepository finamMetainfoRepository;
     private final MarketDataRepository marketDataRepository;
     private final TickersRepository tickersRepository;
-    private final RtsService rtsService;
 
     public void initTickers() {
         if (tickersRepository.getProviderTickersCount("finam") > 0) return;
-        initExchanges();
         var assetsRs = assetsServiceBlockingStub.withCallCredentials(getBearer())
                 .assets(AssetsRequest.newBuilder().build());
-        assetsRs.getAssetsList().forEach(finamMetainfoRepository::saveFinamAsset);
-        rtsService.initWhiteList();
-    }
-
-    private void initExchanges() {
-        var bearer = getBearer();
-        var exchangesRs = assetsServiceBlockingStub.withCallCredentials(bearer)
-                .exchanges(ExchangesRequest.newBuilder().build());
-        exchangesRs.getExchangesList().forEach(finamMetainfoRepository::saveFinamExchange);
+        assetsRs.getAssetsList()
+                .stream()
+                .filter(a -> FINAM_PRELOAD_EXCHANGES_MIC.contains(a.getMic()))
+                .forEach(finamMetainfoRepository::saveFinamAsset);
     }
 
     public void loadHistoryForSymbol(String tickerCode) {
@@ -65,23 +57,23 @@ public class FinamGrpcClientService implements PricesLoader {
         var bearer = getBearer();
         var startTime = findStartTime(symbol, properties.integration().finam().historyMaxDepthDays());
         var endTime = convertToTimestamp(ZonedDateTime.now());
-        var intervalInHours = (endTime.getSeconds() - startTime.getSeconds())/60;
+        var intervalInHours = (endTime.getSeconds() - startTime.getSeconds()) / 60;
         if (intervalInHours < 5) {
             return;
         }
         BarsResponse marketDataRs;
-            marketDataRs = marketDataServiceBlockingStub
-                    .withCallCredentials(bearer)
-                    .bars(BarsRequest.newBuilder()
-                            .setInterval(Interval.newBuilder()
-                                    .setStartTime(startTime)
-                                    .setEndTime(endTime)
-                                    .build())
-                            .setSymbol(symbol)
-                            .setTimeframe(TimeFrame.TIME_FRAME_H1)
-                            .build());
+        marketDataRs = marketDataServiceBlockingStub
+                .withCallCredentials(bearer)
+                .bars(BarsRequest.newBuilder()
+                        .setInterval(Interval.newBuilder()
+                                .setStartTime(startTime)
+                                .setEndTime(endTime)
+                                .build())
+                        .setSymbol(symbol)
+                        .setTimeframe(TimeFrame.TIME_FRAME_H1)
+                        .build());
         marketDataRs.getBarsList().stream().forEach(b -> marketDataRepository.saveMarketData(b, tickerCode));
-        if(marketDataRs.getBarsList().isEmpty() && intervalInHours > MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK) {
+        if (marketDataRs.getBarsList().isEmpty() && intervalInHours > MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK) {
             tickersRepository.markTickerFailedByQuotes(tickerCode);
         }
     }
@@ -94,7 +86,7 @@ public class FinamGrpcClientService implements PricesLoader {
         return new BearerToken(authRs.getToken());
     }
 
-    private Timestamp  findStartTime(String symbol, int historyMaxDepthDays) {
+    private Timestamp findStartTime(String symbol, int historyMaxDepthDays) {
         var res = marketDataRepository.getLatestTickTime(symbol, historyMaxDepthDays);
         return convertToTimestamp(res);
     }

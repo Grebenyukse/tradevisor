@@ -103,7 +103,7 @@ public class ControlPositionService {
     private record SortedSignals(List<Signals> active, List<Signals> toCancel) { }
 
     public void openPosition(Signals signal) {
-        Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
+        Tickers ticker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
         var clientOptional = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))
                 .findFirst();
         if (clientOptional.isEmpty()) {
@@ -154,7 +154,7 @@ public class ControlPositionService {
     }
 
     public void controlPosition(Signals signal) {
-        Tickers ticker = tickersRepository.findTickerByTickerCode(signal.getTickerCode());
+        Tickers ticker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
         var client = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))
                 .findFirst()
                 .orElseThrow();
