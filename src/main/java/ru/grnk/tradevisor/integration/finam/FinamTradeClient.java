@@ -1,6 +1,7 @@
 package ru.grnk.tradevisor.integration.finam;
 
 import com.google.type.Decimal;
+import com.google.type.Money;
 import grpc.tradeapi.v1.Side;
 import grpc.tradeapi.v1.accounts.AccountsServiceGrpc;
 import grpc.tradeapi.v1.accounts.GetAccountRequest;
@@ -16,11 +17,12 @@ import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
-import ru.grnk.tradevisor.integration.rts.RtsService;
 import ru.grnk.tradevisor.trade.TradeClient;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
 
+import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -32,12 +34,12 @@ import static grpc.tradeapi.v1.orders.TimeInForce.TIME_IN_FORCE_GOOD_TILL_CANCEL
 @Slf4j
 public class FinamTradeClient implements TradeClient {
 
+    public static final double NANOS_DIGITS = Math.pow(10, -9);
     private final TradevisorProperties tradevisorProperties;
     private final AccountsServiceGrpc.AccountsServiceBlockingStub accountsServiceBlockingStub;
     private final OrdersServiceGrpc.OrdersServiceBlockingStub ordersServiceBlockingStub;
     private final AuthServiceGrpc.AuthServiceBlockingStub authServiceBlockingStub;
     private final TickersRepository tickersRepository;
-    private final RtsService rtsService;
 
     public BearerToken getBearer() {
         TrvFinamProperties finamProperties = tradevisorProperties.integration().finam();
@@ -145,8 +147,10 @@ public class FinamTradeClient implements TradeClient {
                         .build());
         List<OrderState> ordersForTicker = orders.getOrdersList().stream()
                 .filter(o -> o.getOrder().getSymbol().equals(tickerCode))
-                .sorted((x1, x2) -> Float.parseFloat(x2.getOrder().getLimitPrice().getValue())
-                        - Float.parseFloat(x1.getOrder().getLimitPrice().getValue()) > 0 ? 1 : -1)
+                .sorted(Comparator.comparing(
+                        o -> Float.parseFloat(o.getOrder().getLimitPrice().getValue()),
+                        Comparator.reverseOrder()
+                ))
                 .toList();
         if (ordersForTicker.size() > 2) {
             log.error("найдено более двух открытых ордеров для одной позиции. Должно быть только 2. " +
@@ -223,19 +227,18 @@ public class FinamTradeClient implements TradeClient {
     }
 
 
-
     @Override
     public void deleteOrders(String tickerCode) {
         var bearer = getBearer();
-        OrdersResponse  orders = ordersServiceBlockingStub.withCallCredentials(bearer)
+        OrdersResponse orders = ordersServiceBlockingStub.withCallCredentials(bearer)
                 .getOrders(OrdersRequest.newBuilder()
                         .setAccountId(tradevisorProperties.integration().finam().accountId())
                         .build());
         var cancelResult = orders.getOrdersList().stream().map(o -> ordersServiceBlockingStub
-                .cancelOrder(CancelOrderRequest.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .setOrderId(o.getOrderId())
-                        .build()))
+                        .cancelOrder(CancelOrderRequest.newBuilder()
+                                .setAccountId(tradevisorProperties.integration().finam().accountId())
+                                .setOrderId(o.getOrderId())
+                                .build()))
                 .toList();
         var notCancelledOrders = cancelResult.stream().filter(o -> o.getStatus() != OrderStatus.ORDER_STATUS_CANCELED)
                 .toList();
@@ -266,16 +269,89 @@ public class FinamTradeClient implements TradeClient {
     }
 
     @Override
-    public void openPosition(Signals signal) {
+    public boolean openPosition(Signals signal) {
         Tickers signalTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
-        Tickers tradeTicker = tickersRepository.getTickerByTickerCode(signalTicker.getTradeTickerCode());
-        Float go = rtsService.getGoForFutures(tradeTicker.getTicker());
-        // ...
+        Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCode(signalTicker.getTickerCode());
+        if (tradeTicker == null) {
+            log.warn("торговый тикер не выставлен. открытие только вручную. SignalId: {}, tickerCode: {}, direction: {}",
+                    signal.getId(), signal.getTickerCode(), signal.getDirection());
+            return false;
+        }
+        double go = NANOS_DIGITS * tradeTicker.getGo();
+        Money balanceMoney = accountsServiceBlockingStub.withCallCredentials(getBearer())
+                .getAccount(GetAccountRequest.newBuilder()
+                        .setAccountId(tradevisorProperties.integration().finam().accountId())
+                        .build())
+                .getCashList()
+                .stream().findFirst()
+                .orElseThrow();
+        double balance = balanceMoney.getUnits() + NANOS_DIGITS * balanceMoney.getNanos();
+        double maxRiskInMoney = balance * tradevisorProperties.trade().limits() / 100;
+        double availableLots = (balance - maxRiskInMoney) / (signal.getPriceOpen() * go);
+        double stopLossInMoneyFor1Lot = Math.abs(signal.getStopLoss() - signal.getPriceOpen());
+        double countedRiskLots = maxRiskInMoney / stopLossInMoneyFor1Lot;
+        int tradeLots = (int) Math.floor(Math.min(availableLots, countedRiskLots));
+        if (tradeLots == 0) {
+            log.warn("недостаточно денег для открытия позиции. Signal: {}. ticker: {}", signal.getId(), signal.getTickerCode());
+            return false;
+        }
+        var bearer = getBearer();
+        var openPositionOrderResult = ordersServiceBlockingStub.withCallCredentials(bearer)
+                .placeOrder(Order.newBuilder()
+                        .setAccountId(tradevisorProperties.integration().finam().accountId())
+                        .setSymbol(signal.getTickerCode())
+                        .setType(OrderType.ORDER_TYPE_LIMIT)
+                        .setLimitPrice(Decimal.newBuilder()
+                                .setValue(BigDecimal.valueOf(signal.getPriceOpen()).toString())
+                                .build())
+                        .setTimeInForce(TIME_IN_FORCE_GOOD_TILL_CANCEL)
+                        .setQuantity(Decimal.newBuilder()
+                                .setValue(String.valueOf(tradeLots))
+                                .build())
+                        .setSide(signal.getDirection() > 0 ? Side.SIDE_BUY : Side.SIDE_SELL)
+                        .build());
+        OrderState stopLossOrder = ordersServiceBlockingStub.withCallCredentials(bearer)
+                .placeOrder(Order.newBuilder()
+                        .setAccountId(tradevisorProperties.integration().finam().accountId())
+                        .setSymbol(signal.getTickerCode())
+                        .setType(OrderType.ORDER_TYPE_STOP)
+                        .setLimitPrice(Decimal.newBuilder()
+                                .setValue(BigDecimal.valueOf(signal.getStopLoss()).toString())
+                                .build())
+                        .setStopPrice(Decimal.newBuilder()
+                                .setValue(BigDecimal.valueOf(signal.getStopLoss()).toString())
+                                .build())
+                        .setStopCondition(signal.getDirection() > 0
+                                ? StopCondition.STOP_CONDITION_LAST_DOWN
+                                : StopCondition.STOP_CONDITION_LAST_UP)
+                        .setTimeInForce(TIME_IN_FORCE_GOOD_TILL_CANCEL)
+                        .setQuantity(Decimal.newBuilder()
+                                .setValue(String.valueOf(tradeLots))
+                                .build())
+                        .setSide(signal.getDirection() > 0 ? Side.SIDE_SELL : Side.SIDE_BUY)
+                        .build());
+        OrderState takeProfitOrder = ordersServiceBlockingStub.withCallCredentials(bearer)
+                .placeOrder(Order.newBuilder()
+                        .setAccountId(tradevisorProperties.integration().finam().accountId())
+                        .setSymbol(signal.getTickerCode())
+                        .setType(OrderType.ORDER_TYPE_LIMIT)
+                        .setLimitPrice(Decimal.newBuilder()
+                                .setValue(BigDecimal.valueOf(signal.getTakeProfit()).toString())
+                                .build())
+                        .setTimeInForce(TIME_IN_FORCE_GOOD_TILL_CANCEL)
+                        .setQuantity(Decimal.newBuilder()
+                                .setValue(String.valueOf(tradeLots))
+                                .build())
+                        .setSide(signal.getDirection() > 0 ? Side.SIDE_SELL : Side.SIDE_BUY)
+                        .build());
+        if (!openPositionOrderResult.hasAcceptAt() || !stopLossOrder.hasAcceptAt() || !takeProfitOrder.hasAcceptAt()) {
+            log.error("ордер не выставлен. необходима проверка вручную. SignalId: {}. TickerId: {}. Direction: {}",
+                    signal.getId(), signal.getTickerCode(), signal.getDirection());
+            throw new IllegalStateException();
+        } else {
+            log.info("позиция выставлена успешно.SignalId: {}. TickerId: {}. Direction: {}",
+                    signal.getId(), signal.getTickerCode(), signal.getDirection());
+            return true;
+        }
     }
-
-    public int calculatePositionSize(String spotTicker, float priceOpen, float stopLoss, float takeProfit) {
-        return 1;
-    }
-
-
 }

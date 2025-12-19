@@ -134,9 +134,14 @@ public class ControlPositionService {
             return;
         }
         // сигнал жив, ордеров нет, позиций нет, сигнал подтвержден пользователем -> выставляем ордера
-        client.openPosition(signal);
-        signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.EXECUTED);
-        publishSignalsService.publishOrder(signal);
+        if (client.openPosition(signal)) {
+            signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.EXECUTED);
+            publishSignalsService.publishOrder(signal);
+        } else {
+            log.error("ошибка автоматического открытия позиции.");
+            signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.MANUAL);
+            publishSignalsService.publishOrderForManualExecution(signal);
+        }
     }
 
     private Integer getInteger(Signals signal, TradeClient client, String tickerCodeForSpot) {

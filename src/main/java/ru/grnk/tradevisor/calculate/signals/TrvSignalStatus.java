@@ -7,6 +7,7 @@ package ru.grnk.tradevisor.calculate.signals;
  * CONFIRMED - сигнал подтвержден. передается на обработку торговым модулем.
  * EXECUTED - по сигналу выставлена торговая позиция
  * CANCELLED - сигнал отменен из другого модуля или получен новый сигнал, который отменяет этот.
+ * MANUAL - позиция на ручном управлении
  */
 public enum TrvSignalStatus {
     CREATED,
@@ -14,5 +15,6 @@ public enum TrvSignalStatus {
     CONFIRMED,
     EXECUTED,
     CANCELLED,
-    EXPIRED
+    EXPIRED,
+    MANUAL
 }

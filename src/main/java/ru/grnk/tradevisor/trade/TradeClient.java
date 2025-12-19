@@ -26,7 +26,7 @@ public interface TradeClient {
 
     void setOrder(TrvOrder order);
 
-    void openPosition(Signals signal);
+    boolean openPosition(Signals signal);
 
     void deleteOrders(String tickerCode);
 

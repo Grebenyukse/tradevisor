@@ -38,4 +38,9 @@ public class PublishSignalsService {
         positionPublisher.publishPosition(signal);
     }
 
+    public void publishOrderForManualExecution(Signals signal) {
+        log.warn("сигнал для ручного исполнения");
+        orderPublisher.publishManualOrder(signal);
+    }
+
 }

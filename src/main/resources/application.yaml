@@ -60,7 +60,7 @@ app:
       news: false            # получить новости последних дней, связанные с этим инструментом, если есть
     prices:
       delay: PT1M
-      finam: true
+      finam: false
       tinkoff: true
       bybit: true
       yahoofinance: true
@@ -73,8 +73,8 @@ app:
     batch-size: 1000
   trade:
     delay: PT1M
-    limits: 1
-    enabled: false
+    limits: 1 # риск в процентах от капитала на одну позицию
+    enabled: true
   notification:
     enabled: true
     delay: PT1M
@@ -127,7 +127,7 @@ app:
       host: "invest-public-api.tinkoff.ru:443"
       history-max-depth-days: 10
     finam:
-      enabled: true
+      enabled: false
       secret: ${FINAM_API_KEY}
       url: https://api.finam.ru/v1
       host: api.finam.ru

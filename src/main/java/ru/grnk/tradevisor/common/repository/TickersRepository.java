@@ -10,6 +10,8 @@ import ru.grnk.tradevisor.common.repository.jpa.TickersJpa;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +27,7 @@ public class TickersRepository {
     private EntityManager em;
 
     public int updateTickerSpotTickerCode(String tickerCode, String spotTickerCode) {
-        return em.createQuery("update Tickers t set t.tradeTickerCode = :spotTickerCode where t.tickerCode = :tickerCode", Integer.class)
+        return em.createQuery("UPDATE Tickers t SET t.tradeTickerCode = :spotTickerCode WHERE t.tickerCode = :tickerCode")
                 .setParameter("spotTickerCode", spotTickerCode)
                 .setParameter("tickerCode", tickerCode)
                 .executeUpdate();
@@ -33,6 +35,23 @@ public class TickersRepository {
 
     public List<Tickers> findUnlinkedFutures(String provider) {
         return tickersRepo.findByProviderAndMarketTypeAndTradeTickerCodeIsNull(provider, "futures");
+    }
+
+    public Tickers findTradeTickerByTickerCode(String tickerCode) {
+        LocalDateTime twoWeeksAgo = LocalDateTime.now().plusWeeks(2);
+        return em.createQuery("""
+                        select t from Tickers t
+                        where t.tradeTickerCode = :spotTickerCode
+                        and (t.expiration > :twoWeeksAgo or t.expiration is null)
+                        order by t.expiration desc
+                        """, Tickers.class)
+                .setParameter("spotTickerCode", tickerCode)
+                .setParameter("twoWeeksAgo", twoWeeksAgo)
+                .setMaxResults(1)  // Вместо LIMIT в JPQL
+                .getResultList()
+                .stream()
+                .findFirst()
+                .orElse(null);
     }
 
     public Tickers getTickerByTickerCode(String tickerCode) {
@@ -85,20 +104,20 @@ public class TickersRepository {
                 Object[].class
         );
         return query.getResultList().stream()
-                .collect(Collectors.toMap(row -> (String)row[0], row -> ((Long)row[1]).intValue()));
+                .collect(Collectors.toMap(row -> (String) row[0], row -> ((Long) row[1]).intValue()));
     }
 
     public int getUnpublishedTickersCount() {
         TypedQuery<Long> query = em.createQuery(
                 """
-                SELECT COUNT(*) FROM Tickers t
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM Signals s
-                    WHERE s.tickerCode = t.tickerCode
-                      AND s.status IN (:statuses)
-                )
-                  AND t.status IS NULL
-                """, Long.class
+                        SELECT COUNT(*) FROM Tickers t
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM Signals s
+                            WHERE s.tickerCode = t.tickerCode
+                              AND s.status IN (:statuses)
+                        )
+                          AND t.status IS NULL
+                        """, Long.class
         );
         query.setParameter("statuses", List.of(
                 TrvSignalStatus.CREATED.name(),
@@ -113,15 +132,15 @@ public class TickersRepository {
     public List<Tickers> getUnpublishedTickersBatch(int limit, int offset) {
         TypedQuery<Tickers> query = em.createQuery(
                 """
-                SELECT t FROM Tickers t
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM Signals s
-                    WHERE s.tickerCode = t.tickerCode
-                      AND s.status IN (:statuses)
-                )
-                  AND t.status IS NULL
-                ORDER BY t.loadPriority DESC
-                """, Tickers.class
+                        SELECT t FROM Tickers t
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM Signals s
+                            WHERE s.tickerCode = t.tickerCode
+                              AND s.status IN (:statuses)
+                        )
+                          AND t.status IS NULL
+                        ORDER BY t.loadPriority DESC
+                        """, Tickers.class
         );
         query.setParameter("statuses", List.of(
                 TrvSignalStatus.CREATED.name(),

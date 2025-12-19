@@ -17,13 +17,14 @@ import ru.tinkoff.piapi.core.InvestApi;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
+import static ru.grnk.tradevisor.collect.prices.BindTradeFuturesService.TRV_PROVIDER_TINKOFF;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "app.collect.prices.tinkoff")
 public class TinkoffPricesService implements PricesLoader {
 
-    public static final String TINKOFF_PROVIDER_NAME = "tinkoff";
     private final InvestApi investApi;
     private final MarketDataRepository marketDataRepository;
     private final TickersRepository tickersRepository;
@@ -48,7 +49,7 @@ public class TinkoffPricesService implements PricesLoader {
 
     @Override
     public String getProvider() {
-        return TINKOFF_PROVIDER_NAME;
+        return TRV_PROVIDER_TINKOFF;
     }
 
     public void loadHistoryForTicker(String instrumentUuid, int historyMaxDepthDays) {
@@ -76,7 +77,7 @@ public class TinkoffPricesService implements PricesLoader {
                 .go(null)
                 .lot(share.getLot())
                 .precision(1)
-                .provider(TINKOFF_PROVIDER_NAME)
+                .provider(TRV_PROVIDER_TINKOFF)
                 .build();
     }
 
@@ -93,7 +94,7 @@ public class TinkoffPricesService implements PricesLoader {
                 .go(null)
                 .lot(currency.getLot())
                 .precision(1)
-                .provider(TINKOFF_PROVIDER_NAME)
+                .provider(TRV_PROVIDER_TINKOFF)
                 .build();
     }
 }

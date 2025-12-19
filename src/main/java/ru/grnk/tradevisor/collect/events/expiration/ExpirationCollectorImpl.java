@@ -13,6 +13,8 @@ import ru.tinkoff.piapi.core.InvestApi;
 import java.util.List;
 import java.util.Objects;
 
+import static ru.grnk.tradevisor.collect.prices.BindTradeFuturesService.TRV_PROVIDER_TINKOFF;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,7 +25,7 @@ public class ExpirationCollectorImpl implements EventCollector {
 
     @Override
     public List<String> collect(Tickers ticker) {
-        if (!Objects.equals(ticker.getProvider(), "tinkoff")) return List.of();
+        if (!Objects.equals(ticker.getProvider(), TRV_PROVIDER_TINKOFF)) return List.of();
         return investApi.getInstrumentsService()
                 .getTradableFuturesSync()
                 .stream()

@@ -33,6 +33,15 @@ public class OrderPublisher {
                 tradevisorProperties.integration().telegram().supergroup().ordersThreadId());
     }
 
+    @Transactional
+    public void publishManualOrder(Signals signal) {
+        String image = plotService.saveCandlestickChartToFile(signal, true);
+        if (image == null ) return;
+        Tickers ticker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
+        telegramMessageService.sendMessage(image, "MANUAL EXECUTION ONLY. \n" + getTitle(signal, ticker), getText(signal, ticker), signal.getId(),
+                tradevisorProperties.integration().telegram().supergroup().ordersThreadId());
+    }
+
     private static String getTitle(Signals signal, Tickers ticker) {
         return String.join(". ",
                 "Ордер опубликован",ticker.getTicker(), ticker.getExchange(), ticker.getProvider(),

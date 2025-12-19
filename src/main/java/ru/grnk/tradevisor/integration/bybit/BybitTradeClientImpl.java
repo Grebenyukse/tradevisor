@@ -252,18 +252,21 @@ public class BybitTradeClientImpl implements TradeClient {
     }
 
     @Override
-    public void openPosition(Signals signal) {
+    public boolean openPosition(Signals signal) {
+        return false;
         // For spot trading, opening a position means placing a buy order
-        TrvOrder order = new TrvOrder(
-                signal.getTickerCode(),
-                signal.getDirection(),
-                signal.getPriceOpen(),
-                signal.getTakeProfit(),
-               1,
-                true,
-                "NEW"
-        );
-        setOrder(order);
+//        String originalTicker = signal.getTickerCode().replace("@bybit", "");
+//
+//        TrvOrder order = new TrvOrder(
+//                signal.getTickerCode().replace("@bybit", ""),
+//                signal.getDirection(),
+//                signal.getPriceOpen(),
+//                signal.getTakeProfit(),
+//               1,
+//                true,
+//                "NEW"
+//        );
+//        setOrder(order);
     }
 
     @Override

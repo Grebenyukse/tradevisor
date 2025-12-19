@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
-import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.tinkoff.piapi.contract.v1.Future;
@@ -38,9 +37,10 @@ import static ru.grnk.tradevisor.collect.prices.Futures2SpotMap.*;
 @Slf4j
 public class BindTradeFuturesService {
 
+    public static final String TRV_FUTURES_ASSET_TYPE = "futures";
+    public static final String TRV_PROVIDER_TINKOFF = "tinkoff";
     private final InvestApi investApi;
     private final TickersRepository tickersRepository;
-    private final TradevisorProperties tradevisorProperties;
 
     @SneakyThrows
     void initTickers() {
@@ -69,7 +69,7 @@ public class BindTradeFuturesService {
                         }
                     }
                 });
-        tickersRepository.findUnlinkedFutures("finam")
+        tickersRepository.findUnlinkedFutures(TRV_PROVIDER_TINKOFF)
                 .stream()
                 .map(this::getTickerSearchPart2FutureTickerCode)
                 .map(x -> Pair.of(FUTURES_2_SPOT.get(x.getLeft()), x.getRight()))
@@ -90,7 +90,7 @@ public class BindTradeFuturesService {
                                 .figi(spotTickerCode)
                                 .description("endless future for " + futureTickerCode)
                                 .exchange("RTS")
-                                .provider("finam")
+                                .provider(TRV_PROVIDER_TINKOFF)
                                 .loadPriority(100)
                                 .build());
                     }
@@ -128,7 +128,7 @@ public class BindTradeFuturesService {
                         .go(null)
                         .expiration(null)
                         .currency("RUB")
-                        .provider("tinkoff")
+                        .provider(TRV_PROVIDER_TINKOFF)
                         .status(null)
                         .loadPriority(100)
                         .tradeTickerCode(null)
@@ -136,11 +136,11 @@ public class BindTradeFuturesService {
         );
         tickersRepository.saveInstrument(
                 Tickers.builder()
-                        .tickerCode(future.getTicker() + "@RTSX")
+                        .tickerCode(future.getUid())
                         .ticker(future.getTicker())
                         .figi(future.getFigi())
                         .description(future.getName())
-                        .marketType("futures")
+                        .marketType(TRV_FUTURES_ASSET_TYPE)
                         .exchange(future.getExchange())
                         .precision(null)
                         .lot(future.getLot())
@@ -150,7 +150,7 @@ public class BindTradeFuturesService {
                                         ZoneId.systemDefault())
                         )
                         .currency(future.getCurrency())
-                        .provider("finam") // планируем торговать через финам поэтому подменяем провайдера.
+                        .provider(TRV_PROVIDER_TINKOFF) // планируем торговать через финам поэтому подменяем провайдера.
                         .status(null)
                         .loadPriority(0)
                         .tradeTickerCode(spotTicker.getUid())
@@ -161,11 +161,11 @@ public class BindTradeFuturesService {
     private void saveFutureWithoutLink(Future future) {
         tickersRepository.saveInstrument(
                 Tickers.builder()
-                        .tickerCode(future.getTicker() + "@RTSX")
+                        .tickerCode(future.getUid())
                         .ticker(future.getTicker())
                         .figi(future.getFigi())
                         .description(future.getName())
-                        .marketType("futures")
+                        .marketType(TRV_FUTURES_ASSET_TYPE)
                         .exchange(future.getExchange())
                         .precision(null)
                         .lot(future.getLot())
@@ -175,7 +175,7 @@ public class BindTradeFuturesService {
                                         ZoneId.systemDefault())
                         )
                         .currency(future.getCurrency())
-                        .provider("finam")  // планируем торговать через финам поэтому подменяем провайдера.
+                        .provider(TRV_PROVIDER_TINKOFF)
                         .status(null)
                         .loadPriority(0)
                         .tradeTickerCode(null)
