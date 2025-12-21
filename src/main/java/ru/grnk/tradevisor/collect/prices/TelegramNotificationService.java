@@ -157,6 +157,17 @@ public class TelegramNotificationService {
         }
     }
 
+    public void sendControlPositionErrorMessage(Exception e) {
+        try {
+            Long chatId = tradevisorProperties.integration().telegram().supergroup().chatId();
+            Integer threadId = tradevisorProperties.integration().telegram().supergroup().errorsThreadId();
+            String errorMessage = String.format("❌ Ошибка открытия / контроля позиции. \n %s",  e.getMessage()) ;
+            sendSimpleMessage(chatId, threadId, errorMessage);
+        } catch (Exception ex) {
+            log.warn("Не удалось отправить сообщение об ошибке в Telegram", ex);
+        }
+    }
+
     public void updateMessage(String messageId, String text) {
         try {
             if (messageId != null) {

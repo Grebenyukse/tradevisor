@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
-import ru.grnk.tradevisor.common.properties.TradevisorProperties;
+import ru.grnk.tradevisor.collect.prices.TelegramNotificationService;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
@@ -21,11 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static java.util.stream.Collectors.*;
-import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.CREATED;
-import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.PUBLISHED;
-import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.CONFIRMED;
-import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.EXECUTED;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.*;
 
 @Slf4j
 @Service
@@ -38,8 +36,8 @@ public class ControlPositionService {
     private final MarketDataRepository marketDataRepository;
     private final List<TradeClient> tradeClients;
     private final List<IStrategy> strategies;
-    private final TradevisorProperties tradevisorProperties;
     private final PublishSignalsService publishSignalsService;
+    private final TelegramNotificationService telegramNotificationService;
 
     @Scheduled(fixedRateString = "${app.trade.delay}")
     public void process() {
@@ -66,21 +64,27 @@ public class ControlPositionService {
                     .collect(toList());
             signalsRepository.cancelExpiredSignals(idsToCancel);
         }
-        result.active.forEach(
-            s -> {
-                switch (TrvSignalStatus.valueOf(s.getStatus())) {
-                    case CREATED:
-                    case PUBLISHED:
-                        log.info("решение по сигналу {} не принято", s.getId());
-                        return;
-                    case CONFIRMED:
-                        this.openPosition(s);
-                        return;
-                    case EXECUTED:
-                        this.controlPosition(s);
-                }
-            }
-        );
+        try {
+            result.active.forEach(
+                    s -> {
+                        switch (TrvSignalStatus.valueOf(s.getStatus())) {
+                            case CREATED:
+                            case PUBLISHED:
+                                log.info("решение по сигналу {} не принято", s.getId());
+                                return;
+                            case CONFIRMED:
+                                this.openPosition(s);
+                                return;
+                            case EXECUTED:
+                                this.controlPosition(s);
+                        }
+                    }
+            );
+        } catch (Exception e) {
+            log.error("ошибка открытия или контроля позиции", e);
+            telegramNotificationService.sendControlPositionErrorMessage(e);
+        }
+
     }
 
     private SortedSignals splitSignals(List<Signals> signals) {
@@ -144,22 +148,9 @@ public class ControlPositionService {
         }
     }
 
-    private Integer getInteger(Signals signal, TradeClient client, String tickerCodeForSpot) {
-        Float tickPrice = client.getTickPriceForTicker(tickerCodeForSpot);
-        float stopLossMoneyPerLot = Math.abs(signal.getPriceOpen() - signal.getStopLoss()) * tickPrice;
-        Integer limits = tradevisorProperties.trade().limits();
-        Float lotCounted = (client.getBalance() * limits) / stopLossMoneyPerLot;
-        Integer lot = Math.round(lotCounted / client.getMinLotForTicker(tickerCodeForSpot));
-        if (signal.getPriceOpen() * lot < client.getFreeMargin()) {
-            log.warn("Недостаточно средств для открытия позиции. SignalId: {}. TickerCodeSpot: {}, TickerCodeTrade: {}. требуется: {}. Свободно: {}",
-                    signal.getId(), signal.getTickerCode(), tickerCodeForSpot,  signal.getPriceOpen()*lot, client.getFreeMargin());
-            throw new RuntimeException("недостаточно средств.");
-        }
-        return lot;
-    }
-
     public void controlPosition(Signals signal) {
-        Tickers ticker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
+        Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
+        Tickers ticker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode()).orElse(spotTicker);
         var client = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))
                 .findFirst()
                 .orElseThrow();
@@ -179,33 +170,16 @@ public class ControlPositionService {
             var candles = marketDataRepository.fetchMarketDataForLast(strategy.barsRequiredToCalcStrategy(), signal.getTickerCode());
             var strategyCalculationResult = strategy.calculate(candles);
             if (strategyCalculationResult.direction().directionCode() != signal.getDirection()) {
-                log.info("предпосылки торгового сигнала нарушены. удаляем ордера. сигнал переводим в стату  SignalId: {}", signal.getId());
+                log.info("предпосылки торгового сигнала нарушены. удаляем ордера. сигнал переводим в статус cancelled  SignalId: {}", signal.getId());
                 client.deleteOrders(ticker.getTickerCode());
+                signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.CANCELLED);
             }
         } else {
             if (orders.size() != 2L) {
                 log.warn("позиция выставлена. ожидается 2 ордера но их не 2. значит нет takeProfit или stopLoss. удаляем ордера и перевыставляем sl и tp заново");
-                client.deleteOrders(ticker.getTickerCode());
-                client.setOrder(TrvOrder
-                        .builder()
-                                .tickerCode(ticker.getTickerCode())
-                                .isGtc(true)
-                                .activation(signal.getStopLoss())
-                                .price(signal.getStopLoss())
-                                .direction(-1 * signal.getDirection()) //противоположно основному сигналу
-                                .lot(getInteger(signal, client, signal.getTickerCode()))
-                        .build());
-                client.setOrder(TrvOrder
-                        .builder()
-                            .tickerCode(ticker.getTickerCode())
-                            .isGtc(true)
-                            .activation(signal.getTakeProfit())
-                            .price(signal.getTakeProfit())
-                            .direction(-1 * signal.getDirection()) //противоположно основному сигналу
-                            .lot(getInteger(signal, client, signal.getTickerCode()))
-                        .build());
+                signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.MANUAL);
+                throw new IllegalStateException("ошибка количества ордеров у открытых позиций, нужно исправить позицию по сигналу signal: " + signal);
             }
-            publishSignalsService.publishPosition(signal);
         }
     }
 

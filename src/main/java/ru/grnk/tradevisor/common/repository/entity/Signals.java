@@ -16,6 +16,7 @@ import java.util.List;
 @Table(name = "signals", schema = "tradevisor")
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class Signals implements Serializable {
 
     @Id

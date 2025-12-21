@@ -11,6 +11,7 @@ import grpc.tradeapi.v1.orders.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
@@ -32,6 +33,7 @@ import static grpc.tradeapi.v1.orders.TimeInForce.TIME_IN_FORCE_GOOD_TILL_CANCEL
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(value = "app.integration.finam.enabled")
 public class FinamTradeClient implements TradeClient {
 
     public static final double NANOS_DIGITS = Math.pow(10, -9);

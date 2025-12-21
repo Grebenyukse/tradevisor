@@ -16,15 +16,3 @@ databaseChangeLog:
   - include:
       file: 2023-05-20-trv-3-add-signals.sql
       relativeToChangelogFile: true
-  - include:
-      file: 2025-04-20-trv-4-add-events-table.sql
-      relativeToChangelogFile: true
-  - include:
-      file: 2025-04-27-trv-5-add-ai-score-table.sql
-      relativeToChangelogFile: true
-  - include:
-      file: 2025-08-03-trv-6-add-finam-meta.sql
-      relativeToChangelogFile: true
-  - include:
-      file: 2025-12-09-trv-7-add-tickers-link.sql
-      relativeToChangelogFile: true

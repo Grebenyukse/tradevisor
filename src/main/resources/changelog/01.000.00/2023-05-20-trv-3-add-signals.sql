@@ -7,7 +7,7 @@ create table if not exists tradevisor.signals
     id          serial primary key,
     name        varchar,
     description varchar,
-    ticker_code      varchar references tradevisor.tickers (ticker_code),
+    ticker_code varchar references tradevisor.tickers (ticker_code),
     direction   smallint, -- 1 long -1 short
     price_open  real,
     stop_loss   real,

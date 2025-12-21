@@ -208,7 +208,7 @@ public class BybitTradeClientImpl implements TradeClient {
     }
 
     @Override
-    public void setOrder(TrvOrder order) {
+    public String setOrder(TrvOrder order) {
         try {
             String timestamp = String.valueOf(Instant.now().toEpochMilli());
             String recvWindow = "5000";
@@ -245,9 +245,10 @@ public class BybitTradeClientImpl implements TradeClient {
             );
 
             log.info("Set order response: {}", response.getBody());
-
+            return "";
         } catch (Exception e) {
             log.error("Error setting order", e);
+            return "";
         }
     }
 

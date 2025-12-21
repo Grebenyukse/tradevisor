@@ -5,10 +5,10 @@ import lombok.Builder;
 @Builder
 public record TrvPosition(
         String tickerCode,
-        int direction,
-        float price,
-        float lot,
-        float sl,
-        float tp
+        Integer direction,
+        Float price,
+        Float lot,
+        Float sl,
+        Float tp
 ) {
 }

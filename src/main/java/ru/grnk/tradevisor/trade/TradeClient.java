@@ -24,7 +24,7 @@ public interface TradeClient {
 
     TrvPosition getAvgPositionByTicker(String tickerCode);
 
-    void setOrder(TrvOrder order);
+    String setOrder(TrvOrder order);
 
     boolean openPosition(Signals signal);
 

@@ -38,6 +38,11 @@ public class TickersRepository {
     }
 
     public Tickers findTradeTickerByTickerCode(String tickerCode) {
+       return findTradeTickerByTickerCodeIfExists(tickerCode)
+                .orElse(null);
+    }
+
+    public Optional<Tickers> findTradeTickerByTickerCodeIfExists(String tickerCode) {
         LocalDateTime twoWeeksAgo = LocalDateTime.now().plusWeeks(2);
         return em.createQuery("""
                         select t from Tickers t
@@ -50,8 +55,7 @@ public class TickersRepository {
                 .setMaxResults(1)  // Вместо LIMIT в JPQL
                 .getResultList()
                 .stream()
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     public Tickers getTickerByTickerCode(String tickerCode) {

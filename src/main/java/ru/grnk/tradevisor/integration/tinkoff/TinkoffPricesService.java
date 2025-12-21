@@ -25,6 +25,7 @@ import static ru.grnk.tradevisor.collect.prices.BindTradeFuturesService.TRV_PROV
 @ConditionalOnProperty(value = "app.collect.prices.tinkoff")
 public class TinkoffPricesService implements PricesLoader {
 
+    public static final String TRV_ASSET_TYPE_SHARES = "shares";
     private final InvestApi investApi;
     private final MarketDataRepository marketDataRepository;
     private final TickersRepository tickersRepository;
@@ -71,7 +72,7 @@ public class TinkoffPricesService implements PricesLoader {
                 .figi(share.getFigi())
                 .description(share.getName())
                 .exchange(share.getExchange())
-                .marketType("shares")
+                .marketType(TRV_ASSET_TYPE_SHARES)
                 .currency(share.getCurrency())
                 .expiration(null)
                 .go(null)
