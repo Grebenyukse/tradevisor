@@ -182,7 +182,7 @@ public class FinamTradeClient implements TradeClient {
         return TrvPosition.builder()
                 .tickerCode(tickerCode)
                 .price(Float.parseFloat(positionForSymbol.getAveragePrice().getValue()))
-                .lot(Math.abs(openLots))
+                .lot((float) Math.abs(openLots))
                 .direction(direction)
                 .tp(Float.parseFloat(tpOrder.getOrder().getLimitPrice().getValue()))
                 .sl(Float.parseFloat(slOrder.getOrder().getLimitPrice().getValue()))
@@ -190,7 +190,7 @@ public class FinamTradeClient implements TradeClient {
     }
 
     @Override
-    public void setOrder(TrvOrder order) {
+    public String setOrder(TrvOrder order) {
         var bearer = getBearer();
         Order orderToPlace;
         if (order.activation() == null) {
@@ -226,6 +226,7 @@ public class FinamTradeClient implements TradeClient {
                 .withCallCredentials(bearer)
                 .placeOrder(orderToPlace);
         log.info("ордер выставлен : {}", res.toString());
+        return orderToPlace.getClientOrderId();
     }
 
 
