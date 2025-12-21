@@ -142,7 +142,7 @@ public class ControlPositionService {
             signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.EXECUTED);
             publishSignalsService.publishOrder(signal);
         } else {
-            log.error("ошибка автоматического открытия позиции.");
+            log.warn("Не удалось автоматически открыть позицию. Переводим сигнал в режим ручного управления. Signal: {}", signal);
             signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.MANUAL);
             publishSignalsService.publishOrderForManualExecution(signal);
         }
@@ -175,7 +175,7 @@ public class ControlPositionService {
                 signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.CANCELLED);
             }
         } else {
-            if (orders.size() != 2L) {
+            if (orders.size() != 2) {
                 log.warn("позиция выставлена. ожидается 2 ордера но их не 2. значит нет takeProfit или stopLoss. удаляем ордера и перевыставляем sl и tp заново");
                 signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.MANUAL);
                 throw new IllegalStateException("ошибка количества ордеров у открытых позиций, нужно исправить позицию по сигналу signal: " + signal);

@@ -75,7 +75,7 @@ public class TinkoffTradeClient implements TradeClient {
             Tickers spotTicker = tickersRepository.getTickerByTickerCode(tickerCode);
             return spotTicker.getTicker();
         } catch (Exception e) {
-            log.error("Error finding futures contract for spot ticker: {}", tickerCode, e);
+            log.warn("Error finding futures contract for spot ticker: {}", tickerCode, e);
             return null;
         }
     }
@@ -163,7 +163,7 @@ public class TinkoffTradeClient implements TradeClient {
                     (long) order.lot(),
                     quotationFromFloat(order.price()),
                     quotationFromFloat(order.activation()),
-                    order.direction() > 1 ? StopOrderDirection.STOP_ORDER_DIRECTION_BUY : StopOrderDirection.STOP_ORDER_DIRECTION_SELL,
+                    order.direction() > 0 ? StopOrderDirection.STOP_ORDER_DIRECTION_BUY : StopOrderDirection.STOP_ORDER_DIRECTION_SELL,
                     tradingAccountId,
                     StopOrderType.STOP_ORDER_TYPE_STOP_LIMIT
             );
@@ -300,7 +300,7 @@ public class TinkoffTradeClient implements TradeClient {
                         .activation(signal.getTakeProfit())
                         .price(signal.getTakeProfit())
                         .tickerCode(signal.getTickerCode())
-                        .direction(signal.getDirection() * -1 ) // сигнал на закрытие противоположный открытию
+                        .direction(signal.getDirection() * -1) // сигнал на закрытие противоположный открытию
                         .isGtc(true)
                 .build());
         if (!isStopOrderAccepted(investApi.getStopOrdersService()
@@ -369,7 +369,7 @@ public class TinkoffTradeClient implements TradeClient {
                 .activation(signal.getTakeProfit())
                 .price(signal.getTakeProfit())
                 .tickerCode(signal.getTickerCode())
-                .direction(signal.getDirection() * -1 ) // сигнал на закрытие противоположный открытию
+                .direction(signal.getDirection() * -1) // сигнал на закрытие противоположный открытию
                 .isGtc(true)
                 .build());
         if (!isStopOrderAccepted(investApi.getStopOrdersService()
