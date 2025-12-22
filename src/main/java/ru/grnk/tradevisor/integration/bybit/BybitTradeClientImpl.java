@@ -1,35 +1,42 @@
 package ru.grnk.tradevisor.integration.bybit;
 
+import com.bybit.api.client.config.BybitApiConfig;
+import com.bybit.api.client.domain.CategoryType;
+import com.bybit.api.client.domain.TradeOrderType;
+import com.bybit.api.client.domain.asset.request.AssetDataRequest;
+import com.bybit.api.client.domain.market.request.MarketDataRequest;
+import com.bybit.api.client.domain.trade.Side;
+import com.bybit.api.client.domain.trade.TimeInForce;
+import com.bybit.api.client.domain.trade.request.TradeOrderRequest;
+import com.bybit.api.client.restApi.BybitApiAssetRestClient;
+import com.bybit.api.client.restApi.BybitApiMarketRestClient;
+import com.bybit.api.client.restApi.BybitApiTradeRestClient;
+import com.bybit.api.client.service.BybitApiClientFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import ru.grnk.tradevisor.common.properties.TradevisorProperties;
+import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
-import ru.grnk.tradevisor.integration.bybit.dto.BybitOrdersResponse;
-import ru.grnk.tradevisor.integration.bybit.dto.BybitWalletBalanceResponse;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
+import ru.grnk.tradevisor.integration.bybit.dto.*;
 import ru.grnk.tradevisor.trade.TradeClient;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class BybitTradeClientImpl implements TradeClient {
 
-    private final RestTemplate restTemplate;
-
-    @Value("${app.integration.bybit.url}")
-    private String baseUrl;
+    private final TickersRepository tickersRepository;
+    private final TradevisorProperties tradevisorProperties;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${app.integration.bybit.key}")
     private String apiKey;
@@ -37,42 +44,53 @@ public class BybitTradeClientImpl implements TradeClient {
     @Value("${app.integration.bybit.secret}")
     private String apiSecret;
 
+    @Value("${app.integration.bybit.url}")
+    private String baseUrl;
+
+    private BybitApiTradeRestClient tradeRestClient;
+    private BybitApiAssetRestClient assetRestClient;
+    private BybitApiMarketRestClient marketRestClient;
+
+    @PostConstruct
+    public void init() {
+        // Определяем домен (mainnet или testnet) на основе baseUrl
+        String domain = baseUrl.contains("testnet") ? BybitApiConfig.TESTNET_DOMAIN : BybitApiConfig.MAINNET_DOMAIN;
+        boolean debugMode = false; // Включите для отладки
+
+        BybitApiClientFactory factory = BybitApiClientFactory.newInstance(apiKey, apiSecret, domain, debugMode);
+        this.tradeRestClient = factory.newTradeRestClient();
+        this.assetRestClient = factory.newAssetRestClient();
+        this.marketRestClient = factory.newMarketDataRestClient();
+    }
+
     @Override
     public String provider() {
         return "bybit";
     }
 
-    @Override
     public Float getBalance() {
         try {
-            String timestamp = String.valueOf(Instant.now().toEpochMilli());
-            String recvWindow = "5000";
-            String path = "/v5/account/wallet-balance";
-            String queryString = "accountType=UNIFIED";
+            AssetDataRequest request = AssetDataRequest.builder()
+                    .accountType(com.bybit.api.client.domain.account.AccountType.UNIFIED)
+                    .coin("USDT")
+                    .build();
 
-            String signature = generateSignature(timestamp, "GET", path, queryString, "", apiSecret);
+            Object response = assetRestClient.getAssetSingleCoinBalance(request);
+            String jsonResponse = objectMapper.writeValueAsString(response);
+            BalanceResponse balanceResponse = objectMapper.readValue(jsonResponse, BalanceResponse.class);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-BAPI-API-KEY", apiKey);
-            headers.set("X-BAPI-TIMESTAMP", timestamp);
-            headers.set("X-BAPI-RECV-WINDOW", recvWindow);
-            headers.set("X-BAPI-SIGN", signature);
+            if (balanceResponse.getResult() != null &&
+                    balanceResponse.getResult().getList() != null &&
+                    !balanceResponse.getResult().getList().isEmpty()) {
 
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<BybitWalletBalanceResponse> response = restTemplate.exchange(
-                    baseUrl + path + "?" + queryString,
-                    HttpMethod.GET,
-                    entity,
-                    BybitWalletBalanceResponse.class
-            );
-
-            if (response.getBody() != null && response.getBody().retCode() == 0) {
-                return response.getBody().result().list().stream()
-                        .filter(w -> "USDT".equals(w.coin()))
-                        .findFirst()
-                        .map(w -> w.walletBalance().floatValue())
-                        .orElse(0f);
+                List<BalanceResponse.CoinInfo> coinList = balanceResponse.getResult().getList().get(0).getCoin();
+                if (coinList != null) {
+                    for (BalanceResponse.CoinInfo coinInfo : coinList) {
+                        if ("USDT".equals(coinInfo.getCoin())) {
+                            return Float.valueOf(coinInfo.getWalletBalance());
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             log.error("Error fetching balance", e);
@@ -80,82 +98,29 @@ public class BybitTradeClientImpl implements TradeClient {
         return 0f;
     }
 
-    @Override
-    public Float getFreeMargin() {
-        try {
-            String timestamp = String.valueOf(Instant.now().toEpochMilli());
-            String recvWindow = "5000";
-            String path = "/v5/account/wallet-balance";
-            String queryString = "accountType=UNIFIED";
-
-            String signature = generateSignature(timestamp, "GET", path, queryString, "", apiSecret);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-BAPI-API-KEY", apiKey);
-            headers.set("X-BAPI-TIMESTAMP", timestamp);
-            headers.set("X-BAPI-RECV-WINDOW", recvWindow);
-            headers.set("X-BAPI-SIGN", signature);
-
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<BybitWalletBalanceResponse> response = restTemplate.exchange(
-                    baseUrl + path + "?" + queryString,
-                    HttpMethod.GET,
-                    entity,
-                    BybitWalletBalanceResponse.class
-            );
-
-            if (response.getBody() != null && response.getBody().retCode() == 0) {
-                return response.getBody().result().list().stream()
-                        .filter(w -> "USDT".equals(w.coin()))
-                        .findFirst()
-                        .map(w -> w.availableToWithdraw().floatValue())
-                        .orElse(0f);
-            }
-        } catch (Exception e) {
-            log.error("Error fetching free margin", e);
-        }
-        return 0f;
-    }
-
-    @Override
     public String findTickerForSpot(String tickerCode) {
-        return tickerCode.split("@")[0];
+        return tickerCode;
     }
 
-    @Override
-    public Float getTickPriceForTicker(String tickerCode) {
-        try {
-            String symbol = findTickerForSpot(tickerCode);
-            String url = baseUrl + "/v5/market/instruments-info?category=spot&symbol=" + symbol;
-
-            ResponseEntity<BybitTickerRs> response = restTemplate.getForEntity(url, BybitTickerRs.class);
-
-            if (response.getBody() != null && response.getBody().retCode() == 0) {
-                return response.getBody().result().list().stream()
-                        .findFirst()
-                        .map(info -> info.priceFilter().tickSize().floatValue())
-                        .orElse(0f);
-            }
-        } catch (Exception e) {
-            log.error("Error fetching tick price for ticker: {}", tickerCode, e);
-        }
-        return 0f;
-    }
-
-    @Override
     public Float getMinLotForTicker(String tickerCode) {
         try {
             String symbol = findTickerForSpot(tickerCode);
-            String url = baseUrl + "/v5/market/instruments-info?category=spot&symbol=" + symbol;
+            CategoryType category = getCategoryForTicker(symbol);
+            Object response = marketRestClient.getInstrumentsInfo(MarketDataRequest.builder()
+                            .category(category)
+                            .symbol(symbol)
+                    .build());
+            String jsonResponse = objectMapper.writeValueAsString(response);
+            InstrumentInfoResponse instrumentResponse = objectMapper.readValue(jsonResponse, InstrumentInfoResponse.class);
 
-            ResponseEntity<BybitTickerRs> response = restTemplate.getForEntity(url, BybitTickerRs.class);
+            if (instrumentResponse.getResult() != null &&
+                    instrumentResponse.getResult().getList() != null &&
+                    !instrumentResponse.getResult().getList().isEmpty()) {
 
-            if (response.getBody() != null && response.getBody().retCode() == 0) {
-                return response.getBody().result().list().stream()
-                        .findFirst()
-                        .map(info -> info.lotSizeFilter().minOrderQty().floatValue())
-                        .orElse(0f);
+                InstrumentInfoResponse.Instrument instrument = instrumentResponse.getResult().getList().get(0);
+                if (instrument.getLotSizeFilter() != null) {
+                    return Float.valueOf(instrument.getLotSizeFilter().getMinOrderQty());
+                }
             }
         } catch (Exception e) {
             log.error("Error fetching min lot for ticker: {}", tickerCode, e);
@@ -167,31 +132,21 @@ public class BybitTradeClientImpl implements TradeClient {
     public List<TrvOrder> getOrdersByTicker(String tickerCode) {
         try {
             String symbol = findTickerForSpot(tickerCode);
-            String timestamp = String.valueOf(Instant.now().toEpochMilli());
-            String recvWindow = "5000";
-            String path = "/v5/order/realtime";
-            String queryString = "category=spot&symbol=" + symbol;
+            CategoryType category = getCategoryForTicker(symbol);
+            TradeOrderRequest request = TradeOrderRequest.builder()
+                    .category(category)
+                    .symbol(symbol)
+                    .build();
 
-            String signature = generateSignature(timestamp, "GET", path, queryString, "", apiSecret);
+            Object response = tradeRestClient.getOpenOrders(request);
+            String jsonResponse = objectMapper.writeValueAsString(response);
+            OpenOrdersResponse ordersResponse = objectMapper.readValue(jsonResponse, OpenOrdersResponse.class);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-BAPI-API-KEY", apiKey);
-            headers.set("X-BAPI-TIMESTAMP", timestamp);
-            headers.set("X-BAPI-RECV-WINDOW", recvWindow);
-            headers.set("X-BAPI-SIGN", signature);
+            if (ordersResponse.getResult() != null &&
+                    ordersResponse.getResult().getList() != null) {
 
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<BybitOrdersResponse> response = restTemplate.exchange(
-                    baseUrl + path + "?" + queryString,
-                    HttpMethod.GET,
-                    entity,
-                    BybitOrdersResponse.class
-            );
-
-            if (response.getBody() != null && response.getBody().retCode() == 0) {
-                return response.getBody().result().list().stream()
-                        .map(this::convertToTrvOrder)
+                return ordersResponse.getResult().getList().stream()
+                        .map(this::convertDtoToTrvOrder)
                         .toList();
             }
         } catch (Exception e) {
@@ -202,213 +157,202 @@ public class BybitTradeClientImpl implements TradeClient {
 
     @Override
     public TrvPosition getAvgPositionByTicker(String tickerCode) {
-        // Bybit spot trading doesn't have positions in the same way as futures
-        // For spot, we would need to calculate average buy price from trade history
+        try {
+            String symbol = findTickerForSpot(tickerCode);
+            CategoryType category = getCategoryForTicker(symbol);
+            if (category == CategoryType.SPOT) {
+                // Для спота позиций нет, возвращаем null
+                return null;
+            }
+            // Для деривативов используем эндпоинт позиций
+            Object response = tradeRestClient.getOpenOrders(TradeOrderRequest.builder()
+                            .category(category)
+                            .symbol(symbol)
+                    .build());
+
+            String jsonResponse = objectMapper.writeValueAsString(response);
+            PositionResponse positionResponse = objectMapper.readValue(jsonResponse, PositionResponse.class);
+
+            if (positionResponse.getResult() != null &&
+                    positionResponse.getResult().getList() != null &&
+                    !positionResponse.getResult().getList().isEmpty()) {
+
+                PositionResponse.Position position = positionResponse.getResult().getList().get(0);
+                if (position.getAvgPrice() != null &&
+                        position.getSize() != null &&
+                        position.getSide() != null) {
+
+                    return TrvPosition.builder()
+                            .tickerCode(tickerCode)
+                            .price(Float.valueOf(position.getAvgPrice()))
+                            .lot(Float.valueOf(position.getSize()))
+                            .direction("Buy".equalsIgnoreCase(position.getSide()) ? 1 : -1)
+                            .build();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error fetching position for ticker: {}", tickerCode, e);
+        }
         return null;
     }
 
-    @Override
     public String setOrder(TrvOrder order) {
         try {
-            String timestamp = String.valueOf(Instant.now().toEpochMilli());
-            String recvWindow = "5000";
-            String path = "/v5/order/create";
-
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("category", "spot");
-            payload.put("symbol", order.tickerCode().split("@")[0]);
-            payload.put("side", order.direction() > 0 ? "BUY" : "SELL");
-            payload.put("orderType", "LIMIT"); // Assuming LIMIT order, could be enhanced
-            payload.put("qty", String.valueOf(order.lot()));
-
-            if (order.price() > 0) {
-                payload.put("price", String.valueOf(order.price()));
+            var requestBuilder = TradeOrderRequest.builder()
+                    .category(getCategoryForTicker(order.tickerCode()))
+                    .symbol(order.tickerCode())
+                    .side(order.direction() > 0 ? Side.BUY : Side.SELL)
+                    .orderType(TradeOrderType.LIMIT)
+                    .qty(String.valueOf(order.lot()))
+                    .price(String.valueOf(order.price()))
+                    .timeInForce(TimeInForce.GOOD_TILL_CANCEL);
+            if (order.activation() != null && order.activation() > 0) {
+                requestBuilder.triggerPrice(order.activation().toString());
+                requestBuilder.triggerDirection(order.direction() > 0 ? 2 : 1);
             }
-
-            String jsonBody = mapToJson(payload);
-
-            String signature = generateSignature(timestamp, "POST", path, "", jsonBody, apiSecret);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-BAPI-API-KEY", apiKey);
-            headers.set("X-BAPI-TIMESTAMP", timestamp);
-            headers.set("X-BAPI-RECV-WINDOW", recvWindow);
-            headers.set("X-BAPI-SIGN", signature);
-
-            HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                    baseUrl + path,
-                    entity,
-                    Map.class
-            );
-
-            log.info("Set order response: {}", response.getBody());
-            return "";
+            TradeOrderRequest request = requestBuilder.build();
+            Object response = tradeRestClient.createOrder(request);
+            String jsonResponse = objectMapper.writeValueAsString(response);
+            CreateOrderResponse orderResponse = objectMapper.readValue(jsonResponse, CreateOrderResponse.class);
+            if (orderResponse.getResult() != null && orderResponse.getResult().getOrderId() != null) {
+                return orderResponse.getResult().getOrderId();
+            }
+            throw new IllegalStateException("нет orderId");
         } catch (Exception e) {
             log.error("Error setting order", e);
-            return "";
+            throw new RuntimeException(e);
         }
     }
 
     @Override
     public boolean openPosition(Signals signal) {
-        return false;
-        // For spot trading, opening a position means placing a buy order
-//        String originalTicker = signal.getTickerCode().replace("@bybit", "");
-//
-//        TrvOrder order = new TrvOrder(
-//                signal.getTickerCode().replace("@bybit", ""),
-//                signal.getDirection(),
-//                signal.getPriceOpen(),
-//                signal.getTakeProfit(),
-//               1,
-//                true,
-//                "NEW"
-//        );
-//        setOrder(order);
-    }
-
-    @Override
-    public void deleteOrders(String tickerCode) {
-
-    }
-
-    public void deleteOrder(TrvOrder order) {
         try {
-            String timestamp = String.valueOf(Instant.now().toEpochMilli());
-            String recvWindow = "5000";
-            String path = "/v5/order/cancel";
+            Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
+            Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode())
+                    .orElse(spotTicker);
+            String symbol = tradeTicker.getTicker();
+            CategoryType category = getCategoryForTicker(symbol);
+            int tradeLots = calculateTradeLots(signal, tradeTicker, category);
+            if (tradeLots == 0) {
+                log.warn("Недостаточно средств для открытия позиции. Signal: {}", signal);
+                return false;
+            }
+            String orderId = setOrder(TrvOrder.builder()
+                    .tickerCode(tradeTicker.getTicker()) // для выставления позиций используется ticker "без @mic"
+                    .direction(signal.getDirection())
+                    .price(signal.getPriceOpen())
+                    .lot((float) tradeLots)
+                    .isGtc(true)
+                    .build());
+            if (orderId.isEmpty()) {
+                log.error("Не удалось открыть основную позицию. Signal: {}", signal);
+                return false;
+            }
 
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("category", "spot");
-            payload.put("symbol", order.tickerCode().split("@")[0]);
-            // Note: We don't have orderId in TrvOrder, so we'll need to handle this differently
-            // For now, we'll skip this implementation as it requires orderId which isn't available
+            // Выставление стоп-лосса
+            String stopLossOrderId = setOrder(TrvOrder.builder()
+                    .tickerCode(tradeTicker.getTicker())
+                    .direction(signal.getDirection() > 0 ? -1 : 1) // Противоположное направление для закрытия
+                    .activation(signal.getStopLoss())
+                    .price(signal.getStopLoss())
+                    .lot((float) tradeLots)
+                    .isGtc(true)
+                    .build());
 
-            String jsonBody = mapToJson(payload);
+            // Выставление тейк-профита
+            String takeProfitOrderId = setOrder(TrvOrder.builder()
+                    .tickerCode(tradeTicker.getTicker())
+                    .direction(signal.getDirection() > 0 ? -1 : 1) // Противоположное направление для закрытия
+                    .activation(signal.getTakeProfit())
+                    .price(signal.getTakeProfit())
+                    .lot((float) tradeLots)
+                    .isGtc(true)
+                    .build());
 
-            String signature = generateSignature(timestamp, "POST", path, "", jsonBody, apiSecret);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-BAPI-API-KEY", apiKey);
-            headers.set("X-BAPI-TIMESTAMP", timestamp);
-            headers.set("X-BAPI-RECV-WINDOW", recvWindow);
-            headers.set("X-BAPI-SIGN", signature);
-
-            HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-            restTemplate.postForEntity(baseUrl + path, entity, Void.class);
+            return !stopLossOrderId.isEmpty() && !takeProfitOrderId.isEmpty();
         } catch (Exception e) {
-            log.error("Error deleting order", e);
-        }
-    }
-
-    @Override
-    public Boolean closeAll() {
-        try {
-            // Cancel all open orders
-            String timestamp = String.valueOf(Instant.now().toEpochMilli());
-            String recvWindow = "5000";
-            String path = "/v5/order/cancel-all";
-
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("category", "spot");
-
-            String jsonBody = mapToJson(payload);
-
-            String signature = generateSignature(timestamp, "POST", path, "", jsonBody, apiSecret);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-BAPI-API-KEY", apiKey);
-            headers.set("X-BAPI-TIMESTAMP", timestamp);
-            headers.set("X-BAPI-RECV-WINDOW", recvWindow);
-            headers.set("X-BAPI-SIGN", signature);
-
-            HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                    baseUrl + path,
-                    entity,
-                    Map.class
-            );
-
-            return response.getBody() != null &&
-                    response.getBody().get("retCode") != null &&
-                    response.getBody().get("retCode").equals(0);
-        } catch (Exception e) {
-            log.error("Error closing all positions", e);
+            log.error("Error opening position for signal: {}", signal, e);
             return false;
         }
     }
 
-    private String generateSignature(String timestamp, String method, String path, String params, String body, String secret) {
+    @Override
+    public void deleteOrders(String tickerCode) {
         try {
-            String recvWindow = "5000";
-            String toSign = timestamp + apiKey + recvWindow + (method.equals("GET") ? params : (body.isEmpty() ? params : body));
-            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-            sha256_HMAC.init(secretKeySpec);
-            byte[] hash = sha256_HMAC.doFinal(toSign.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
+            String symbol = findTickerForSpot(tickerCode);
+            CategoryType category = getCategoryForTicker(symbol);
+            TradeOrderRequest request = TradeOrderRequest.builder()
+                    .category(category)
+                    .symbol(symbol)
+                    .build();
+            tradeRestClient.cancelAllOrder(request);
         } catch (Exception e) {
-            throw new RuntimeException("Error generating signature", e);
+            log.error("Error deleting orders for ticker: {}", tickerCode, e);
         }
     }
 
-    private String mapToJson(Map<String, Object> map) {
-        StringBuilder json = new StringBuilder("{");
-        boolean first = true;
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            if (!first) json.append(",");
-            json.append("\"").append(entry.getKey()).append("\":");
-            if (entry.getValue() instanceof String) {
-                json.append("\"").append(entry.getValue()).append("\"");
-            } else {
-                json.append(entry.getValue());
-            }
-            first = false;
+    private CategoryType getCategoryForTicker(String symbol) {
+        if (symbol.endsWith("USDT") && !symbol.contains("-")) {
+            return CategoryType.SPOT;
+        } else if (symbol.endsWith("USDT") || symbol.endsWith("PERP")) {
+            return CategoryType.LINEAR;
+        } else {
+            return CategoryType.INVERSE;
         }
-        json.append("}");
-        return json.toString();
     }
 
-    private TrvOrder convertToTrvOrder(BybitOrdersResponse.OrderInfo orderInfo) {
-        // Определяем направление: 1 для покупки (BUY), -1 для продажи (SELL)
-        int direction = "BUY".equalsIgnoreCase(orderInfo.side()) ? 1 : -1;
+    private int calculateTradeLots(Signals signal, Tickers ticker, CategoryType category) {
+        float balance = getBalance();
+        // Проверяем, что tradevisorProperties.trade().limits() не null
+        Integer limits = tradevisorProperties.trade().limits();
+        if (limits == null) {
+            limits = 1; // Значение по умолчанию
+        }
+        double maxRiskInMoney = balance * limits / 100;
+        Float minLot = getMinLotForTicker(ticker.getTradeTickerCode() + "@bybit");
 
-        // Цена (может быть null для рыночных ордеров)
-        float price = orderInfo.price() != null ? Float.parseFloat(orderInfo.price()) : 0f;
+        // Проверяем, что minLot не null
+        if (minLot == null || minLot <= 0) {
+            minLot = 1.0f; // Значение по умолчанию
+        }
 
-        // Количество
-        float quantity = Float.parseFloat(orderInfo.qty());
-
-        // Note: timeInForce and Status mapping removed as they're not in TrvOrder
-
-        return new TrvOrder(
-                orderInfo.symbol() + "@bybit", // Добавляем провайдер к тикеру
-                direction,
-                price, // Используем цену как уровень активации
-                price,
-                quantity,
-                true, // Defaulting to GTC
-                orderInfo.orderStatus() // Сохраняем статус
-        );
+        if (category == CategoryType.SPOT) {
+            float availableBalance = getBalance();
+            double availableLots = availableBalance / signal.getPriceOpen();
+            double stopLossRisk = Math.abs(signal.getStopLoss() - signal.getPriceOpen());
+            double riskBasedLots = maxRiskInMoney / stopLossRisk;
+            // Используем Math.min чтобы выбрать более консервативное значение
+            double minLots = Math.min(availableLots, riskBasedLots);
+            // Округляем вниз до ближайшего целого кратного minLot
+            return (int) (Math.floor(minLots / minLot) * minLot);
+        } else {
+            // Для деривативов учитываем плечо (упрощённо)
+            float marginPerLot = signal.getPriceOpen() * minLot;
+            double availableLots = balance / marginPerLot;
+            double stopLossRisk = Math.abs(signal.getStopLoss() - signal.getPriceOpen()) * minLot;
+            double riskBasedLots = maxRiskInMoney / stopLossRisk;
+            // Используем Math.min чтобы выбрать более консервативное значение
+            double minLots = Math.min(availableLots, riskBasedLots);
+            // Округляем вниз до ближайшего целого кратного minLot
+            return (int) (Math.floor(minLots / minLot) * minLot);
+        }
     }
 
-    // Removed mapOrderStatus method as TrvOrder doesn't have a Status enum
+    private TrvOrder convertDtoToTrvOrder(OpenOrdersResponse.Order order) {
+        int direction = "Buy".equalsIgnoreCase(order.getSide()) ? 1 : -1;
+        float price = order.getPrice() != null ? Float.parseFloat(order.getPrice()) : 0f;
+        float quantity = order.getQty() != null ? Float.parseFloat(order.getQty()) : 0f;
+        boolean isGtc = "GTC".equalsIgnoreCase(order.getTimeInForce());
+        String status = order.getOrderStatus() != null ? order.getOrderStatus() : "";
+        String tickerCode = order.getSymbol() != null ? order.getSymbol() + "@bybit" : "";
 
-    // Response records for Bybit API responses
-
-
-
+        return TrvOrder.builder()
+                .tickerCode(tickerCode)
+                .direction(direction)
+                .price(price)
+                .lot(quantity)
+                .isGtc(isGtc)
+                .status(status)
+                .build();
+    }
 }

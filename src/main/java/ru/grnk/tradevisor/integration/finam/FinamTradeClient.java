@@ -56,7 +56,6 @@ public class FinamTradeClient implements TradeClient {
         return "finam";
     }
 
-    @Override
     public Float getBalance() {
         var bearer = getBearer();
         var accountRs = accountsServiceBlockingStub
@@ -72,18 +71,6 @@ public class FinamTradeClient implements TradeClient {
         );
     }
 
-    @Override
-    public Float getFreeMargin() {
-        var bearer = getBearer();
-        var accountRs = accountsServiceBlockingStub
-                .withCallCredentials(bearer)
-                .getAccount(GetAccountRequest.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .build());
-        return Float.parseFloat(accountRs.getEquity().getValue());
-    }
-
-    @Override
     public String findTickerForSpot(String tickerCode) {
         try {
             Tickers spotTicker = tickersRepository.getTickerByTickerCode(tickerCode);
@@ -92,20 +79,6 @@ public class FinamTradeClient implements TradeClient {
             log.error("Error finding futures contract for spot ticker: {}", tickerCode, e);
             return null;
         }
-    }
-
-    @Override
-    public Float getTickPriceForTicker(String tickerCode) {
-        Tickers ticker = tickersRepository.getTickerByTickerCode(tickerCode);
-        var tickPrice = ticker.getLot() * Math.pow(10, -1 * ticker.getPrecision());
-        var currencyMultiplier = Objects.equals(ticker.getCurrency(), "RUB") ? 1 : 90;  // средний курс доллара на год
-        return (float) tickPrice * currencyMultiplier;
-    }
-
-
-    @Override
-    public Float getMinLotForTicker(String tickerCode) {
-        return 1f;
     }
 
     @Override
@@ -189,7 +162,6 @@ public class FinamTradeClient implements TradeClient {
                 .build();
     }
 
-    @Override
     public String setOrder(TrvOrder order) {
         var bearer = getBearer();
         Order orderToPlace;
@@ -249,26 +221,6 @@ public class FinamTradeClient implements TradeClient {
             log.error("не удалось отменить ордера : {}", notCancelledOrders.toString());
             throw new IllegalStateException();
         }
-    }
-
-    @Override
-    public Boolean closeAll() {
-        var bearer = getBearer();
-        ordersServiceBlockingStub
-                .withCallCredentials(bearer)
-                .getOrders(OrdersRequest.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .build())
-                .getOrdersList()
-                .stream().map(o -> o.getOrder().getClientOrderId())
-                .forEach(id -> ordersServiceBlockingStub
-                        .withCallCredentials(bearer)
-                        .cancelOrder(CancelOrderRequest.newBuilder()
-                                .setAccountId(tradevisorProperties.integration().finam().accountId())
-                                .setOrderId(id)
-                                .build())
-                );
-        return true;
     }
 
     @Override

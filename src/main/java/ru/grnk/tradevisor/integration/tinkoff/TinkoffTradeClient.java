@@ -58,39 +58,9 @@ public class TinkoffTradeClient implements TradeClient {
         return TRV_PROVIDER_TINKOFF;
     }
 
-    @Override
     public Float getBalance() {
         var margin = investApi.getUserService().getMarginAttributesSync(tradingAccountId).getCorrectedMargin();
         return (float) (margin.getUnits() + NANOS_DIGITS * margin.getNano());
-    }
-
-    @Override
-    public Float getFreeMargin() {
-        return this.getBalance();
-    }
-
-    @Override
-    public String findTickerForSpot(String tickerCode) {
-        try {
-            Tickers spotTicker = tickersRepository.getTickerByTickerCode(tickerCode);
-            return spotTicker.getTicker();
-        } catch (Exception e) {
-            log.warn("Error finding futures contract for spot ticker: {}", tickerCode, e);
-            return null;
-        }
-    }
-
-    @Override
-    public Float getTickPriceForTicker(String tickerCode) {
-        Tickers ticker = tickersRepository.getTickerByTickerCode(tickerCode);
-        var tickPrice = ticker.getLot() * Math.pow(10, -1 * ticker.getPrecision());
-        var currencyMultiplier = Objects.equals(ticker.getCurrency(), "RUB") ? 1 : 90;  // средний курс доллара на год
-        return (float) tickPrice * currencyMultiplier;
-    }
-
-    @Override
-    public Float getMinLotForTicker(String tickerCode) {
-        return 1f;
     }
 
     @Override
@@ -143,7 +113,6 @@ public class TinkoffTradeClient implements TradeClient {
                 .orElse(null);
     }
 
-    @Override
     public String setOrder(TrvOrder order) {
         if (order.activation() == null) {
             var resp = investApi.getOrdersService().postLimitOrderSync(
@@ -185,12 +154,6 @@ public class TinkoffTradeClient implements TradeClient {
                 .forEach(x -> investApi.getStopOrdersService()
                         .cancelStopOrderSync(tradingAccountId, x.getStopOrderId()));
     }
-
-    @Override
-    public Boolean closeAll() {
-        throw new IllegalStateException("все позиции можно закрыть из приложения");
-    }
-
 
     @Override
     public boolean openPosition(Signals rawSignal) {
@@ -255,7 +218,7 @@ public class TinkoffTradeClient implements TradeClient {
         Future future = investApi.getInstrumentsService().getFutureByUidSync(signal.getTickerCode());
         int tradeLots = countTradeLots(signal, future);
         if (tradeLots == 0) {
-            log.warn("недостаточно денег для открытия позиции. Signal: {}", signal);
+            log.warn("недостаточно денег для открытия позиции по фьючерсам. Signal: {}", signal);
             return false;
         }
         var positionOrderResp = investApi.getOrdersService()

@@ -10,25 +10,12 @@ public interface TradeClient {
 
     String provider();
 
-    Float getBalance();
-
-    Float getFreeMargin();
-
-    String findTickerForSpot(String tickerCode);
-
-    Float getTickPriceForTicker(String tickerCode);
-
-    Float getMinLotForTicker(String tickerCode);
-
     List<TrvOrder> getOrdersByTicker(String tickerCode);
 
     TrvPosition getAvgPositionByTicker(String tickerCode);
-
-    String setOrder(TrvOrder order);
 
     boolean openPosition(Signals signal);
 
     void deleteOrders(String tickerCode);
 
-    Boolean closeAll();
 }

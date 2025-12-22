@@ -37,6 +37,7 @@ dependencies {
 
     // External APIs
     implementation 'chat.giga:gigachat-java:0.1.7'
+    implementation 'io.github.wuhewuhe:bybit-java-api:1.2.8'
 
     implementation('io.netty:netty-all') {
         exclude group: 'io.netty', module: 'netty-transport-epoll'
