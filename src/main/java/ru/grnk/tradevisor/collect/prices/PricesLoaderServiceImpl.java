@@ -92,7 +92,7 @@ public class PricesLoaderServiceImpl {
                     providerProcessedCount.merge(provider, 1, Integer::sum);
 
                     long now = System.currentTimeMillis();
-                    if (now - lastUpdate > 60000) {
+                    if (now - lastUpdate > 30000) {
                         telegramService.sendProgressMessage(messageId,
                                 providerProcessedCount.values().stream().mapToInt(Integer::intValue).sum(),
                                 tickersRepository.getAllTickersCount(),

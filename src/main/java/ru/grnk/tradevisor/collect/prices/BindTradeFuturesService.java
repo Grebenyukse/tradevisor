@@ -80,7 +80,8 @@ public class BindTradeFuturesService {
                         : x)
                 .forEach(spotTickerCode2tickerCode -> {
                     var spotTickerCode = spotTickerCode2tickerCode.getLeft(); // потовый инструмент, по которому будет технический анализ
-                    var futureTickerCode = spotTickerCode2tickerCode.getRight().getTicker(); // фьючерс у которого нужно проставить ссылку на спот
+                    var futureTicker = spotTickerCode2tickerCode.getRight().getTicker(); // фьючерс у которого нужно проставить ссылку на спот
+                    var futureTickerCode = spotTickerCode2tickerCode.getRight().getTickerCode(); // uid оригинального фьюча у которого будет размещена ссылка на спот
                     // если спота нет, как например для бесконечных фьючей, то создаем свой.
                     var optTickerByTickerCode = tickersRepository.findTickerByTickerCode(spotTickerCode);
                     if (optTickerByTickerCode.isEmpty()) {
@@ -88,7 +89,7 @@ public class BindTradeFuturesService {
                                 .tickerCode(spotTickerCode)
                                 .ticker(spotTickerCode)
                                 .figi(spotTickerCode)
-                                .description("endless future for " + futureTickerCode)
+                                .description("endless future for " + futureTicker)
                                 .exchange("RTS")
                                 .provider(TRV_PROVIDER_TINKOFF)
                                 .loadPriority(100)
