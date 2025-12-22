@@ -112,7 +112,7 @@ public class ControlPositionService {
         var clientOptional = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))
                 .findFirst();
         if (clientOptional.isEmpty()) {
-            log.warn("провайдер {} для сигнала signal:{} по trade_ticker_code: {} не активен. невозможно выполнить торговую операцию.",
+            log.warn("провайдер {} для сигнала signal:{} по spot_ticker_code: {} не активен. невозможно выполнить торговую операцию.",
                    ticker.getProvider(), signal, ticker.getTickerCode());
             return;
         }

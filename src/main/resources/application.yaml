@@ -49,7 +49,6 @@ spring:
     url: jdbc:postgresql://localhost:5432/postgres    # Add explicit URL
     user: postgres                                    # Add credentials
     password: password
-    default-schema: tradevisor
 
 app:
   collect:                    # сбор информации для анализа
@@ -74,7 +73,7 @@ app:
   trade:
     delay: PT1M
     limits: 1 # риск в процентах от капитала на одну позицию
-    enabled: true
+    enabled: false
   notification:
     enabled: true
     delay: PT1M

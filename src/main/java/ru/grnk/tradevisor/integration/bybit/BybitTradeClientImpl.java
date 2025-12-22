@@ -309,7 +309,7 @@ public class BybitTradeClientImpl implements TradeClient {
             limits = 1; // Значение по умолчанию
         }
         double maxRiskInMoney = balance * limits / 100;
-        Float minLot = getMinLotForTicker(ticker.getTradeTickerCode() + "@bybit");
+        Float minLot = getMinLotForTicker(ticker.getSpotTickerCode() + "@bybit");
 
         // Проверяем, что minLot не null
         if (minLot == null || minLot <= 0) {

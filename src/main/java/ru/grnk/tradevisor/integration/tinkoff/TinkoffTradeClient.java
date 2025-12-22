@@ -174,22 +174,22 @@ public class TinkoffTradeClient implements TradeClient {
         };
     }
 
-    private float getSpot2TradeTickerK(String spotTickerCode, String tradeTickerCode) {
-        var lastPrices = investApi.getMarketDataService().getLastPricesSync(List.of(tradeTickerCode, spotTickerCode))
+    private float kFutBySpot(String futTickerCode, String spotTickerCode) {
+        var lastPrices = investApi.getMarketDataService().getLastPricesSync(List.of(futTickerCode, spotTickerCode))
                 .stream()
                 .map(x -> quotationToFloat(x.getPrice()))
                 .toList();
         if (lastPrices.size() != 2) {
             throw new IllegalStateException();
         }
-        return spotTickerCode.equals(tradeTickerCode) ? 1 : lastPrices.get(1) / lastPrices.get(0);
+        return futTickerCode.equals(spotTickerCode) ? 1 : lastPrices.get(0) / lastPrices.get(1);
     }
 
     private Signals mapSignalToTradeTicker(Signals rawSignal) {
         Tickers spotTicker = tickersRepository.getTickerByTickerCode(rawSignal.getTickerCode());
         Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode())
                 .orElse(spotTicker);
-        float kFut2Spot = getSpot2TradeTickerK(spotTicker.getTickerCode(), tradeTicker.getTradeTickerCode());
+        float kFut2Spot = kFutBySpot(tradeTicker.getSpotTickerCode(), spotTicker.getTickerCode());
         var minPriceIncrement = getMinPriceIncrement(tradeTicker.getTickerCode());
         return Signals.builder()
                 .priceOpen(roundPrice(rawSignal.getPriceOpen() * kFut2Spot, minPriceIncrement, rawSignal.getDirection()))

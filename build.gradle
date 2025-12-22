@@ -141,8 +141,6 @@ liquibase {
         main {
             arguments = [
                     changeLogFile: 'src/main/resources/changelog/changelog-master.yaml',
-                    defaultSchemaName: 'tradevisor',
-                    liquibaseSchemaName: 'tradevisor',
                     logLevel: 'debug'
             ]
         }

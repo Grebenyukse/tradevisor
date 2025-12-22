@@ -58,8 +58,8 @@ public class Tickers implements Serializable {
     @Column(name = "load_priority")
     private Integer loadPriority;
 
-    @Column(name = "trade_ticker_code")
-    private String tradeTickerCode;
+    @Column(name = "spot_ticker_code")
+    private String spotTickerCode;
 
 
 }

@@ -26,15 +26,16 @@ public class TickersRepository {
     @PersistenceContext
     private EntityManager em;
 
+    @Transactional
     public int updateTickerSpotTickerCode(String tickerCode, String spotTickerCode) {
-        return em.createQuery("UPDATE Tickers t SET t.tradeTickerCode = :spotTickerCode WHERE t.tickerCode = :tickerCode")
+        return em.createQuery("UPDATE Tickers t SET t.spotTickerCode = :spotTickerCode WHERE t.tickerCode = :tickerCode")
                 .setParameter("spotTickerCode", spotTickerCode)
                 .setParameter("tickerCode", tickerCode)
                 .executeUpdate();
     }
 
     public List<Tickers> findUnlinkedFutures(String provider) {
-        return tickersRepo.findByProviderAndMarketTypeAndTradeTickerCodeIsNull(provider, "futures");
+        return tickersRepo.findByProviderAndMarketTypeAndSpotTickerCodeIsNull(provider, "futures");
     }
 
     public Tickers findTradeTickerByTickerCode(String tickerCode) {
@@ -46,7 +47,7 @@ public class TickersRepository {
         LocalDateTime twoWeeksAgo = LocalDateTime.now().plusWeeks(2);
         return em.createQuery("""
                         select t from Tickers t
-                        where t.tradeTickerCode = :spotTickerCode
+                        where t.spotTickerCode = :spotTickerCode
                         and (t.expiration > :twoWeeksAgo or t.expiration is null)
                         order by t.expiration desc
                         """, Tickers.class)
@@ -175,7 +176,7 @@ public class TickersRepository {
                 ticker.getProvider(),
                 ticker.getStatus(),
                 ticker.getLoadPriority(),
-                ticker.getTradeTickerCode()
+                ticker.getSpotTickerCode()
         );
     }
 

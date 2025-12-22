@@ -24,7 +24,7 @@ import static ru.grnk.tradevisor.collect.prices.Futures2SpotMap.*;
 /**
  * 1. загружаются все активные фьючерсы с тинькоф API
  * 2. по каждому фьючу определяется привязанный спот-тикер
- * 3. фьючерсы размечаются связкой tickerCode-tradeTickerCode
+ * 3. фьючерсы размечаются связкой tickerCode-spotTickerCode
  * 4. при открытии позиции проверяется, есть ли привязанный futures. Если да - выставляется позиция по нему. если нет -
  * торговля спотом.
  * 5. фьючерсы у которых нет явной привязке к споту, но при этом контракт широко используется (например Brent)
@@ -78,9 +78,9 @@ public class BindTradeFuturesService {
                 .map(x -> Objects.equals(x.getLeft(), JOIN_ENDLESS_FUTURE_MAPPING_VALUE)
                         ? Pair.of(x.getRight().substring(0,2) + "!1", x.getRight()) // маппим в бесконечный фьючерс со склеиванием интервалов
                         : x)
-                .forEach(tradeTickerCode2tickerCode -> {
-                    var spotTickerCode = tradeTickerCode2tickerCode.getLeft(); // потовый инструмент, по которому будет технический анализ
-                    var futureTickerCode = tradeTickerCode2tickerCode.getRight(); // фьючерс у которого нужно проставить ссылку на спот
+                .forEach(spotTickerCode2tickerCode -> {
+                    var spotTickerCode = spotTickerCode2tickerCode.getLeft(); // потовый инструмент, по которому будет технический анализ
+                    var futureTickerCode = spotTickerCode2tickerCode.getRight(); // фьючерс у которого нужно проставить ссылку на спот
                     // если спота нет, как например для бесконечных фьючей, то создаем свой.
                     var optTickerByTickerCode = tickersRepository.findTickerByTickerCode(spotTickerCode);
                     if (optTickerByTickerCode.isEmpty()) {
@@ -131,7 +131,7 @@ public class BindTradeFuturesService {
                         .provider(TRV_PROVIDER_TINKOFF)
                         .status(null)
                         .loadPriority(100)
-                        .tradeTickerCode(null)
+                        .spotTickerCode(null)
                         .build()
         );
         tickersRepository.saveInstrument(
@@ -153,7 +153,7 @@ public class BindTradeFuturesService {
                         .provider(TRV_PROVIDER_TINKOFF) // планируем торговать через финам поэтому подменяем провайдера.
                         .status(null)
                         .loadPriority(0)
-                        .tradeTickerCode(spotTicker.getUid())
+                        .spotTickerCode(spotTicker.getUid())
                         .build()
         );
     }
@@ -178,7 +178,7 @@ public class BindTradeFuturesService {
                         .provider(TRV_PROVIDER_TINKOFF)
                         .status(null)
                         .loadPriority(0)
-                        .tradeTickerCode(null)
+                        .spotTickerCode(null)
                         .build()
         );
     }

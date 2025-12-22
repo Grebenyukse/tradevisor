@@ -11,13 +11,13 @@ import java.util.List;
 
 public interface TickersJpa extends JpaRepository<Tickers, String> {
 
-    @Query(value = "SELECT t FROM Tickers t WHERE t.provider = :provider AND t.marketType = :marketType AND t.tradeTickerCode = :tradeTickerCode")
-    List<Tickers> findByProviderAndMarketTypeAndTradeTickerCode(@Param("provider") String provider,
+    @Query(value = "SELECT t FROM Tickers t WHERE t.provider = :provider AND t.marketType = :marketType AND t.spotTickerCode = :spotTickerCode")
+    List<Tickers> findByProviderAndMarketTypeAndSpotTickerCode(@Param("provider") String provider,
                                                                 @Param("marketType") String marketType,
-                                                                @Param("tradeTickerCode") String tradeTickerCode);
+                                                                @Param("spotTickerCode") String spotTickerCode);
 
-    @Query(value = "SELECT t FROM Tickers t WHERE t.provider = :provider AND t.marketType = :marketType AND t.tradeTickerCode IS NULL")
-    List<Tickers> findByProviderAndMarketTypeAndTradeTickerCodeIsNull(@Param("provider") String provider,
+    @Query(value = "SELECT t FROM Tickers t WHERE t.provider = :provider AND t.marketType = :marketType AND t.spotTickerCode IS NULL")
+    List<Tickers> findByProviderAndMarketTypeAndSpotTickerCodeIsNull(@Param("provider") String provider,
                                                                       @Param("marketType") String marketType);
 
 
@@ -39,7 +39,7 @@ public interface TickersJpa extends JpaRepository<Tickers, String> {
                 provider,
                 status,
                 load_priority,
-                trade_ticker_code
+                spot_ticker_code
             ) VALUES (
                 ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15
             )
@@ -58,7 +58,7 @@ public interface TickersJpa extends JpaRepository<Tickers, String> {
                 provider = EXCLUDED.provider,
                 status = EXCLUDED.status,
                 load_priority = EXCLUDED.load_priority,
-                trade_ticker_code = EXCLUDED.trade_ticker_code
+                spot_ticker_code = EXCLUDED.spot_ticker_code
             """, nativeQuery = true)
     void upsert(
             String tickerCode,
@@ -75,6 +75,6 @@ public interface TickersJpa extends JpaRepository<Tickers, String> {
             String provider,
             String status,
             Integer loadPriority,
-            String tradeTickerCode
+            String spotTickerCode
     );
 }
