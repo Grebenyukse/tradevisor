@@ -9,6 +9,7 @@ import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,13 +25,14 @@ public class PricesLoaderServiceImpl {
     private final List<PricesLoader> loaders;
     private final PriceLoadingErrorHandler errorHandler;
     private final TelegramNotificationService telegramService;
-    private final BindTradeFuturesService bindTradeFuturesService;
 
     @SneakyThrows
     @Scheduled(fixedRateString = "${app.collect.prices.delay}")
     public void doWork() {
-        loaders.forEach(PricesLoader::initTickers);
-        bindTradeFuturesService.initTickers();
+        loaders
+                .stream()
+                .sorted(Comparator.comparingInt(PricesLoader::loadOrder))
+                .forEach(PricesLoader::initTickers);
 
         log.info("start collecting prices");
         LocalDateTime startTime = LocalDateTime.now();
@@ -85,7 +87,7 @@ public class PricesLoaderServiceImpl {
             List<Tickers> tickers = tickersRepository.getAllTickers(provider, TICKERS_BATCH_LOAD, processedForThisProvider);
             for (Tickers ticker : tickers) {
                 try {
-                    loader.loadPrices(ticker.getTickerCode());
+                    loader.loadPrices(ticker);
                     processedForThisProvider++;
                     providerProcessedCount.merge(provider, 1, Integer::sum);
 

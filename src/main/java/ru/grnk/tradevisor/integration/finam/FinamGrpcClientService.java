@@ -20,6 +20,7 @@ import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
 import ru.grnk.tradevisor.common.repository.FinamMetainfoRepository;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
 
 import java.time.ZonedDateTime;
 
@@ -92,12 +93,17 @@ public class FinamGrpcClientService implements PricesLoader {
     }
 
     @Override
-    public void loadPrices(String tickerUid) {
-        loadHistoryForSymbol(tickerUid);
+    public void loadPrices(Tickers ticker) {
+        loadHistoryForSymbol(ticker.getTickerCode());
     }
 
     @Override
     public String getProvider() {
         return "finam";
+    }
+
+    @Override
+    public int loadOrder() {
+        return 2;
     }
 }

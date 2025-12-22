@@ -32,7 +32,8 @@ public class BybitPricesService implements PricesLoader {
 
 
     @Override
-    public void loadPrices(String tickerCode) {
+    public void loadPrices(Tickers ticker) {
+        var tickerCode = ticker.getTickerCode();
         var startTime = findStartTime(tickerCode);
         var endTime = convertToTimestamp(ZonedDateTime.now());
         var intervalInHours = (endTime.getSeconds() - startTime.getSeconds()) / 60;
@@ -59,6 +60,11 @@ public class BybitPricesService implements PricesLoader {
         tickers.stream()
                 .map(BybitPricesService::from)
                 .forEach(tickersRepository::saveInstrument);
+    }
+
+    @Override
+    public int loadOrder() {
+        return 1;
     }
 
     private Timestamp findStartTime(String symbol) {

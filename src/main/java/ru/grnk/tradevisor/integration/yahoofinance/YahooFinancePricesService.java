@@ -48,7 +48,8 @@ public class YahooFinancePricesService implements PricesLoader {
     }
 
     @Override
-    public void loadPrices(String tickerCode) {
+    public void loadPrices(Tickers ticker) {
+        var tickerCode = ticker.getTickerCode();
         int historyMaxDepthDays = tradevisorProperties.integration().yahoofinance().historyMaxDepthDays();
         var startTime = findStartTime(tickerCode, historyMaxDepthDays);
         var endTime = convertToTimestamp(ZonedDateTime.now());
@@ -69,6 +70,11 @@ public class YahooFinancePricesService implements PricesLoader {
     @Override
     public String getProvider() {
         return "yahoofinance";
+    }
+
+    @Override
+    public int loadOrder() {
+        return 3;
     }
 
     private com.google.protobuf.Timestamp findStartTime(String tickerCode, int historyMaxDepthDays) {

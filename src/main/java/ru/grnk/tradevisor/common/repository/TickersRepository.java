@@ -29,8 +29,8 @@ public class TickersRepository {
     @Transactional
     public int updateTickerSpotTickerCode(String tickerCode, String spotTickerCode) {
         return em.createQuery("UPDATE Tickers t SET t.spotTickerCode = :spotTickerCode WHERE t.tickerCode = :tickerCode")
-                .setParameter("spotTickerCode", spotTickerCode)
                 .setParameter("tickerCode", tickerCode)
+                .setParameter("spotTickerCode", spotTickerCode)
                 .executeUpdate();
     }
 

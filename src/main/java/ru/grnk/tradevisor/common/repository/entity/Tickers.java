@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Table(name = "tickers", schema = "tradevisor")
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class Tickers implements Serializable {
 
     @Id

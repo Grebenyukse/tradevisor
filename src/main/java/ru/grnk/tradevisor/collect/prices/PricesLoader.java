@@ -1,10 +1,14 @@
 package ru.grnk.tradevisor.collect.prices;
 
+import ru.grnk.tradevisor.common.repository.entity.Tickers;
+
 public interface PricesLoader {
 
-    void loadPrices(String tickerUid);
+    void loadPrices(Tickers ticker);
 
     String getProvider();
 
     void initTickers();
+
+    int loadOrder();
 }

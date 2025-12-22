@@ -43,7 +43,7 @@ public class BindTradeFuturesService {
     private final TickersRepository tickersRepository;
 
     @SneakyThrows
-    void initTickers() {
+    public void initTickers() {
         investApi.getInstrumentsService().getTradableFuturesSync()
                 .forEach(future -> {
                     if (future == null) return;
@@ -76,11 +76,11 @@ public class BindTradeFuturesService {
                 .filter(x -> x.getLeft() != null)
                 .filter(x -> !x.getLeft().equals(SKIP_TICKER_MAPPING_VALUE))
                 .map(x -> Objects.equals(x.getLeft(), JOIN_ENDLESS_FUTURE_MAPPING_VALUE)
-                        ? Pair.of(x.getRight().substring(0,2) + "!1", x.getRight()) // маппим в бесконечный фьючерс со склеиванием интервалов
+                        ? Pair.of(x.getRight().getTicker().substring(0,2) + "!1", x.getRight()) // маппим в бесконечный фьючерс со склеиванием интервалов
                         : x)
                 .forEach(spotTickerCode2tickerCode -> {
                     var spotTickerCode = spotTickerCode2tickerCode.getLeft(); // потовый инструмент, по которому будет технический анализ
-                    var futureTickerCode = spotTickerCode2tickerCode.getRight(); // фьючерс у которого нужно проставить ссылку на спот
+                    var futureTickerCode = spotTickerCode2tickerCode.getRight().getTicker(); // фьючерс у которого нужно проставить ссылку на спот
                     // если спота нет, как например для бесконечных фьючей, то создаем свой.
                     var optTickerByTickerCode = tickersRepository.findTickerByTickerCode(spotTickerCode);
                     if (optTickerByTickerCode.isEmpty()) {
@@ -99,18 +99,16 @@ public class BindTradeFuturesService {
                 });
     }
 
-    private Pair<String, String> getTickerSearchPart2FutureTickerCode(Tickers ticker) {
+    private Pair<String, Tickers> getTickerSearchPart2FutureTickerCode(Tickers ticker) {
         String description = ticker.getDescription();
         Pattern pattern = Pattern.compile("-\\d{1,2}\\.\\d{2}");
         Matcher matcher = pattern.matcher(description);
         if (matcher.find()) {
             int start = matcher.start();         // начало совпадения (-3.26)
-            int end = matcher.end();             // конец совпадения
             String leftPart = description.substring(0, start);   // до "-3.26"
-            String rightPart = description.substring(end).trim(); // после "-3.26", обрезаем пробелы
-            return Pair.of(leftPart, ticker.getTickerCode());
+            return Pair.of(leftPart, ticker);
         } else {
-            return Pair.of(description, ticker.getTickerCode());
+            return Pair.of(description, ticker);
         }
     }
 
