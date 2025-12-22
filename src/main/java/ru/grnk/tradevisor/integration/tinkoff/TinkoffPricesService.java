@@ -50,37 +50,44 @@ public class TinkoffPricesService implements PricesLoader {
 
     @Override
     public void loadPrices(Tickers ticker) {
-// 1. спот      -> spot_ticker_code == null
-//                    ---> это бесконечный фьючерс?
-//                      --> YES - return
-//                      --> NO - Load tickers
-// 2. futures   -> spot_ticker_code != nul
-//                      ---> спот это бесконечный фьючерс?  -> по коду тикера
-//                      |      --> это ближайший фьючерс по этому активу?
-//                      |         --> загрузи котировки и сохрани под тикером спота (бесконечного фьюча)
-//                      |
-//                      ---> спот - самостоятельный актив. пусть ищется по своим котировкам. не загружать котировки по фьючу.
+        // 1. Спот-актив (не фьючерс) -> spot_ticker_code == null
+        //    ---> это бесконечный фьючерс?
+        //         --> YES - не загружаем (он получает данные от фьючерсов)
+        //         --> NO - загружаем котировки
+        //
+        // 2. Фьючерс -> spot_ticker_code != null
+        //    ---> спот это бесконечный фьючерс?
+        //         --> YES - это ближайший фьючерс по этому активу?
+        //               --> YES - загрузи котировки и сохрани под тикером спота (бесконечного фьюча)
+        //               --> NO - не загружаем
+        //         --> NO - спот самостоятельный актив, не загружаем котировки по фьючу
 
         if (ticker.getSpotTickerCode() == null) {
+            // Это спот-актив (возможно фьючерс)
             if (!isEndlessFutureTicker(ticker)) {
+                // Это обычный спот-актив, загружаем котировки
                 loadHistoryForTicker(ticker.getTickerCode(), tradevisorProperties.integration().tinkoff().historyMaxDepthDays());
             }
+            // Если это бесконечный фьючерс, то его котировки будут приходить от обычных фьючерсов
         } else {
+            // Это фьючерс
             if (isEndlessFuturesByTickerCode(ticker.getSpotTickerCode())) {
+                // Спот - это бесконечный фьючерс, загружаем данные для него
                 if (isNearestFutureCode(ticker.getTicker())) {
+                    // Это ближайший фьючерс, загружаем его котировки для бесконечного фьючерса
                     loadHistoryForFuture(ticker.getSpotTickerCode(), ticker.getTickerCode(), tradevisorProperties.integration().tinkoff().historyMaxDepthDays());
                 }
             }
+            // Если спот - самостоятельный актив, то его котировки загружаются отдельно, фьючерс не трогаем
         }
     }
 
     private boolean isEndlessFuturesByTickerCode(String tickerCode) {
-        return tickerCode!= null && tickerCode.length() == ENDLESS_FUTURES_CODE && tickerCode.endsWith("!1");
+        return tickerCode != null && tickerCode.length() >= ENDLESS_FUTURES_CODE && tickerCode.endsWith("!1");
     }
 
     private boolean isEndlessFutureTicker(Tickers ticker) {
-        return ticker.getSpotTickerCode() != null && ticker.getSpotTickerCode().length() == TinkoffPricesService.ENDLESS_FUTURES_CODE
-                && ticker.getTicker().contains("!1");
+        return ticker.getTicker() != null && ticker.getTicker().endsWith("!1");
     }
 
     @Override
