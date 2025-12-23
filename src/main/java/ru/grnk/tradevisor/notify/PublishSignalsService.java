@@ -23,7 +23,7 @@ public class PublishSignalsService {
 
     @Scheduled(fixedRateString = "${app.notification.delay}")
     public void doWork() {
-        log.info("start signals publishing");
+        log.debug("start signals publishing");
         signalsRepository.findUnpublishedSignals()
                 .forEach(messagePublisher::publishMessage);
     }

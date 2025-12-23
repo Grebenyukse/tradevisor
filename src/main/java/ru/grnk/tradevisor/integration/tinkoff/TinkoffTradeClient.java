@@ -2,6 +2,7 @@ package ru.grnk.tradevisor.integration.tinkoff;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -16,12 +17,12 @@ import ru.tinkoff.piapi.contract.v1.*;
 import ru.tinkoff.piapi.core.InvestApi;
 import ru.ttech.piapi.core.helpers.NumberMapper;
 
-import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -39,18 +40,24 @@ public class TinkoffTradeClient implements TradeClient {
     private final TradevisorProperties tradevisorProperties;
     private final TickersRepository tickersRepository;
 
+    private final AtomicReference<String> tradingAccountId = new AtomicReference<>();
 
-    private String tradingAccountId;
-
-    @PostConstruct
-    public void init() {
+    private void init() {
+        if (tradingAccountId.get() != null) return;
         var accountsResponse = investApi.getUserService().getAccountsSync(AccountStatus.ACCOUNT_STATUS_OPEN);
-        tradingAccountId = accountsResponse.stream()
+        String accountId = accountsResponse.stream()
                 .filter(acc -> acc.getType() == AccountType.ACCOUNT_TYPE_TINKOFF)
                 .findFirst()
                 .map(Account::getId)
                 .orElseThrow(() -> new IllegalStateException("Не найден открытый брокерский счет"));
-        log.info("Брокерский счет: {}", tradingAccountId);
+        if (tradingAccountId.compareAndSet(null, accountId)) {
+            log.info("Брокерский счет: {}", accountId);
+        }
+    }
+
+    private String getTradingAccountId() {
+        init();
+        return tradingAccountId.get();
     }
 
     @Override
@@ -59,13 +66,13 @@ public class TinkoffTradeClient implements TradeClient {
     }
 
     public Float getBalance() {
-        var margin = investApi.getUserService().getMarginAttributesSync(tradingAccountId).getCorrectedMargin();
+        var margin = investApi.getUserService().getMarginAttributesSync(getTradingAccountId()).getCorrectedMargin();
         return (float) (margin.getUnits() + NANOS_DIGITS * margin.getNano());
     }
 
     @Override
     public List<TrvOrder> getOrdersByTicker(String tickerCode) {
-        var orders = investApi.getOrdersService().getOrdersSync(tradingAccountId)
+        var orders = investApi.getOrdersService().getOrdersSync(getTradingAccountId())
                 .stream()
                 .map(x -> TrvOrder.builder()
                         .tickerCode(x.getInstrumentUid())
@@ -76,7 +83,7 @@ public class TinkoffTradeClient implements TradeClient {
                         .status(x.hasExecutedOrderPrice() ? "executed" : "pending")
                         .build())
                 .toList();
-        var stopOrdersService = investApi.getStopOrdersService().getStopOrdersSync(tradingAccountId)
+        var stopOrdersService = investApi.getStopOrdersService().getStopOrdersSync(getTradingAccountId())
                 .stream()
                 .map(x -> TrvOrder
                         .builder()
@@ -98,7 +105,7 @@ public class TinkoffTradeClient implements TradeClient {
         List<TrvOrder> orders = this.getOrdersByTicker(tickerCode);
         Float tp = orders.stream().filter(x -> x.activation() == null).findFirst().map(TrvOrder::price).orElse(null);
         Float sl = orders.stream().filter(x -> x.activation() != null).findFirst().map(TrvOrder::price).orElse(null);
-        return investApi.getOrdersService().getOrdersSync(tradingAccountId)
+        return investApi.getOrdersService().getOrdersSync(getTradingAccountId())
                 .stream()
                 .filter(o -> o.getInstrumentUid().equals(tickerCode))
                 .findFirst()
@@ -120,7 +127,7 @@ public class TinkoffTradeClient implements TradeClient {
                     (long) order.lot(),
                     quotationFromFloat(order.price()),
                     order.direction() > 0 ? OrderDirection.ORDER_DIRECTION_BUY : OrderDirection.ORDER_DIRECTION_SELL,
-                    tradingAccountId,
+                    getTradingAccountId(),
                     TimeInForceType.TIME_IN_FORCE_DAY,
                     UUID.randomUUID().toString()
             );
@@ -133,7 +140,7 @@ public class TinkoffTradeClient implements TradeClient {
                     quotationFromFloat(order.price()),
                     quotationFromFloat(order.activation()),
                     order.direction() > 0 ? StopOrderDirection.STOP_ORDER_DIRECTION_BUY : StopOrderDirection.STOP_ORDER_DIRECTION_SELL,
-                    tradingAccountId,
+                    getTradingAccountId(),
                     StopOrderType.STOP_ORDER_TYPE_STOP_LIMIT
             );
             log.info("Ордер STOP LOSS выставлен. orderId: {}", orderId);
@@ -143,16 +150,16 @@ public class TinkoffTradeClient implements TradeClient {
 
     @Override
     public void deleteOrders(String tickerCode) {
-        investApi.getOrdersService().getOrdersSync(tradingAccountId)
+        investApi.getOrdersService().getOrdersSync(getTradingAccountId())
                 .stream()
                 .filter(x -> x.getInstrumentUid().equals(tickerCode))
                 .forEach(x -> investApi.getOrdersService()
-                        .cancelOrderSync(tradingAccountId, x.getOrderId()));
-        investApi.getStopOrdersService().getStopOrdersSync(tradingAccountId)
+                        .cancelOrderSync(getTradingAccountId(), x.getOrderId()));
+        investApi.getStopOrdersService().getStopOrdersSync(getTradingAccountId())
                 .stream()
                 .filter(x -> x.getInstrumentUid().equals(tickerCode))
                 .forEach(x -> investApi.getStopOrdersService()
-                        .cancelStopOrderSync(tradingAccountId, x.getStopOrderId()));
+                        .cancelStopOrderSync(getTradingAccountId(), x.getStopOrderId()));
     }
 
     @Override
@@ -175,6 +182,7 @@ public class TinkoffTradeClient implements TradeClient {
     }
 
     private float kFutBySpot(String futTickerCode, String spotTickerCode) {
+        if (Objects.equals(futTickerCode, spotTickerCode)) return 1;
         var lastPrices = investApi.getMarketDataService().getLastPricesSync(List.of(futTickerCode, spotTickerCode))
                 .stream()
                 .map(x -> quotationToFloat(x.getPrice()))
@@ -189,7 +197,7 @@ public class TinkoffTradeClient implements TradeClient {
         Tickers spotTicker = tickersRepository.getTickerByTickerCode(rawSignal.getTickerCode());
         Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode())
                 .orElse(spotTicker);
-        float kFut2Spot = kFutBySpot(tradeTicker.getSpotTickerCode(), spotTicker.getTickerCode());
+        float kFut2Spot = kFutBySpot(tradeTicker.getTickerCode(), spotTicker.getTickerCode());
         var minPriceIncrement = getMinPriceIncrement(tradeTicker.getTickerCode());
         return Signals.builder()
                 .priceOpen(roundPrice(rawSignal.getPriceOpen() * kFut2Spot, minPriceIncrement, rawSignal.getDirection()))
@@ -229,15 +237,15 @@ public class TinkoffTradeClient implements TradeClient {
                         signal.getDirection() > 0
                                 ? OrderDirection.ORDER_DIRECTION_BUY
                                 : OrderDirection.ORDER_DIRECTION_SELL,
-                        tradingAccountId,
+                        getTradingAccountId(),
                         TimeInForceType.TIME_IN_FORCE_DAY,
                         UUID.randomUUID().toString()
                 );
         if (!isOrderAccepted(investApi.getOrdersService()
-                .getOrderStateSync(tradingAccountId, positionOrderResp.getOrderId())
+                .getOrderStateSync(getTradingAccountId(), positionOrderResp.getOrderId())
                 .getExecutionReportStatus())
         ) {
-            investApi.getOrdersService().cancelOrderSync(tradingAccountId, positionOrderResp.getOrderId());
+            investApi.getOrdersService().cancelOrderSync(getTradingAccountId(), positionOrderResp.getOrderId());
             return false;
         }
         var stopLossOrderId = this.setOrder(TrvOrder.builder()
@@ -249,7 +257,7 @@ public class TinkoffTradeClient implements TradeClient {
                         .isGtc(true)
                 .build());
         if (!isStopOrderAccepted(investApi.getStopOrdersService()
-                .getStopOrdersSync(tradingAccountId)
+                .getStopOrdersSync(getTradingAccountId())
                 .stream()
                 .filter(o -> o.getStopOrderId().equals(stopLossOrderId))
                 .findFirst()
@@ -267,7 +275,7 @@ public class TinkoffTradeClient implements TradeClient {
                         .isGtc(true)
                 .build());
         if (!isStopOrderAccepted(investApi.getStopOrdersService()
-                .getStopOrdersSync(tradingAccountId)
+                .getStopOrdersSync(getTradingAccountId())
                 .stream()
                 .filter(o -> o.getStopOrderId().equals(takeProfitOrderId))
                 .findFirst()
@@ -298,15 +306,15 @@ public class TinkoffTradeClient implements TradeClient {
                         signal.getDirection() > 0
                                 ? OrderDirection.ORDER_DIRECTION_BUY
                                 : OrderDirection.ORDER_DIRECTION_SELL,
-                        tradingAccountId,
+                        getTradingAccountId(),
                         TimeInForceType.TIME_IN_FORCE_DAY,
                         UUID.randomUUID().toString()
                 );
         if (!isOrderAccepted(investApi.getOrdersService()
-                .getOrderStateSync(tradingAccountId, positionOrderResp.getOrderId())
+                .getOrderStateSync(getTradingAccountId(), positionOrderResp.getOrderId())
                 .getExecutionReportStatus())
         ) {
-            investApi.getOrdersService().cancelOrderSync(tradingAccountId, positionOrderResp.getOrderId());
+            investApi.getOrdersService().cancelOrderSync(getTradingAccountId(), positionOrderResp.getOrderId());
             return false;
         }
         var stopLossOrderId = this.setOrder(TrvOrder.builder()
@@ -318,7 +326,7 @@ public class TinkoffTradeClient implements TradeClient {
                 .isGtc(true)
                 .build());
         if (!isStopOrderAccepted(investApi.getStopOrdersService()
-                .getStopOrdersSync(tradingAccountId)
+                .getStopOrdersSync(getTradingAccountId())
                 .stream()
                 .filter(o -> o.getStopOrderId().equals(stopLossOrderId))
                 .findFirst()
@@ -336,7 +344,7 @@ public class TinkoffTradeClient implements TradeClient {
                 .isGtc(true)
                 .build());
         if (!isStopOrderAccepted(investApi.getStopOrdersService()
-                .getStopOrdersSync(tradingAccountId)
+                .getStopOrdersSync(getTradingAccountId())
                 .stream()
                 .filter(o -> o.getStopOrderId().equals(takeProfitOrderId))
                 .findFirst()
@@ -417,7 +425,7 @@ public class TinkoffTradeClient implements TradeClient {
     private int countTradeLotsForGo(Signals signal, String  uid, float go) {
         float balance = this.getBalance();
         double maxRiskInMoney = balance * tradevisorProperties.trade().limits() / 100;
-        var maxLotsResp = investApi.getOrdersService().getMaxLotsSync(tradingAccountId, uid,
+        var maxLotsResp = investApi.getOrdersService().getMaxLotsSync(getTradingAccountId(), uid,
                 quotationFromFloat(signal.getPriceOpen()));
         int maxLots = signal.getDirection() > 0
                 ? (int) maxLotsResp.getBuyLimits().getBuyMaxLots()

@@ -47,7 +47,7 @@ public class CalculateSignalService {
 
     @Scheduled(fixedRateString = "${app.calculate.delay}")
     public void doWork() {
-        log.info("calculate all signals mf");
+        log.debug("calculate all signals mf");
         int totalTickersCount = tickersRepository.getUnpublishedTickersCount();
         if (totalTickersCount == 0) {
             log.info("нет тикеров ждем когда появятся");

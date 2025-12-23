@@ -73,7 +73,7 @@ app:
   trade:
     delay: PT1M
     limits: 1 # риск в процентах от капитала на одну позицию
-    enabled: false
+    enabled: true
   notification:
     enabled: true
     delay: PT1M
