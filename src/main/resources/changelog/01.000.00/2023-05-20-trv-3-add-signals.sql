@@ -18,7 +18,3 @@ create table if not exists tradevisor.signals
     strategy_props jsonb -- { name: fibo, from_price: .., to_price:.., from_date:.., to_date:.., price618:..,price50:..,price318:.. }
                          -- { name: gap, from_price: .., to_price:.., from_date:.., to_date:.. }
 );
-
-alter table tradevisor.signals drop constraint if exists signal_on_bar_calculated_once_per_strategy;
-alter table tradevisor.signals add constraint signal_on_bar_calculated_once_per_strategy unique
-    (name, ticker_code, status, direction);

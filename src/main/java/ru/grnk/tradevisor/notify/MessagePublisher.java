@@ -28,7 +28,10 @@ public class MessagePublisher {
     private final TickersRepository tickersRepository;
     private final TradevisorProperties tradevisorProperties;
 
-    private final static Map<String, String> PROVIDER_TO_BASE_URL = Map.of("finam", "https://trading.finam.ru/profile/");
+    private final static Map<String, String> PROVIDER_TO_BASE_URL = Map.of("finam", "https://trading.finam.ru/profile/",
+            "tinkoff", "https://www.tbank.ru/invest/",
+            "bybit","bybit/"
+            );
 
     @Transactional
     public void publishMessage(Signals signal) {

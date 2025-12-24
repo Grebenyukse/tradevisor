@@ -154,11 +154,11 @@ public class FinamTradeClient implements TradeClient {
         }
         return TrvPosition.builder()
                 .tickerCode(tickerCode)
-                .price(Float.parseFloat(positionForSymbol.getAveragePrice().getValue()))
-                .lot((float) Math.abs(openLots))
+                .price(toBigDecimal(positionForSymbol.getAveragePrice()))
+                .lot(Math.abs(openLots))
                 .direction(direction)
-                .tp(Float.parseFloat(tpOrder.getOrder().getLimitPrice().getValue()))
-                .sl(Float.parseFloat(slOrder.getOrder().getLimitPrice().getValue()))
+                .tp(toBigDecimal(tpOrder.getOrder().getLimitPrice()))
+                .sl(toBigDecimal(slOrder.getOrder().getLimitPrice()))
                 .build();
     }
 
@@ -307,6 +307,20 @@ public class FinamTradeClient implements TradeClient {
             log.info("позиция выставлена успешно.SignalId: {}. TickerId: {}. Direction: {}",
                     signal.getId(), signal.getTickerCode(), signal.getDirection());
             return true;
+        }
+    }
+
+    public static BigDecimal toBigDecimal(Decimal decimal) {
+        if (decimal == null) {
+            return null;
+        }
+        if (decimal.getValue().isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        try {
+            return new BigDecimal(decimal.getValue());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid decimal format: " + decimal.getValue(), e);
         }
     }
 }

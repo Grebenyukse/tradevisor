@@ -2,13 +2,15 @@ package ru.grnk.tradevisor.trade.dto;
 
 import lombok.Builder;
 
+import java.math.BigDecimal;
+
 @Builder
 public record TrvPosition(
         String tickerCode,
         Integer direction,
-        Float price,
-        Float lot,
-        Float sl,
-        Float tp
+        BigDecimal price,
+        int lot,
+        BigDecimal sl,
+        BigDecimal tp
 ) {
 }

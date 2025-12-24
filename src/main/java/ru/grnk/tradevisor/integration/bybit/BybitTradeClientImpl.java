@@ -27,6 +27,7 @@ import ru.grnk.tradevisor.trade.TradeClient;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Component
@@ -184,8 +185,8 @@ public class BybitTradeClientImpl implements TradeClient {
 
                     return TrvPosition.builder()
                             .tickerCode(tickerCode)
-                            .price(Float.valueOf(position.getAvgPrice()))
-                            .lot(Float.valueOf(position.getSize()))
+                            .price(BigDecimal.valueOf(Double.parseDouble(position.getAvgPrice())))
+                            .lot(Integer.parseInt(position.getSize()))
                             .direction("Buy".equalsIgnoreCase(position.getSide()) ? 1 : -1)
                             .build();
                 }
@@ -206,7 +207,7 @@ public class BybitTradeClientImpl implements TradeClient {
                     .qty(String.valueOf(order.lot()))
                     .price(String.valueOf(order.price()))
                     .timeInForce(TimeInForce.GOOD_TILL_CANCEL);
-            if (order.activation() != null && order.activation() > 0) {
+            if (order.activation() != null && order.activation().doubleValue() > 0) {
                 requestBuilder.triggerPrice(order.activation().toString());
                 requestBuilder.triggerDirection(order.direction() > 0 ? 2 : 1);
             }
@@ -240,8 +241,8 @@ public class BybitTradeClientImpl implements TradeClient {
             String orderId = setOrder(TrvOrder.builder()
                     .tickerCode(tradeTicker.getTicker()) // для выставления позиций используется ticker "без @mic"
                     .direction(signal.getDirection())
-                    .price(signal.getPriceOpen())
-                    .lot((float) tradeLots)
+                    .price(BigDecimal.valueOf(Double.valueOf(signal.getPriceOpen())))
+                    .lot(tradeLots)
                     .isGtc(true)
                     .build());
             if (orderId.isEmpty()) {
@@ -253,9 +254,9 @@ public class BybitTradeClientImpl implements TradeClient {
             String stopLossOrderId = setOrder(TrvOrder.builder()
                     .tickerCode(tradeTicker.getTicker())
                     .direction(signal.getDirection() > 0 ? -1 : 1) // Противоположное направление для закрытия
-                    .activation(signal.getStopLoss())
-                    .price(signal.getStopLoss())
-                    .lot((float) tradeLots)
+                    .activation(BigDecimal.valueOf(Double.valueOf(signal.getStopLoss())))
+                    .price(BigDecimal.valueOf(Double.valueOf(signal.getStopLoss())))
+                    .lot(tradeLots)
                     .isGtc(true)
                     .build());
 
@@ -263,9 +264,9 @@ public class BybitTradeClientImpl implements TradeClient {
             String takeProfitOrderId = setOrder(TrvOrder.builder()
                     .tickerCode(tradeTicker.getTicker())
                     .direction(signal.getDirection() > 0 ? -1 : 1) // Противоположное направление для закрытия
-                    .activation(signal.getTakeProfit())
-                    .price(signal.getTakeProfit())
-                    .lot((float) tradeLots)
+                    .activation(BigDecimal.valueOf(Double.valueOf(signal.getTakeProfit())))
+                    .price(BigDecimal.valueOf(Double.valueOf(signal.getTakeProfit())))
+                    .lot(tradeLots)
                     .isGtc(true)
                     .build());
 
@@ -349,8 +350,8 @@ public class BybitTradeClientImpl implements TradeClient {
         return TrvOrder.builder()
                 .tickerCode(tickerCode)
                 .direction(direction)
-                .price(price)
-                .lot(quantity)
+                .price(BigDecimal.valueOf(price))
+                .lot((int)quantity)
                 .isGtc(isGtc)
                 .status(status)
                 .build();

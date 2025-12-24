@@ -130,12 +130,16 @@ public class ControlPositionService {
         List<TrvOrder> orders = client.getOrdersByTicker(ticker.getTickerCode());
         if (!orders.isEmpty()) {
             log.error("сигнал {} находится в статусе {}, но по нему есть открытые ордера {}", signal, signal.getStatus(), orders.size());
+            signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.MANUAL);
+            publishSignalsService.publishOrderForManualExecution(signal);
             return;
         }
         // проверяем есть ли открытые позиции по тикеру
         TrvPosition position = client.getAvgPositionByTicker(ticker.getTickerCode());
         if (position != null) {
             log.error("сигнал {} находится в статусе {}, но по нему есть открытая позиция {}", signal, signal.getStatus(), position);
+            signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.MANUAL);
+            publishSignalsService.publishOrderForManualExecution(signal);
             return;
         }
         // сигнал жив, ордеров нет, позиций нет, сигнал подтвержден пользователем -> выставляем ордера

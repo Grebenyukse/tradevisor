@@ -1,5 +1,9 @@
 package ru.grnk.tradevisor.common.repository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -7,11 +11,8 @@ import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.common.repository.jpa.TickersJpa;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
-
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +40,7 @@ public class TickersRepository {
     }
 
     public Tickers findTradeTickerByTickerCode(String tickerCode) {
-       return findTradeTickerByTickerCodeIfExists(tickerCode)
+        return findTradeTickerByTickerCodeIfExists(tickerCode)
                 .orElse(null);
     }
 
@@ -93,13 +94,36 @@ public class TickersRepository {
     }
 
     public List<Tickers> getAllTickers(String provider, Integer limit, Integer offset) {
-        TypedQuery<Tickers> query = em.createQuery(
-                "SELECT t FROM Tickers t WHERE t.status IS NULL AND t.provider = :provider ORDER BY t.loadPriority DESC",
-                Tickers.class
-        );
+        if (provider == null || provider.trim().isEmpty()) {
+            throw new IllegalArgumentException("Provider cannot be null or empty");
+        }
+
+        Query query = em.createNativeQuery("""
+        SELECT t.* FROM tradevisor.tickers t
+        WHERE t.status IS NULL
+          AND t.provider = :provider
+          AND NOT EXISTS (
+            SELECT 1 FROM tradevisor.signals s 
+            WHERE s.ticker_code = t.ticker_code 
+              AND (
+                s.created_at >= :timeBarrier 
+                OR s.status IN (:activeStatuses)
+              )
+          )
+        ORDER BY t.load_priority DESC
+        """, Tickers.class);
         query.setParameter("provider", provider);
-        query.setFirstResult(offset);
-        query.setMaxResults(limit);
+        query.setParameter("activeStatuses", List.of(
+                TrvSignalStatus.CREATED.name(),
+                TrvSignalStatus.CONFIRMED.name(),
+                TrvSignalStatus.EXECUTED.name(),
+                TrvSignalStatus.MANUAL.name(),
+                TrvSignalStatus.PUBLISHED.name())
+        );
+        query.setParameter("timeBarrier", OffsetDateTime.now().minusWeeks(2));
+        query.setFirstResult(offset != null ? offset : 0);
+        query.setMaxResults(limit != null ? limit : Integer.MAX_VALUE);
+
         return query.getResultList();
     }
 
