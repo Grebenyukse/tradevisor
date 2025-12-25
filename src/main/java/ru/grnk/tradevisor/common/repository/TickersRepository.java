@@ -36,7 +36,7 @@ public class TickersRepository {
     }
 
     public List<Tickers> findUnlinkedFutures(String provider) {
-        return tickersRepo.findByProviderAndMarketTypeAndSpotTickerCodeIsNull(provider, "futures");
+        return tickersRepo.findByProviderAndSpotTickerCodeIsNull(provider);
     }
 
     public Tickers findTradeTickerByTickerCode(String tickerCode) {
@@ -49,8 +49,7 @@ public class TickersRepository {
         return em.createQuery("""
                         select t from Tickers t
                         where t.spotTickerCode = :spotTickerCode
-                        and (t.expiration > :twoWeeksAgo or t.expiration is null)
-                        order by t.expiration desc
+                        order by t.tickerCode
                         """, Tickers.class)
                 .setParameter("spotTickerCode", tickerCode)
                 .setParameter("twoWeeksAgo", twoWeeksAgo)
@@ -70,7 +69,7 @@ public class TickersRepository {
 
     public List<Tickers> getAllTickers() {
         TypedQuery<Tickers> query = em.createQuery(
-                "SELECT t FROM Tickers t WHERE t.status IS NULL ORDER BY t.loadPriority DESC",
+                "SELECT t FROM Tickers t WHERE t.status IS NULL ORDER BY t.tickerCode",
                 Tickers.class
         );
         return query.getResultList();
@@ -168,7 +167,7 @@ public class TickersRepository {
                               AND s.status IN (:statuses)
                         )
                           AND t.status IS NULL
-                        ORDER BY t.loadPriority DESC
+                        ORDER BY t.tickerCode
                         """, Tickers.class
         );
         query.setParameter("statuses", List.of(
@@ -188,18 +187,12 @@ public class TickersRepository {
         tickersRepo.upsert(
                 ticker.getTickerCode(),
                 ticker.getTicker(),
-                ticker.getFigi(),
                 ticker.getDescription(),
-                ticker.getMarketType(),
                 ticker.getExchange(),
-                ticker.getPrecision(),
-                ticker.getLot(),
-                ticker.getGo(),
-                ticker.getExpiration(),
                 ticker.getCurrency(),
                 ticker.getProvider(),
                 ticker.getStatus(),
-                ticker.getLoadPriority(),
+                ticker.getVersion(),
                 ticker.getSpotTickerCode()
         );
     }

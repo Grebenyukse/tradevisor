@@ -14,7 +14,7 @@ create table if not exists tradevisor.signals
     take_profit real,
     created_at  timestamptz,
     updated_at  timestamptz,
-    status      varchar, --created, expired, executed, cancelled, published
+    status      varchar, --created, expired, executed, cancelled, published, manual
     strategy_props jsonb -- { name: fibo, from_price: .., to_price:.., from_date:.., to_date:.., price618:..,price50:..,price318:.. }
                          -- { name: gap, from_price: .., to_price:.., from_date:.., to_date:.. }
 );

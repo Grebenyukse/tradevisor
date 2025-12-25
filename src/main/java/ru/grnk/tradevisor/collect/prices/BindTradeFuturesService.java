@@ -12,14 +12,12 @@ import ru.tinkoff.piapi.contract.v1.Future;
 import ru.tinkoff.piapi.contract.v1.InstrumentShort;
 import ru.tinkoff.piapi.core.InvestApi;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static ru.grnk.tradevisor.collect.prices.Futures2SpotMap.*;
+import static ru.grnk.tradevisor.integration.finam.FinamPricesService.TRV_PROVIDER_FINAM;
 
 /**
  * 1. загружаются все активные фьючерсы с тинькоф API
@@ -88,11 +86,9 @@ public class BindTradeFuturesService {
                         tickersRepository.saveInstrument(Tickers.builder()
                                 .tickerCode(spotTickerCode)
                                 .ticker(spotTickerCode)
-                                .figi(spotTickerCode)
-                                .description("endless future for " + futureTicker)
+                                .description("null")
                                 .exchange("RTS")
                                 .provider(TRV_PROVIDER_TINKOFF)
-                                .loadPriority(100)
                                 .build());
                     }
                     // теперь можем обновить фьючерс, указав ссылку на спот.
@@ -118,40 +114,20 @@ public class BindTradeFuturesService {
                 Tickers.builder()
                         .tickerCode(spotTicker.getUid())
                         .ticker(spotTicker.getTicker())
-                        .figi(spotTicker.getFigi())
                         .description(spotTicker.getName())
-                        .marketType(null)
                         .exchange("RTS")
-                        .precision(null)
-                        .lot(spotTicker.getLot())
-                        .go(null)
-                        .expiration(null)
                         .currency("RUB")
                         .provider(TRV_PROVIDER_TINKOFF)
-                        .status(null)
-                        .loadPriority(100)
-                        .spotTickerCode(null)
                         .build()
         );
         tickersRepository.saveInstrument(
                 Tickers.builder()
-                        .tickerCode(future.getUid())
+                        .tickerCode(future.getTicker() + "@" + "RTSX")
                         .ticker(future.getTicker())
-                        .figi(future.getFigi())
                         .description(future.getName())
-                        .marketType(TRV_FUTURES_ASSET_TYPE)
-                        .exchange(future.getExchange())
-                        .precision(null)
-                        .lot(future.getLot())
-                        .go(future.getDshortMin().getNano())
-                        .expiration(
-                                LocalDateTime.ofInstant(Instant.ofEpochSecond(future.getExpirationDate().getSeconds()),
-                                        ZoneId.systemDefault())
-                        )
+                        .exchange("RTSX")
                         .currency(future.getCurrency())
-                        .provider(TRV_PROVIDER_TINKOFF) // планируем торговать через финам поэтому подменяем провайдера.
-                        .status(null)
-                        .loadPriority(0)
+                        .provider(TRV_PROVIDER_FINAM) // планируем торговать через финам поэтому подменяем провайдера.
                         .spotTickerCode(spotTicker.getUid())
                         .build()
         );
@@ -162,22 +138,10 @@ public class BindTradeFuturesService {
                 Tickers.builder()
                         .tickerCode(future.getUid())
                         .ticker(future.getTicker())
-                        .figi(future.getFigi())
                         .description(future.getName())
-                        .marketType(TRV_FUTURES_ASSET_TYPE)
                         .exchange(future.getExchange())
-                        .precision(null)
-                        .lot(future.getLot())
-                        .go(future.getDshortMin().getNano())
-                        .expiration(
-                                LocalDateTime.ofInstant(Instant.ofEpochSecond(future.getExpirationDate().getSeconds()),
-                                        ZoneId.systemDefault())
-                        )
                         .currency(future.getCurrency())
-                        .provider(TRV_PROVIDER_TINKOFF)
-                        .status(null)
-                        .loadPriority(0)
-                        .spotTickerCode(null)
+                        .provider(TRV_PROVIDER_FINAM)
                         .build()
         );
     }

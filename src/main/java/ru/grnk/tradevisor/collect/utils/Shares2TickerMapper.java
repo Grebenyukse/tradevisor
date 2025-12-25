@@ -4,10 +4,6 @@ import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.tinkoff.piapi.contract.v1.Future;
 import ru.tinkoff.piapi.contract.v1.Share;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-
 public class Shares2TickerMapper {
 
     public static Tickers from(Share share) {
@@ -16,13 +12,7 @@ public class Shares2TickerMapper {
                 .description(share.getName())
                 .ticker(share.getTicker())
                 .exchange(share.getExchange())
-                .expiration(null)
-                .go(null)
-                .lot(share.getLot())
                 .tickerCode(share.getUid())
-                .figi(share.getFigi())
-                .marketType("акции")
-                .precision(1)
                 .build();
 
     }
@@ -33,16 +23,7 @@ public class Shares2TickerMapper {
                 .description(future.getName())
                 .ticker(future.getTicker())
                 .exchange(future.getExchange())
-                .expiration(
-                        LocalDateTime.ofInstant(Instant.ofEpochSecond(future.getExpirationDate().getSeconds()),
-                        ZoneId.systemDefault())
-                )
-                .go(null)
-                .lot(future.getLot())
                 .tickerCode(future.getUid())
-                .figi(future.getFigi())
-                .marketType("фьючерсы")
-                .precision(1)
                 .build();
     }
 }

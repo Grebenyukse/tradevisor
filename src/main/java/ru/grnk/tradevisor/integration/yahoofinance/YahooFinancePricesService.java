@@ -34,7 +34,6 @@ public class YahooFinancePricesService implements PricesLoader {
 
     @Override
     public void initTickers() {
-        if (tickersRepository.getProviderTickersCount("yahoofinance") > 0) return;
         log.info("Start loading tickers for Yahoo Finance");
         var tickers = yahooFinanceService.fetchAllTickersFromJson();
         for (YahooTickerInfo symbol : tickers) {
@@ -74,7 +73,7 @@ public class YahooFinancePricesService implements PricesLoader {
 
     @Override
     public int loadOrder() {
-        return 3;
+        return 2;
     }
 
     private com.google.protobuf.Timestamp findStartTime(String tickerCode, int historyMaxDepthDays) {
@@ -88,12 +87,7 @@ public class YahooFinancePricesService implements PricesLoader {
                 .tickerCode(tickerInfo.symbol())
                 .currency("USD")
                 .exchange(tickerInfo.exchange())
-                .expiration(null)
-                .figi(tickerInfo.symbol())
                 .description(tickerInfo.name())
-                .precision(2)
-                .marketType(tickerInfo.type())
-                .lot(1)
                 .provider("yahoofinance")
                 .build();
     }

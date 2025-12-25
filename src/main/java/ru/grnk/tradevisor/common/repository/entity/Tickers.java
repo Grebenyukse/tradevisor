@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 @Builder
 @Setter
@@ -23,29 +22,14 @@ public class Tickers implements Serializable {
     @Column(name = "ticker", nullable = false)
     private String ticker;
 
-    @Column(name = "figi", nullable = false)
-    private String figi;
-
-    @Column(name = "description")
-    private String description;
-
-    @Column(name = "market_type")
-    private String marketType;
-
     @Column(name = "exchange")
     private String exchange;
 
-    @Column(name = "precision")
-    private Integer precision;
+    @Column(name = "spot_ticker_code")
+    private String spotTickerCode;
 
-    @Column(name = "lot")
-    private Integer lot;
-
-    @Column(name = "go")
-    private Integer go;
-
-    @Column(name = "expiration")
-    private LocalDateTime expiration;
+    @Column(name = "description")
+    private String description;
 
     @Column(name = "currency")
     private String currency;
@@ -56,11 +40,6 @@ public class Tickers implements Serializable {
     @Column(name = "status", length = 100)
     private String status;
 
-    @Column(name = "load_priority")
-    private Integer loadPriority;
-
-    @Column(name = "spot_ticker_code")
-    private String spotTickerCode;
-
-
+    @Column(name = "version")
+    private Integer version;
 }

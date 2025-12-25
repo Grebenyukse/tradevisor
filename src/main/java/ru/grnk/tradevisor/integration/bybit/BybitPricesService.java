@@ -54,7 +54,6 @@ public class BybitPricesService implements PricesLoader {
 
     @Override
     public void initTickers() {
-        if (tickersRepository.getProviderTickersCount("bybit") > 0) return;
         log.info("start loading tickers for bybit");
         var tickers = bybitClient.fetchAllTickers();
         tickers.stream()
@@ -78,11 +77,7 @@ public class BybitPricesService implements PricesLoader {
                 .tickerCode(bybitTicker.symbol() + "@" + "bybit")
                 .currency(bybitTicker.baseCoin())
                 .exchange("bybit")
-                .expiration(null)
-                .figi(bybitTicker.symbol() + "@" + "bybit")
                 .description(bybitTicker.status())
-                .precision(bybitTicker.lotSizeFilter().basePrecision().precision())
-                .lot(1)
                 .provider("bybit")
                 .build();
     }

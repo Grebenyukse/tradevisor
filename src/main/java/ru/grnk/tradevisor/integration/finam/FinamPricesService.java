@@ -23,7 +23,9 @@ import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 
 import java.time.ZonedDateTime;
+import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toMap;
 import static ru.grnk.tradevisor.collect.prices.Futures2SpotMap.FINAM_PRELOAD_EXCHANGES_MIC;
 import static ru.grnk.tradevisor.common.util.TimeUtils.convertToTimestamp;
 
@@ -31,25 +33,34 @@ import static ru.grnk.tradevisor.common.util.TimeUtils.convertToTimestamp;
 @RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty(value = "app.collect.prices.finam")
-public class FinamGrpcClientService implements PricesLoader {
+public class FinamPricesService implements PricesLoader {
 
     public static final int MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK = 720;
+    public static final String TRV_PROVIDER_FINAM = "finam";
     private final TradevisorProperties properties;
     private final AssetsServiceGrpc.AssetsServiceBlockingStub assetsServiceBlockingStub;
     private final AuthServiceGrpc.AuthServiceBlockingStub authServiceBlockingStub;
     private final MarketDataServiceGrpc.MarketDataServiceBlockingStub marketDataServiceBlockingStub;
+
     private  final FinamMetainfoRepository finamMetainfoRepository;
     private final MarketDataRepository marketDataRepository;
     private final TickersRepository tickersRepository;
 
     public void initTickers() {
-        if (tickersRepository.getProviderTickersCount("finam") > 0) return;
         var assetsRs = assetsServiceBlockingStub.withCallCredentials(getBearer())
                 .assets(AssetsRequest.newBuilder().build());
-        assetsRs.getAssetsList()
+        var res = assetsRs.getAssetsList()
                 .stream()
                 .filter(a -> FINAM_PRELOAD_EXCHANGES_MIC.contains(a.getMic()))
-                .forEach(finamMetainfoRepository::saveFinamAsset);
+                .collect(toMap(x -> x,
+                        finamMetainfoRepository::saveFinamAssetIgnoringTinkoffDuplicates,
+                        (x1, x2) -> x1))
+                .entrySet()
+                .stream()
+                .filter(en -> en.getValue() == 0)
+                .map(x -> "отфильтрован тикер: " + x.getKey())
+                .collect(Collectors.toSet());
+        log.info("результат загрузки: {}", res);
     }
 
     public void loadHistoryForSymbol(String tickerCode) {
@@ -99,11 +110,11 @@ public class FinamGrpcClientService implements PricesLoader {
 
     @Override
     public String getProvider() {
-        return "finam";
+        return TRV_PROVIDER_FINAM;
     }
 
     @Override
     public int loadOrder() {
-        return 2;
+        return 4;
     }
 }

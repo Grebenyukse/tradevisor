@@ -38,13 +38,8 @@ public class TinkoffPricesService implements PricesLoader {
     @SneakyThrows
     @Override
     public void initTickers() {
-        if (tickersRepository.getProviderTickersCount(this.getProvider()) > 0) return;
-        investApi.getInstrumentsService().getAllShares().get(10, TimeUnit.SECONDS).stream()
-                .map(TinkoffPricesService::from)
-                .forEach(tickersRepository::saveInstrument);
-        investApi.getInstrumentsService().getAllCurrencies().get(10, TimeUnit.SECONDS).stream()
-                .map(TinkoffPricesService::from)
-                .forEach(tickersRepository::saveInstrument);
+//        торговать на тиньке очень дорого из-за высоких коммиссий. используем удобное API для биндинга spot-futures.
+//        загружаем только те споты, по которым есть фьючи. фьючи будут загружаться под провайдером - финам.
         bindTradeFuturesService.initTickers();
     }
 
@@ -97,7 +92,7 @@ public class TinkoffPricesService implements PricesLoader {
 
     @Override
     public int loadOrder() {
-        return 100;
+        return 3;
     }
 
     public void loadHistoryForFuture(String endlessFutureCode, String nearestFutureCode, int historyMaxDepthDays) {
@@ -128,15 +123,9 @@ public class TinkoffPricesService implements PricesLoader {
         return Tickers.builder()
                 .tickerCode(share.getUid())
                 .ticker(share.getTicker())
-                .figi(share.getFigi())
                 .description(share.getName())
                 .exchange(share.getExchange())
-                .marketType(TRV_ASSET_TYPE_SHARES)
                 .currency(share.getCurrency())
-                .expiration(null)
-                .go(null)
-                .lot(share.getLot())
-                .precision(1)
                 .provider(TRV_PROVIDER_TINKOFF)
                 .build();
     }
@@ -145,15 +134,9 @@ public class TinkoffPricesService implements PricesLoader {
         return Tickers.builder()
                 .tickerCode(currency.getUid())
                 .ticker(currency.getTicker())
-                .figi(currency.getFigi())
                 .description(currency.getName())
                 .exchange(currency.getExchange())
-                .marketType("currencies")
                 .currency(currency.getCurrency())
-                .expiration(null)
-                .go(null)
-                .lot(currency.getLot())
-                .precision(1)
                 .provider(TRV_PROVIDER_TINKOFF)
                 .build();
     }

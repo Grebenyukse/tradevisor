@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class Futures2SpotMap {
-    public static final Set<String> FINAM_PRELOAD_EXCHANGES_MIC = Set.of("XNYS", "XHKG");
+    public static final Set<String> FINAM_PRELOAD_EXCHANGES_MIC = Set.of("MISX", "XNYS", "XHKG");
 
     public static final String SKIP_TICKER_MAPPING_VALUE = "NOT_FOR_TRADE";
 

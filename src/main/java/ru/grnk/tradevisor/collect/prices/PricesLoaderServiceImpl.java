@@ -25,15 +25,18 @@ public class PricesLoaderServiceImpl {
     private final List<PricesLoader> loaders;
     private final PriceLoadingErrorHandler errorHandler;
     private final TelegramNotificationService telegramService;
+    private final BindTradeFuturesService bindTradeFuturesService;
 
     @SneakyThrows
     @Scheduled(fixedRateString = "${app.collect.prices.delay}")
     public void doWork() {
-        loaders
-                .stream()
-                .sorted(Comparator.comparingInt(PricesLoader::loadOrder))
-                .forEach(PricesLoader::initTickers);
-
+        if (tickersRepository.getAllTickersCount() == 0) {
+            loaders
+                    .stream()
+                    .sorted(Comparator.comparingInt(PricesLoader::loadOrder))
+                    .forEach(PricesLoader::initTickers);
+            bindTradeFuturesService.initTickers();
+        }
         log.info("start collecting prices");
         LocalDateTime startTime = LocalDateTime.now();
         String messageId = telegramService.sendInitialMessage("🔄 Загрузка тикеров...");
