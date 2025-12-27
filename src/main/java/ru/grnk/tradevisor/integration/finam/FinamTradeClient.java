@@ -112,7 +112,7 @@ public class FinamTradeClient implements TradeClient {
             log.info("position for tickercode:{} not found", tickerCode);
             return null;
         }
-        var openLots = (int) (Float.parseFloat(positionForSymbol.getQuantity().getValue()) / ticker.getLot());
+        var openLots = (int) (Float.parseFloat(positionForSymbol.getQuantity().getValue()));
         int direction = (int) Math.signum(openLots);
 
         OrdersResponse orders = ordersServiceBlockingStub
@@ -232,7 +232,7 @@ public class FinamTradeClient implements TradeClient {
                     signal.getId(), signal.getTickerCode(), signal.getDirection());
             return false;
         }
-        double go = NANOS_DIGITS * tradeTicker.getGo();
+        double go = NANOS_DIGITS * 0.1;
         Money balanceMoney = accountsServiceBlockingStub.withCallCredentials(getBearer())
                 .getAccount(GetAccountRequest.newBuilder()
                         .setAccountId(tradevisorProperties.integration().finam().accountId())
