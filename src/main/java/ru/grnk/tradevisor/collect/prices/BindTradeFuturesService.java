@@ -136,7 +136,7 @@ public class BindTradeFuturesService {
     private void saveFutureWithoutLink(Future future) {
         tickersRepository.saveInstrument(
                 Tickers.builder()
-                        .tickerCode(future.getUid())
+                        .tickerCode(future.getTicker() + "@" + "RTSX")
                         .ticker(future.getTicker())
                         .description(future.getName())
                         .exchange(future.getExchange())

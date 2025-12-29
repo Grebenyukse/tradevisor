@@ -76,7 +76,7 @@ public class PricesLoaderServiceImpl {
         log.info("historic candles loaded");
     }
 
-    private void processProvider(String provider, PricesLoader loader,
+       private void processProvider(String provider, PricesLoader loader,
                                  Integer totalTickersForProvider,
                                  Map<String, Integer> providerProcessedCount,
                                  String messageId, LocalDateTime startTime) {

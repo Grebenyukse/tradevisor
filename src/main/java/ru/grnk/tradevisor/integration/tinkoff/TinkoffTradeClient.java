@@ -380,7 +380,7 @@ public class TinkoffTradeClient implements TradeClient {
                 .build();
     }
 
-    private Float quotationToFloat(Quotation quotation) {
+    public static Float quotationToFloat(Quotation quotation) {
         return (float) (quotation.getUnits() + NANOS_DIGITS * quotation.getNano());
     }
 

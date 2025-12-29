@@ -111,6 +111,7 @@ app:
       port: 443
       account-id: ${FINAM_ACCOUNT_KEY}
       history-max-depth-days: 150
+      mt5-python-client-url: http://localhost:8001
     bybit:
       enabled: false
       key: ${BYBIT_KEY}

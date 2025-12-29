@@ -11,4 +11,6 @@ public interface PricesLoader {
     void initTickers();
 
     int loadOrder();
+
+    float getBidForTicker(String tickerCode);
 }

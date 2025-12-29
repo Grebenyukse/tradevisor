@@ -1,8 +1,6 @@
 package ru.grnk.tradevisor.integration.finam;
 
 import com.google.type.Decimal;
-import com.google.type.Money;
-import grpc.tradeapi.v1.Side;
 import grpc.tradeapi.v1.accounts.AccountsServiceGrpc;
 import grpc.tradeapi.v1.accounts.GetAccountRequest;
 import grpc.tradeapi.v1.auth.AuthRequest;
@@ -13,11 +11,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import ru.grnk.tradevisor.collect.prices.LastTickLoader;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
+import ru.grnk.tradevisor.integration.finam.mt5py.FinamMt5PythonClient;
 import ru.grnk.tradevisor.trade.TradeClient;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
@@ -25,10 +25,7 @@ import ru.grnk.tradevisor.trade.dto.TrvPosition;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static grpc.tradeapi.v1.orders.TimeInForce.TIME_IN_FORCE_GOOD_TILL_CANCEL;
 
 @Component
 @RequiredArgsConstructor
@@ -36,12 +33,13 @@ import static grpc.tradeapi.v1.orders.TimeInForce.TIME_IN_FORCE_GOOD_TILL_CANCEL
 @ConditionalOnProperty(value = "app.integration.finam.enabled")
 public class FinamTradeClient implements TradeClient {
 
-    public static final double NANOS_DIGITS = Math.pow(10, -9);
     private final TradevisorProperties tradevisorProperties;
     private final AccountsServiceGrpc.AccountsServiceBlockingStub accountsServiceBlockingStub;
     private final OrdersServiceGrpc.OrdersServiceBlockingStub ordersServiceBlockingStub;
     private final AuthServiceGrpc.AuthServiceBlockingStub authServiceBlockingStub;
     private final TickersRepository tickersRepository;
+    private final FinamMt5PythonClient finamMt5PythonClient;
+    private final LastTickLoader lastTickLoader;
 
     public BearerToken getBearer() {
         TrvFinamProperties finamProperties = tradevisorProperties.integration().finam();
@@ -56,30 +54,6 @@ public class FinamTradeClient implements TradeClient {
         return "finam";
     }
 
-    public Float getBalance() {
-        var bearer = getBearer();
-        var accountRs = accountsServiceBlockingStub
-                .withCallCredentials(bearer)
-                .getAccount(GetAccountRequest.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .build());
-        return Float.parseFloat(accountRs.getCashList().stream()
-                .filter(x -> x.getCurrencyCode().equals("RUB"))
-                .findFirst()
-                .orElseThrow()
-                .toString()
-        );
-    }
-
-    public String findTickerForSpot(String tickerCode) {
-        try {
-            Tickers spotTicker = tickersRepository.getTickerByTickerCode(tickerCode);
-            return spotTicker.getTicker();
-        } catch (Exception e) {
-            log.error("Error finding futures contract for spot ticker: {}", tickerCode, e);
-            return null;
-        }
-    }
 
     @Override
     public List<TrvOrder> getOrdersByTicker(String tickerCode) {
@@ -162,45 +136,6 @@ public class FinamTradeClient implements TradeClient {
                 .build();
     }
 
-    public String setOrder(TrvOrder order) {
-        var bearer = getBearer();
-        Order orderToPlace;
-        if (order.activation() == null) {
-            orderToPlace = Order.newBuilder()
-                    .setSymbol(order.tickerCode())
-                    .setAccountId(tradevisorProperties.integration().finam().accountId())
-                    .setSide(order.direction() > 0 ? Side.SIDE_BUY : Side.SIDE_SELL)
-                    .setType(OrderType.ORDER_TYPE_LIMIT)
-                    .setTimeInForce(TIME_IN_FORCE_GOOD_TILL_CANCEL)
-                    .setLimitPrice(Decimal.newBuilder()
-                            .setValue(String.valueOf(order.price()))
-                            .build())
-                    .build();
-        } else {
-            orderToPlace = Order.newBuilder()
-                    .setSymbol(order.tickerCode())
-                    .setAccountId(tradevisorProperties.integration().finam().accountId())
-                    .setSide(order.direction() > 0 ? Side.SIDE_BUY : Side.SIDE_SELL)
-                    .setType(OrderType.ORDER_TYPE_STOP_LIMIT)
-                    .setTimeInForce(TIME_IN_FORCE_GOOD_TILL_CANCEL)
-                    // если передан activation параметр значит это ордер на stop loss. для лонга SL < текущей цены, для шорта - наоборот
-                    .setStopCondition(order.direction() > 0 ? StopCondition.STOP_CONDITION_LAST_DOWN : StopCondition.STOP_CONDITION_LAST_UP)
-                    .setStopPrice(Decimal.newBuilder()
-                            .setValue(String.valueOf(order.price()))
-                            .build())
-                    .setLimitPrice(Decimal.newBuilder()
-                            .setValue(String.valueOf(order.price()))
-                            .build())
-                    .build();
-        }
-
-        var res = ordersServiceBlockingStub
-                .withCallCredentials(bearer)
-                .placeOrder(orderToPlace);
-        log.info("ордер выставлен : {}", res.toString());
-        return orderToPlace.getClientOrderId();
-    }
-
 
     @Override
     public void deleteOrders(String tickerCode) {
@@ -232,82 +167,16 @@ public class FinamTradeClient implements TradeClient {
                     signal.getId(), signal.getTickerCode(), signal.getDirection());
             return false;
         }
-        double go = NANOS_DIGITS * 0.1;
-        Money balanceMoney = accountsServiceBlockingStub.withCallCredentials(getBearer())
-                .getAccount(GetAccountRequest.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .build())
-                .getCashList()
-                .stream().findFirst()
-                .orElseThrow();
-        double balance = balanceMoney.getUnits() + NANOS_DIGITS * balanceMoney.getNanos();
-        double maxRiskInMoney = balance * tradevisorProperties.trade().limits() / 100;
-        double availableLots = (balance - maxRiskInMoney) / (signal.getPriceOpen() * go);
-        double stopLossInMoneyFor1Lot = Math.abs(signal.getStopLoss() - signal.getPriceOpen());
-        double countedRiskLots = maxRiskInMoney / stopLossInMoneyFor1Lot;
-        int tradeLots = (int) Math.floor(Math.min(availableLots, countedRiskLots));
-        if (tradeLots == 0) {
-            log.warn("недостаточно денег для открытия позиции. Signal: {}. ticker: {}", signal.getId(), signal.getTickerCode());
-            return false;
-        }
-        var bearer = getBearer();
-        var openPositionOrderResult = ordersServiceBlockingStub.withCallCredentials(bearer)
-                .placeOrder(Order.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .setSymbol(signal.getTickerCode())
-                        .setType(OrderType.ORDER_TYPE_LIMIT)
-                        .setLimitPrice(Decimal.newBuilder()
-                                .setValue(BigDecimal.valueOf(signal.getPriceOpen()).toString())
-                                .build())
-                        .setTimeInForce(TIME_IN_FORCE_GOOD_TILL_CANCEL)
-                        .setQuantity(Decimal.newBuilder()
-                                .setValue(String.valueOf(tradeLots))
-                                .build())
-                        .setSide(signal.getDirection() > 0 ? Side.SIDE_BUY : Side.SIDE_SELL)
-                        .build());
-        OrderState stopLossOrder = ordersServiceBlockingStub.withCallCredentials(bearer)
-                .placeOrder(Order.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .setSymbol(signal.getTickerCode())
-                        .setType(OrderType.ORDER_TYPE_STOP)
-                        .setLimitPrice(Decimal.newBuilder()
-                                .setValue(BigDecimal.valueOf(signal.getStopLoss()).toString())
-                                .build())
-                        .setStopPrice(Decimal.newBuilder()
-                                .setValue(BigDecimal.valueOf(signal.getStopLoss()).toString())
-                                .build())
-                        .setStopCondition(signal.getDirection() > 0
-                                ? StopCondition.STOP_CONDITION_LAST_DOWN
-                                : StopCondition.STOP_CONDITION_LAST_UP)
-                        .setTimeInForce(TIME_IN_FORCE_GOOD_TILL_CANCEL)
-                        .setQuantity(Decimal.newBuilder()
-                                .setValue(String.valueOf(tradeLots))
-                                .build())
-                        .setSide(signal.getDirection() > 0 ? Side.SIDE_SELL : Side.SIDE_BUY)
-                        .build());
-        OrderState takeProfitOrder = ordersServiceBlockingStub.withCallCredentials(bearer)
-                .placeOrder(Order.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .setSymbol(signal.getTickerCode())
-                        .setType(OrderType.ORDER_TYPE_LIMIT)
-                        .setLimitPrice(Decimal.newBuilder()
-                                .setValue(BigDecimal.valueOf(signal.getTakeProfit()).toString())
-                                .build())
-                        .setTimeInForce(TIME_IN_FORCE_GOOD_TILL_CANCEL)
-                        .setQuantity(Decimal.newBuilder()
-                                .setValue(String.valueOf(tradeLots))
-                                .build())
-                        .setSide(signal.getDirection() > 0 ? Side.SIDE_SELL : Side.SIDE_BUY)
-                        .build());
-        if (!openPositionOrderResult.hasAcceptAt() || !stopLossOrder.hasAcceptAt() || !takeProfitOrder.hasAcceptAt()) {
-            log.error("ордер не выставлен. необходима проверка вручную. SignalId: {}. TickerId: {}. Direction: {}",
-                    signal.getId(), signal.getTickerCode(), signal.getDirection());
-            throw new IllegalStateException();
-        } else {
-            log.info("позиция выставлена успешно.SignalId: {}. TickerId: {}. Direction: {}",
-                    signal.getId(), signal.getTickerCode(), signal.getDirection());
-            return true;
-        }
+        var kTradeTicker2SpotTicker =
+                lastTickLoader.getLastCloseForTicker(tradeTicker.getTickerCode(), tradeTicker.getProvider()) /
+                lastTickLoader.getLastCloseForTicker(signalTicker.getTickerCode(), signalTicker.getProvider());
+        return finamMt5PythonClient.openPosition(
+                tradeTicker.getTickerCode().split("@")[0],
+                signal.getPriceOpen() * kTradeTicker2SpotTicker,
+                signal.getStopLoss() * kTradeTicker2SpotTicker,
+                signal.getTakeProfit() * kTradeTicker2SpotTicker,
+                signal.getDirection().intValue()
+        );
     }
 
     public static BigDecimal toBigDecimal(Decimal decimal) {

@@ -4,9 +4,9 @@ import com.google.protobuf.Timestamp;
 import com.google.type.Decimal;
 import grpc.tradeapi.v1.marketdata.Bar;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.entity.MarketData;
 import ru.grnk.tradevisor.common.repository.jpa.MarketDataJpa;
 import ru.tinkoff.piapi.contract.v1.HistoricCandle;
@@ -28,12 +28,42 @@ import static ru.tinkoff.piapi.core.utils.MapperUtils.quotationToBigDecimal;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class MarketDataRepository {
 
     private final MarketDataJpa marketDataRepo;
 
     @PersistenceContext
     private EntityManager em;
+
+    public float getTickerByTickerRelation(String tickerCode, String baseTickerCode) {
+        var res = em.createQuery("""
+        SELECT md1.tickerCode, md2.tickerCode, md1.close, md2.close,
+               CASE WHEN md2.close != 0 THEN md1.close / md2.close ELSE NULL END,
+               md1.time
+        FROM MarketData md1, MarketData md2 
+        WHERE md1.tickerCode = :ticker_code 
+          AND md2.tickerCode = :ticker_code_base 
+          AND md1.time = md2.time
+        ORDER BY md1.time DESC
+        """, TickersRation.class)
+                .setParameter("ticker_code", tickerCode)
+                .setParameter("ticker_code_base", baseTickerCode)
+                .setMaxResults(1)
+                .getSingleResult();
+        log.info("relation of tickers. ticker: {}, baseTicker: {}, ticker_close_price: {}, base_ticker_close_price:{}, time: {}, ratio: {}",
+                res.ticker(), res.baseTicker(), res.tickerClose(), res.baseTickerClose(), res.time(), res.ratio());
+        return res.ratio();
+    }
+
+    private record TickersRation(
+            String ticker,
+            String baseTicker,
+            Float tickerClose,     // Changed from String to Float
+            Float baseTickerClose, // Same here
+            Float ratio,           // This should be Float or double depending on division precision
+            OffsetDateTime time   // Was String before; now correct
+    ) {}
 
     public List<MarketData> fetchMarketDataForLast(int bars, String tickerCode) {
         TypedQuery<MarketData> query = em.createQuery(

@@ -2,6 +2,7 @@ package ru.grnk.tradevisor.integration.yahoofinance;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.prices.PricesLoader;
@@ -74,6 +75,11 @@ public class YahooFinancePricesService implements PricesLoader {
     @Override
     public int loadOrder() {
         return 2;
+    }
+
+    @Override
+    public float getBidForTicker(String tickerCode) {
+        throw new NotImplementedException();
     }
 
     private com.google.protobuf.Timestamp findStartTime(String tickerCode, int historyMaxDepthDays) {

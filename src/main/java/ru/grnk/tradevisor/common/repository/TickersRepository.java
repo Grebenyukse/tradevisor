@@ -45,14 +45,12 @@ public class TickersRepository {
     }
 
     public Optional<Tickers> findTradeTickerByTickerCodeIfExists(String tickerCode) {
-        LocalDateTime twoWeeksAgo = LocalDateTime.now().plusWeeks(2);
         return em.createQuery("""
                         select t from Tickers t
                         where t.spotTickerCode = :spotTickerCode
-                        order by t.tickerCode
+                        order by t.ticker
                         """, Tickers.class)
                 .setParameter("spotTickerCode", tickerCode)
-                .setParameter("twoWeeksAgo", twoWeeksAgo)
                 .setMaxResults(1)  // Вместо LIMIT в JPQL
                 .getResultList()
                 .stream()
@@ -109,7 +107,6 @@ public class TickersRepository {
                 OR s.status IN (:activeStatuses)
               )
           )
-        ORDER BY t.load_priority DESC
         """, Tickers.class);
         query.setParameter("provider", provider);
         query.setParameter("activeStatuses", List.of(

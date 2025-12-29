@@ -1,15 +1,12 @@
 package ru.grnk.tradevisor.integration.finam;
 
 import com.google.protobuf.Timestamp;
+import com.google.type.Decimal;
 import com.google.type.Interval;
-import grpc.tradeapi.v1.assets.AssetsRequest;
 import grpc.tradeapi.v1.assets.AssetsServiceGrpc;
 import grpc.tradeapi.v1.auth.AuthRequest;
 import grpc.tradeapi.v1.auth.AuthServiceGrpc;
-import grpc.tradeapi.v1.marketdata.BarsRequest;
-import grpc.tradeapi.v1.marketdata.BarsResponse;
-import grpc.tradeapi.v1.marketdata.MarketDataServiceGrpc;
-import grpc.tradeapi.v1.marketdata.TimeFrame;
+import grpc.tradeapi.v1.marketdata.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,10 +20,8 @@ import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 
 import java.time.ZonedDateTime;
-import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toMap;
-import static ru.grnk.tradevisor.collect.prices.Futures2SpotMap.FINAM_PRELOAD_EXCHANGES_MIC;
+import static java.util.Optional.ofNullable;
 import static ru.grnk.tradevisor.common.util.TimeUtils.convertToTimestamp;
 
 @Service
@@ -47,20 +42,7 @@ public class FinamPricesService implements PricesLoader {
     private final TickersRepository tickersRepository;
 
     public void initTickers() {
-        var assetsRs = assetsServiceBlockingStub.withCallCredentials(getBearer())
-                .assets(AssetsRequest.newBuilder().build());
-        var res = assetsRs.getAssetsList()
-                .stream()
-                .filter(a -> FINAM_PRELOAD_EXCHANGES_MIC.contains(a.getMic()))
-                .collect(toMap(x -> x,
-                        finamMetainfoRepository::saveFinamAssetIgnoringTinkoffDuplicates,
-                        (x1, x2) -> x1))
-                .entrySet()
-                .stream()
-                .filter(en -> en.getValue() == 0)
-                .map(x -> "отфильтрован тикер: " + x.getKey())
-                .collect(Collectors.toSet());
-        log.info("результат загрузки: {}", res);
+        log.info("skip");
     }
 
     public void loadHistoryForSymbol(String tickerCode) {
@@ -72,6 +54,9 @@ public class FinamPricesService implements PricesLoader {
         var intervalInHours = (endTime.getSeconds() - startTime.getSeconds()) / 60;
         if (intervalInHours < 5) {
             return;
+        }
+        if (!symbol.contains("@")) {
+            log.warn("no mic in symbol detected: {}", symbol);
         }
         BarsResponse marketDataRs;
         marketDataRs = marketDataServiceBlockingStub
@@ -116,5 +101,20 @@ public class FinamPricesService implements PricesLoader {
     @Override
     public int loadOrder() {
         return 4;
+    }
+
+    @Override
+    public float getBidForTicker(String tickerCode) {
+        var res = marketDataServiceBlockingStub
+                .withCallCredentials(getBearer())
+                .lastQuote(QuoteRequest.newBuilder()
+                        .setSymbol(tickerCode)
+                .build());
+        return ofNullable(res)
+                .map(QuoteResponse::getQuote)
+                .map(Quote::getBid)
+                .map(Decimal::getValue)
+                .map(Float::parseFloat)
+                .orElseThrow();
     }
 }

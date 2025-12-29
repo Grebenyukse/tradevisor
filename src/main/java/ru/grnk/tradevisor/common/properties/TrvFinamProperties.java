@@ -7,6 +7,7 @@ public record TrvFinamProperties(
         String host,
         Integer port,
         String accountId,
-        Integer historyMaxDepthDays
+        Integer historyMaxDepthDays,
+        String mt5PythonClientUrl
         ) {
 }

@@ -59,7 +59,7 @@ app:
       news: false            # получить новости последних дней, связанные с этим инструментом, если есть
     prices:
       delay: PT1M
-      finam: false
+      finam: true
       tinkoff: true
       bybit: true
       yahoofinance: true
@@ -126,13 +126,14 @@ app:
       host: "invest-public-api.tinkoff.ru:443"
       history-max-depth-days: 10
     finam:
-      enabled: false
+      enabled: true
       secret: ${FINAM_API_KEY}
       url: https://api.finam.ru/v1
       host: api.finam.ru
       port: 443
       account-id: ${FINAM_ACCOUNT_KEY}
       history-max-depth-days: 10
+      mt5-python-client-url: http://localhost:8001
     bybit:
       enabled: true
       key: ${BYBIT_KEY}

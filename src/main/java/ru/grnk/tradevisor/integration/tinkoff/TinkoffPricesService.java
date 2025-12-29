@@ -12,11 +12,10 @@ import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.tinkoff.piapi.contract.v1.*;
-import ru.tinkoff.piapi.contract.v1.Currency;
 import ru.tinkoff.piapi.core.InvestApi;
 
 import java.time.Instant;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 import static ru.grnk.tradevisor.collect.prices.BindTradeFuturesService.TRV_PROVIDER_TINKOFF;
 import static ru.grnk.tradevisor.integration.tinkoff.FutureUtils.isNearestFutureCode;
@@ -93,6 +92,16 @@ public class TinkoffPricesService implements PricesLoader {
     @Override
     public int loadOrder() {
         return 3;
+    }
+
+    @Override
+    public float getBidForTicker(String tickerCode) {
+        return investApi.getMarketDataService().getLastPricesSync(List.of(tickerCode))
+                .stream()
+                .findFirst()
+                .map(LastPrice::getPrice)
+                .map(TinkoffTradeClient::quotationToFloat)
+                .orElseThrow();
     }
 
     public void loadHistoryForFuture(String endlessFutureCode, String nearestFutureCode, int historyMaxDepthDays) {

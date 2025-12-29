@@ -49,7 +49,8 @@ public class MessagePublisher {
             threadId = tradevisorProperties.integration().telegram().supergroup().cryptoThreadId();
         } else if (lowerExchange.contains("moex") ||
                 lowerExchange.contains("spb_ru") ||
-                lowerExchange.contains("misx")
+                lowerExchange.contains("misx") ||
+                lowerExchange.contains("rts")
         ) {
             threadId = tradevisorProperties.integration().telegram().supergroup().rusThreadId();
         } else {

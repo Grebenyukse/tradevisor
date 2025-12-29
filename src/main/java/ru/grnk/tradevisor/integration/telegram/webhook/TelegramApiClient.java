@@ -186,6 +186,10 @@ public class TelegramApiClient {
             ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
             return response.getStatusCode().is2xxSuccessful();
         } catch (Exception e) {
+            if (e.getMessage().contains("message is not modified")) {
+                log.warn("skip error.message not modified. ", e);
+                return true;
+            }
             log.error("Error editing message", e);
             return false;
         }

@@ -3,6 +3,7 @@ package ru.grnk.tradevisor.integration.bybit;
 import com.google.protobuf.Timestamp;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.prices.PricesLoader;
@@ -91,6 +92,11 @@ public class BybitPricesService implements PricesLoader {
                 candlestick.lowPrice(),
                 candlestick.closePrice()
         );
+    }
+
+    @Override
+    public float getBidForTicker(String tickerCode) {
+        throw new NotImplementedException();
     }
 
 }
