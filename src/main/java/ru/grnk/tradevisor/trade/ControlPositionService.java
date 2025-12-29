@@ -70,7 +70,7 @@ public class ControlPositionService {
                         switch (TrvSignalStatus.valueOf(s.getStatus())) {
                             case CREATED:
                             case PUBLISHED:
-                                log.info("решение по сигналу {} не принято", s.getId());
+                                log.debug("решение по сигналу {} не принято", s.getId());
                                 return;
                             case CONFIRMED:
                                 this.openPosition(s);
