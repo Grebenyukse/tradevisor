@@ -17,7 +17,7 @@ import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
-import ru.grnk.tradevisor.integration.finam.mt5py.FinamMt5PythonClient;
+import ru.grnk.tradevisor.integration.finam.tradeclient.OpenPositionClient;
 import ru.grnk.tradevisor.trade.TradeClient;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
@@ -38,8 +38,8 @@ public class FinamTradeClient implements TradeClient {
     private final OrdersServiceGrpc.OrdersServiceBlockingStub ordersServiceBlockingStub;
     private final AuthServiceGrpc.AuthServiceBlockingStub authServiceBlockingStub;
     private final TickersRepository tickersRepository;
-    private final FinamMt5PythonClient finamMt5PythonClient;
     private final LastTickLoader lastTickLoader;
+    private final OpenPositionClient openPositionClient;
 
     public BearerToken getBearer() {
         TrvFinamProperties finamProperties = tradevisorProperties.integration().finam();
@@ -170,12 +170,13 @@ public class FinamTradeClient implements TradeClient {
         var kTradeTicker2SpotTicker =
                 lastTickLoader.getLastCloseForTicker(tradeTicker.getTickerCode(), tradeTicker.getProvider()) /
                 lastTickLoader.getLastCloseForTicker(signalTicker.getTickerCode(), signalTicker.getProvider());
-        return finamMt5PythonClient.openPosition(
+        return openPositionClient.openPosition(
                 tradeTicker.getTickerCode().split("@")[0],
                 signal.getPriceOpen() * kTradeTicker2SpotTicker,
                 signal.getStopLoss() * kTradeTicker2SpotTicker,
                 signal.getTakeProfit() * kTradeTicker2SpotTicker,
-                signal.getDirection().intValue()
+                signal.getDirection().intValue(),
+                signal.getId()
         );
     }
 

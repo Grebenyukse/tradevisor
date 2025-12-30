@@ -1,7 +1,8 @@
-package ru.grnk.tradevisor.integration.finam.mt5py;
+package ru.grnk.tradevisor.integration.finam.tradeclient.mt5py;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -9,6 +10,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
+import ru.grnk.tradevisor.integration.finam.tradeclient.OpenPositionClient;
 import ru.ttech.piapi.core.helpers.NumberMapper;
 
 import java.math.BigDecimal;
@@ -16,12 +18,14 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class FinamMt5PythonClient {
+@ConditionalOnProperty(name = "app.integration.finam.open-position-client", havingValue = "mt5py")
+public class FinamMt5PythonClient implements OpenPositionClient {
 
     private final RestTemplate restTemplate;
     private final TradevisorProperties tradevisorProperties;
 
-    public boolean openPosition(String symbol, float priceOpen, float stopLoss, float takeProfit, int direction) {
+    @Override
+    public boolean openPosition(String symbol, float priceOpen, float stopLoss, float takeProfit, int direction, int signalId) {
         var baseUrl = tradevisorProperties.integration().finam().mt5PythonClientUrl();
         String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .path("/trade/open-position")

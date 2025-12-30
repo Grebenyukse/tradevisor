@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.integration.finam.mt5py;
+package ru.grnk.tradevisor.integration.finam.tradeclient.mt5py;
 
 public record OpenPositionRs(
         Integer buy_limit_order_id,

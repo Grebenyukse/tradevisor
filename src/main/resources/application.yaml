@@ -68,7 +68,7 @@ app:
     fibo: true
     bars_required_to_calculate_fibo: 150
     gap: false
-    min_touches_count: 2
+    min_touches_count: 1
     batch-size: 1000
   trade:
     delay: PT1M
@@ -134,6 +134,7 @@ app:
       account-id: ${FINAM_ACCOUNT_KEY}
       history-max-depth-days: 10
       mt5-python-client-url: http://localhost:8001
+      open-position-client: grpc # mt5py для открытия через metatrader5
     bybit:
       enabled: true
       key: ${BYBIT_KEY}

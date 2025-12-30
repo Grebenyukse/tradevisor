@@ -2,7 +2,6 @@ package ru.grnk.tradevisor.integration.tinkoff;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
@@ -28,6 +27,8 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static ru.grnk.tradevisor.collect.prices.BindTradeFuturesService.TRV_PROVIDER_TINKOFF;
+import static ru.grnk.tradevisor.common.util.RoundPriceUtils.moneyToBigDecimal;
+import static ru.grnk.tradevisor.common.util.RoundPriceUtils.roundPrice;
 import static ru.tinkoff.piapi.core.models.Quantity.NANOS_MULTIPLIER;
 
 
@@ -220,14 +221,7 @@ public class TinkoffTradeClient implements TradeClient {
                 .build();
     }
 
-    @NotNull
-    private BigDecimal roundPrice(Float price, BigDecimal minPriceIncrement, int direction) {
-        return direction > 0
-                ? roundDownPrice(BigDecimal.valueOf((double) price), minPriceIncrement)
-                : roundUpPrice(BigDecimal.valueOf((double) price), minPriceIncrement);
-    }
-
-    private boolean openFuturePosition(TradeSignal signal) {
+        private boolean openFuturePosition(TradeSignal signal) {
         Future future = investApi.getInstrumentsService().getFutureByUidSync(signal.tickerCode());
         int tradeLots = countTradeLots(signal, future);
         if (tradeLots == 0) {
@@ -384,9 +378,7 @@ public class TinkoffTradeClient implements TradeClient {
         return (float) (quotation.getUnits() + NANOS_DIGITS * quotation.getNano());
     }
 
-    private BigDecimal moneyToBigDecimal(MoneyValue money) {
-        return mapUnitsAndNanos(money.getUnits(), money.getNano());
-    }
+
 
     private BigDecimal getMinPriceIncrement(String instrumentId) {
         return NumberMapper.quotationToBigDecimal(investApi.getInstrumentsService()
@@ -400,15 +392,7 @@ public class TinkoffTradeClient implements TradeClient {
         return BigDecimal.valueOf(units).add(BigDecimal.valueOf(nanos, 9));
     }
 
-    private BigDecimal roundUpPrice(BigDecimal price, BigDecimal minPriceIncrement) {
-        return price.divide(minPriceIncrement, 0, RoundingMode.UP)
-                .multiply(minPriceIncrement);
-    }
 
-    private BigDecimal roundDownPrice(BigDecimal price, BigDecimal minPriceIncrement) {
-        return price.divide(minPriceIncrement, 0, RoundingMode.DOWN)
-                .multiply(minPriceIncrement);
-    }
 
     private boolean isOrderAccepted(OrderExecutionReportStatus orderExecutionStatus) {
         return List.of(OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL,
