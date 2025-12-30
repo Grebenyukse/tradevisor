@@ -227,7 +227,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                         .setClientOrderId(getClientOrderId(signalId, CLIENT_ORDER_TYPE_PART_2_ORDER_TYPE_OP))
                         .setLimitPrice(Decimal.newBuilder().setValue(priceOpen.toString()).build())
                         .setType(OrderType.ORDER_TYPE_LIMIT)
-                        .setTimeInForce(TimeInForce.TIME_IN_FORCE_GOOD_TILL_CANCEL)
+                        .setTimeInForce(TimeInForce.TIME_IN_FORCE_DAY)
                         .setQuantity(Decimal.newBuilder().setValue(String.valueOf(lot)).build())
                         .setSide(direction > 0 ? Side.SIDE_BUY : Side.SIDE_SELL)
                         .build());
