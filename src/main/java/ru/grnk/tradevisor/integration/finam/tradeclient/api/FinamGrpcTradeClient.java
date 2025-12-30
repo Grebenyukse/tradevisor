@@ -44,6 +44,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
     public static final String CLIENT_ORDER_TYPE_PART_2_ORDER_TYPE_TP = "TP";
     public static final BigDecimal AVERAGE_COMMISSION = BigDecimal.valueOf(0.002f);
     public static final BigDecimal GO_LEVEL = BigDecimal.valueOf(0.15f);
+    public static final String CLIENT_ORDER_ID_SEPARATOR = "zz";
     private final TradevisorProperties tradevisorProperties;
 
     private final AccountsServiceGrpc.AccountsServiceBlockingStub accountsServiceBlockingStub;
@@ -123,7 +124,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
         var go = direction == 1 ? assetParams.getLongCollateral() : assetParams.getShortCollateral();
         BigDecimal ticksCountRisk = normalizedPriceOpen.subtract(normalizedStopLoss).abs().divide(minStep, RoundingMode.UNNECESSARY);
         BigDecimal tickPrice = BigDecimal.ONE; // получить через RTS сервис
-        BigDecimal riskMoney = availableMoney.min(balance.multiply(BigDecimal.valueOf(tradevisorProperties.trade().limits() / 100)));
+        BigDecimal riskMoney = availableMoney.min(balance.multiply(BigDecimal.valueOf((double)tradevisorProperties.trade().limits() / 100)));
         var tradingLot =
                 riskMoney.divide(tickPrice.multiply(ticksCountRisk), RoundingMode.DOWN).min(
                         availableMoney.divide(moneyToBigDecimal(go), RoundingMode.DOWN)
@@ -132,7 +133,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
             log.warn("not enough money to open position. signalId: {} , symbol:{}", signalId, symbol);
             return false;
         }
-        placeOrders(symbol, normalizedPriceOpen, normalizedStopLoss, normalizedTakeProfit, direction, tradingLot, signalId);
+        placeOrders(symbol, normalizedPriceOpen, normalizedStopLoss, normalizedTakeProfit, direction, tradingLot.intValue(), signalId);
         return true;
     }
 
@@ -207,7 +208,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
     }
 
     private static String getOrderTypeByClientOrderId(String clientOrderId) {
-        var parts = clientOrderId.split(";");
+        var parts = clientOrderId.split(CLIENT_ORDER_ID_SEPARATOR);
         if (parts.length != 3) throw new IllegalStateException("неверный client orderid: " + clientOrderId);
         return parts[1];
     }
@@ -217,7 +218,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                              BigDecimal stopLoss,
                              BigDecimal takeProfit,
                              int direction,
-                             BigDecimal lot,
+                             int lot,
                              int signalId) {
         var openPositionOrderRes = ordersServiceBlockingStub.withCallCredentials(getBearer())
                 .placeOrder(Order.newBuilder()
@@ -227,7 +228,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                         .setLimitPrice(Decimal.newBuilder().setValue(priceOpen.toString()).build())
                         .setType(OrderType.ORDER_TYPE_LIMIT)
                         .setTimeInForce(TimeInForce.TIME_IN_FORCE_GOOD_TILL_CANCEL)
-                        .setQuantity(Decimal.newBuilder().setValue(lot.toString()).build())
+                        .setQuantity(Decimal.newBuilder().setValue(String.valueOf(lot)).build())
                         .setSide(direction > 0 ? Side.SIDE_BUY : Side.SIDE_SELL)
                         .build());
         if (!openPositionOrderRes.isInitialized()) {
@@ -243,7 +244,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                         .setStopCondition(direction > 0 ? StopCondition.STOP_CONDITION_LAST_DOWN : StopCondition.STOP_CONDITION_LAST_UP)
                         .setType(OrderType.ORDER_TYPE_STOP_LIMIT)
                         .setTimeInForce(TimeInForce.TIME_IN_FORCE_GOOD_TILL_CANCEL)
-                        .setQuantity(Decimal.newBuilder().setValue(lot.toString()).build())
+                        .setQuantity(Decimal.newBuilder().setValue(String.valueOf(lot)).build())
                         .setSide(direction > 0 ? Side.SIDE_SELL : Side.SIDE_BUY)
                         .build());
         if (!stopLossOrderRes.isInitialized()) {
@@ -259,7 +260,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                         .setStopCondition(direction > 0 ? StopCondition.STOP_CONDITION_LAST_UP : StopCondition.STOP_CONDITION_LAST_DOWN)
                         .setType(OrderType.ORDER_TYPE_STOP_LIMIT)
                         .setTimeInForce(TimeInForce.TIME_IN_FORCE_GOOD_TILL_CANCEL)
-                        .setQuantity(Decimal.newBuilder().setValue(lot.toString()).build())
+                        .setQuantity(Decimal.newBuilder().setValue(String.valueOf(lot)).build())
                         .setSide(direction > 0 ? Side.SIDE_SELL : Side.SIDE_BUY)
                         .build());
         if (!takeProfitRes.isInitialized()) {
@@ -272,7 +273,8 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
      * clientOrderId = signalId;TP|OP|SL;timestamp
      */
     public String getClientOrderId(int signalId, String type) {
-        return signalId + ";" + type + ";" + System.currentTimeMillis();
+        StringBuilder sb = new StringBuilder(signalId + CLIENT_ORDER_ID_SEPARATOR + type + CLIENT_ORDER_ID_SEPARATOR + System.currentTimeMillis());
+        return sb.length() > 20 ? sb.substring(0, 20) : sb.toString();
     }
 
 }

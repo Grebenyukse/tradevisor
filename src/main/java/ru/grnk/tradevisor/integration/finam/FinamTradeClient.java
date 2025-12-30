@@ -171,7 +171,7 @@ public class FinamTradeClient implements TradeClient {
                 lastTickLoader.getLastCloseForTicker(tradeTicker.getTickerCode(), tradeTicker.getProvider()) /
                 lastTickLoader.getLastCloseForTicker(signalTicker.getTickerCode(), signalTicker.getProvider());
         return openPositionClient.openPosition(
-                tradeTicker.getTickerCode().split("@")[0],
+                tradeTicker.getTickerCode(),
                 signal.getPriceOpen() * kTradeTicker2SpotTicker,
                 signal.getStopLoss() * kTradeTicker2SpotTicker,
                 signal.getTakeProfit() * kTradeTicker2SpotTicker,

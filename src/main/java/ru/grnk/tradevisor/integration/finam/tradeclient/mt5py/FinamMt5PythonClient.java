@@ -25,13 +25,13 @@ public class FinamMt5PythonClient implements OpenPositionClient {
     private final TradevisorProperties tradevisorProperties;
 
     @Override
-    public boolean openPosition(String symbol, float priceOpen, float stopLoss, float takeProfit, int direction, int signalId) {
+    public boolean openPosition(String tickerCode, float priceOpen, float stopLoss, float takeProfit, int direction, int signalId) {
         var baseUrl = tradevisorProperties.integration().finam().mt5PythonClientUrl();
         String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .path("/trade/open-position")
                 .toUriString();
         var rq = OpenPositionRq.builder()
-                .symbol(symbol)
+                .symbol(tickerCode.split("@")[0])
                 .price_open(bigDecimalToPrice(priceOpen))
                 .stop_loss(bigDecimalToPrice(stopLoss))
                 .take_profit(bigDecimalToPrice(takeProfit))
@@ -42,7 +42,7 @@ public class FinamMt5PythonClient implements OpenPositionClient {
             var res = restTemplate.postForObject(url, rq, OpenPositionRs.class);
 
             if (res == null) {
-                log.error("Received null response from MT5 Python client for symbol: {}", symbol);
+                log.error("Received null response from MT5 Python client for tickerCode: {}", tickerCode);
                 return false;
             }
 
@@ -50,7 +50,7 @@ public class FinamMt5PythonClient implements OpenPositionClient {
 
             // Проверяем, что lot открытой позиции не равен 0
             if (res.lot() == 0) {
-                log.error("Position opened with zero lot for symbol: {}", symbol);
+                log.error("Position opened with zero lot for tickerCode: {}", tickerCode);
                 return false;
             }
 
@@ -58,24 +58,24 @@ public class FinamMt5PythonClient implements OpenPositionClient {
 
         } catch (HttpClientErrorException e) {
             // Обработка 4XX ошибок
-            log.error("Client error ({} {}) when opening position for symbol {}: {}",
-                    e.getStatusCode().value(), e.getStatusText(), symbol, e.getResponseBodyAsString());
+            log.error("Client error ({} {}) when opening position for tickerCode {}: {}",
+                    e.getStatusCode().value(), e.getStatusText(), tickerCode, e.getResponseBodyAsString());
             return false;
 
         } catch (HttpServerErrorException e) {
             // Обработка 5XX ошибок
-            log.error("Server error ({} {}) when opening position for symbol {}: {}",
-                    e.getStatusCode().value(), e.getStatusText(), symbol, e.getResponseBodyAsString());
+            log.error("Server error ({} {}) when opening position for tickerCode {}: {}",
+                    e.getStatusCode().value(), e.getStatusText(), tickerCode, e.getResponseBodyAsString());
             return false;
 
         } catch (ResourceAccessException e) {
             // Обработка сетевых ошибок
-            log.error("Network error when opening position for symbol {}: {}", symbol, e.getMessage());
+            log.error("Network error when opening position for tickerCode {}: {}", tickerCode, e.getMessage());
             return false;
 
         } catch (Exception e) {
             // Обработка других непредвиденных ошибок
-            log.error("Unexpected error when opening position for symbol {}: {}", symbol, e.getMessage(), e);
+            log.error("Unexpected error when opening position for tickerCode {}: {}", tickerCode, e.getMessage(), e);
             return false;
         }
     }
