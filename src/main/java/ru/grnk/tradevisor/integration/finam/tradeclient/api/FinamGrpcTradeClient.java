@@ -19,6 +19,8 @@ import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
 import ru.grnk.tradevisor.common.util.RoundPriceUtils;
 import ru.grnk.tradevisor.integration.finam.BearerToken;
 import ru.grnk.tradevisor.integration.finam.tradeclient.OpenPositionClient;
+import ru.grnk.tradevisor.integration.rts.RtsService;
+import ru.grnk.tradevisor.integration.rts.dto.ContractParams;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
 import static ru.grnk.tradevisor.common.util.RoundPriceUtils.moneyToBigDecimal;
 import static ru.grnk.tradevisor.common.util.RoundPriceUtils.roundPrice;
 
@@ -45,6 +48,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
     public static final String CLIENT_ORDER_ID_SEPARATOR = "zz";
     private static final BigDecimal RISK_LEVEL = BigDecimal.valueOf(0.02);
     private final TradevisorProperties tradevisorProperties;
+    private final RtsService rtsService;
 
     private final AccountsServiceGrpc.AccountsServiceBlockingStub accountsServiceBlockingStub;
     private final OrdersServiceGrpc.OrdersServiceBlockingStub ordersServiceBlockingStub;
@@ -133,7 +137,10 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                         RoundingMode.UNNECESSARY);
         var lotSize = bigDecimalFromDecimal(asset.getLotSize());
         BigDecimal go = direction == 1 ? moneyToBigDecimal(assetParams.getLongCollateral()) : moneyToBigDecimal(assetParams.getShortCollateral());
-        BigDecimal tickPrice = BigDecimal.ONE; // TODO: add call rtsService
+        var ticker = symbol.split("@")[0];
+        BigDecimal tickPrice = ofNullable(rtsService.getContractParams(ticker))
+                .map(ContractParams::getFullTickValue)
+                .orElse(BigDecimal.ONE);
         if (!isValidPriceConfiguration(priceOpen, stopLoss, takeProfit, direction)) {
             throw new IllegalStateException("invalid sl or tp ");
         }
