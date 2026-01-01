@@ -53,10 +53,10 @@ spring:
 app:
   collect:                    # сбор информации для анализа
     events:                   # события, влияющие на ценную бумагу
-      economic: true         # запрос у AI модельки про инструмент и экономический фон
-      dividends: false       # получить точную дату выплаты дивидендов, если провайдер это предоставляет
-      reports: false         # получить точную дату предоставления отчетности, если провайдер это предоставляет
-      news: false            # получить новости последних дней, связанные с этим инструментом, если есть
+      economic: true          # запрос у AI модельки про инструмент и экономический фон
+      dividends: false        # получить точную дату выплаты дивидендов, если провайдер это предоставляет
+      reports: false          # получить точную дату предоставления отчетности, если провайдер это предоставляет
+      news: false             # получить новости последних дней, связанные с этим инструментом, если есть
     prices:
       delay: PT1M
       finam: true
@@ -134,7 +134,7 @@ app:
       account-id: ${FINAM_ACCOUNT_KEY}
       history-max-depth-days: 10
       mt5-python-client-url: http://localhost:8001
-      open-position-client: grpc # mt5py для открытия через metatrader5
+      open-position-client: grpc # mt5py для открытия через metatrader5, grpc для открытие через finam api
     bybit:
       enabled: true
       key: ${BYBIT_KEY}

@@ -99,15 +99,6 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
             log.warn("short operations restricted and signal for sell for symbol: {}", symbol);
             return false;
         }
-        var accountRs = accountsServiceBlockingStub.withCallCredentials(bearer)
-                .getAccount(GetAccountRequest.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .build());
-        var balance = accountRs.getCashList().stream()
-                .filter(x -> x.getCurrencyCode().equals("RUB"))
-                .findFirst()
-                .map(RoundPriceUtils::moneyToBigDecimal)
-                .orElseThrow();
         var asset = assetsServiceBlockingStub.withCallCredentials(bearer)
                 .getAsset(GetAssetRequest.newBuilder()
                         .setSymbol(symbol)
@@ -120,15 +111,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
         BigDecimal normalizedPriceOpen = roundPrice(priceOpen, minStep, direction);
         BigDecimal normalizedStopLoss = roundPrice(stopLoss, minStep, direction);
         BigDecimal normalizedTakeProfit = roundPrice(takeProfit, minStep, direction);
-        BigDecimal availableMoney = getAvailableMoney(balance, accountRs);
-        var go = direction == 1 ? assetParams.getLongCollateral() : assetParams.getShortCollateral();
-        BigDecimal ticksCountRisk = normalizedPriceOpen.subtract(normalizedStopLoss).abs().divide(minStep, RoundingMode.UNNECESSARY);
-        BigDecimal tickPrice = BigDecimal.ONE; // получить через RTS сервис
-        BigDecimal riskMoney = availableMoney.min(balance.multiply(BigDecimal.valueOf((double)tradevisorProperties.trade().limits() / 100)));
-        var tradingLot =
-                riskMoney.divide(tickPrice.multiply(ticksCountRisk), RoundingMode.DOWN).min(
-                        availableMoney.divide(moneyToBigDecimal(go), RoundingMode.DOWN)
-                );
+        var tradingLot = getTradingLot(symbol, normalizedPriceOpen, normalizedStopLoss, normalizedTakeProfit, direction);
         if (tradingLot.intValue() == 0) {
             log.warn("not enough money to open position. signalId: {} , symbol:{}", signalId, symbol);
             return false;
@@ -136,6 +119,146 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
         placeOrders(symbol, normalizedPriceOpen, normalizedStopLoss, normalizedTakeProfit, direction, tradingLot.intValue(), signalId);
         return true;
     }
+
+
+    /**
+     * trading_lot = round.down(counted_lot, min_lot)
+     *  min_lot = минимальный лот, который можно выставить по инструменту
+     *  counted_lot = Min(risk_lot, available_lot)
+     *      risk_lot = (balance * risk_leve ) / (((price_open - stop_loss) / tick_size) * tick_price)
+     *          tick_steps = (price_open - stop_loss) / minimal_price_step
+     *          tick_price - стоимость шага цены
+     *            - получить через rts_api если есть, если нет = 1 руб
+     *      available_lot = available_money / (go_price * КПУР + ((price_open - sl) / tick_size) * tick_price + avg_commission_rate*go_price*lot_factor)
+     *          - go_price = direction= 1 ? tp : weighted_stop_loss (максимальное значение GO для позиции)
+     *          - lot_factor = количество элементов актива в одном лоте
+     *          - КПУР = 0.15 - ставка риска у брокера
+     *          - avg_commission_rate = 0,05 (5% на объем сделки)
+     *          - available_money
+     *              available_money = balance + variance_margin - sum(open_risk + locked_money + commission)
+     *                  - balance = accountRs.getCashList().stream().filter(x -> x.getCurrencyCode().equals("RUB")).findFirst().map(RoundPriceUtils::moneyToBigDecimal).orElseThrow();
+     *                  - variance_margin = вариационная маржа портфеля с момента открытия позиции
+     *                  - sum - сумма по всем теоретическим позициям
+     *                  - open_risk = ((weighted_price - weighted_sl) / tick_size) * tick_price * quantity
+     *                      - weighted_price - средневзвешенная цена с учетом выставленных позиций и активных ордеров
+     *                      - weighted_sl - средневзвешенная цена STOP_LOSS
+     *                      - quantity - размер сделки в лотах
+     *                  - commission = avg_commission_rate*go_price*lot_factor
+     *                  - locked_money = go_price * quantity * КПУР
+     *                      - quantity - размер позиции в лотах
+     *                      - go_price =  direction = 1 ? tp : weighted_stop_loss
+     * params:
+     * BigDecimal priceOpen - нормализованная цена открытия (округлена до ближайшего тика с учетом tick_size)
+     * BigDecimal stopLoss - нормализованная цена stop loss (округлена до ближайшего тика с учетом tick_size)
+     * BigDecimal takeProfit - нормализованная цена take profit (округлена до ближайшего тика с учетом tick_size)
+     * int direction - направление 1 - long, -1 short
+     * @return lot amount to trade
+     */
+    private BigDecimal getTradingLot(String symbol, BigDecimal priceOpen, BigDecimal stopLoss, BigDecimal takeProfit, int direction) {
+        var accountRs = accountsServiceBlockingStub.withCallCredentials(getBearer())
+                .getAccount(GetAccountRequest.newBuilder()
+                        .setAccountId(tradevisorProperties.integration().finam().accountId())
+                        .build());
+
+        var balance = accountRs.getCashList().stream()
+                .filter(x -> x.getCurrencyCode().equals("RUB"))
+                .findFirst()
+                .map(RoundPriceUtils::moneyToBigDecimal)
+                .orElse(BigDecimal.ZERO);
+
+        var availableMoney = getAvailableMoney(balance, accountRs);
+        var assetParams = assetsServiceBlockingStub.withCallCredentials(getBearer())
+                .getAssetParams(GetAssetParamsRequest.newBuilder()
+                        .setSymbol(symbol)
+                        .setAccountId(tradevisorProperties.integration().finam().accountId())
+                        .build());
+        var asset = assetsServiceBlockingStub.withCallCredentials(getBearer())
+                .getAsset(GetAssetRequest.newBuilder()
+                        .setSymbol(symbol)
+                        .setAccountId(tradevisorProperties.integration().finam().accountId())
+                        .build());
+        var minStep = BigDecimal.valueOf(asset.getMinStep())
+                .divide(BigDecimal.TEN.pow(asset.getDecimals()),
+                        asset.getDecimals(),
+                        RoundingMode.UNNECESSARY);
+        var lotSize = bigDecimalFromDecimal(asset.getLotSize());
+
+        // Получаем правильное значение GO
+        BigDecimal go = direction == 1 ? moneyToBigDecimal(assetParams.getLongCollateral()) : moneyToBigDecimal(assetParams.getShortCollateral());
+
+        // Предполагаем, что tickPrice равен 1, если не можем получить из RTS API
+        BigDecimal tickPrice = BigDecimal.ONE;
+
+        // Проверяем правильность расположения цен
+        if (direction > 0) {
+            // LONG: SL должен быть ниже цены открытия, TP выше
+            if (stopLoss.compareTo(priceOpen) >= 0) {
+                log.warn("Invalid stop loss for LONG position. SL: {}, Open: {}", stopLoss, priceOpen);
+                return BigDecimal.ZERO;
+            }
+            if (takeProfit.compareTo(priceOpen) <= 0) {
+                log.warn("Invalid take profit for LONG position. TP: {}, Open: {}", takeProfit, priceOpen);
+                return BigDecimal.ZERO;
+            }
+        } else {
+            // SHORT: SL должен быть выше цены открытия, TP ниже
+            if (stopLoss.compareTo(priceOpen) <= 0) {
+                log.warn("Invalid stop loss for SHORT position. SL: {}, Open: {}", stopLoss, priceOpen);
+                return BigDecimal.ZERO;
+            }
+            if (takeProfit.compareTo(priceOpen) >= 0) {
+                log.warn("Invalid take profit for SHORT position. TP: {}, Open: {}", takeProfit, priceOpen);
+                return BigDecimal.ZERO;
+            }
+        }
+
+        // Рассчитываем риск на лот
+        BigDecimal riskPerLot;
+        if (direction > 0) {
+            // LONG: риск = (priceOpen - stopLoss) / minStep * tickPrice
+            riskPerLot = priceOpen.subtract(stopLoss)
+                    .divide(minStep, RoundingMode.HALF_UP)
+                    .multiply(tickPrice);
+        } else {
+            // SHORT: риск = (stopLoss - priceOpen) / minStep * tickPrice
+            riskPerLot = stopLoss.subtract(priceOpen)
+                    .divide(minStep, RoundingMode.HALF_UP)
+                    .multiply(tickPrice);
+        }
+
+        if (riskPerLot.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        // risk_lot = (balance * risk_level) / risk_per_lot
+        BigDecimal riskLevel = BigDecimal.valueOf(0.02); // TODO: заменить на правильное значение из конфигурации
+        BigDecimal riskLot = balance.multiply(riskLevel)
+                .divide(riskPerLot, RoundingMode.DOWN);
+
+        // Расчет available_lot с использованием правильного GO
+        BigDecimal lockedMarginComponent = go.multiply(GO_LEVEL);
+        BigDecimal slComponent = riskPerLot;
+        BigDecimal commissionComponent = go.multiply(AVERAGE_COMMISSION);
+
+        BigDecimal totalCostPerLot = lockedMarginComponent.add(slComponent).add(commissionComponent);
+
+        if (totalCostPerLot.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal availableLot = availableMoney.divide(totalCostPerLot, RoundingMode.DOWN);
+        BigDecimal countedLot = riskLot.min(availableLot);
+
+        if (lotSize.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        // Округляем до целых лотов
+        BigDecimal tradingLot = countedLot.setScale(0, RoundingMode.DOWN);
+
+        return tradingLot.max(BigDecimal.ZERO);
+    }
+
 
     private BigDecimal getAvailableMoney(BigDecimal balance, GetAccountResponse accountRs) {
         var bearer = getBearer();
@@ -152,7 +275,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                 .filter(x -> !x.isEmpty())
                 .map(positions -> getRiskForPosition(positions, orders))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return balance.subtract(moneyLocked).multiply(DEVIATION);
+        return balance.subtract(moneyLocked).multiply(DEVIATION).max(BigDecimal.ZERO);
     }
 
     private record PositionAvgPrice(BigDecimal price, BigDecimal weight) {
@@ -160,9 +283,25 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
 
     private BigDecimal getRiskForPosition(List<Position> positions, List<OrderState> orderStates) {
         Position anyPosition = positions.stream().findFirst().orElseThrow();
-        var positionSide = new BigDecimal(anyPosition.getQuantity().getValue()).signum() > 0 ? Side.SIDE_BUY : Side.SIDE_SELL;
+        var positionQuantity = bigDecimalFromDecimal(anyPosition.getQuantity());
+        var positionSide = positionQuantity.signum() > 0 ? Side.SIDE_BUY : Side.SIDE_SELL;
+        var positionSymbol = anyPosition.getSymbol();
+
+        // Получаем параметры актива для расчета GO
+        var assetParams = assetsServiceBlockingStub.withCallCredentials(getBearer())
+                .getAssetParams(GetAssetParamsRequest.newBuilder()
+                        .setSymbol(positionSymbol)
+                        .setAccountId(tradevisorProperties.integration().finam().accountId())
+                        .build());
+
+        // Определяем GO в зависимости от направления позиции
+        int direction = positionQuantity.signum();
+        BigDecimal go = direction == 1 ?
+                moneyToBigDecimal(assetParams.getLongCollateral()) :
+                moneyToBigDecimal(assetParams.getShortCollateral());
+
         var slOrdersForPosition = orderStates.stream()
-                .filter(o -> o.getOrder().getSymbol().equals(anyPosition.getSymbol()))
+                .filter(o -> o.getOrder().getSymbol().equals(positionSymbol))
                 .filter(o -> Objects.equals(getOrderTypeByClientOrderId(o.getOrder().getClientOrderId()), CLIENT_ORDER_TYPE_PART_2_ORDER_TYPE_SL))
                 .toList();
         if (slOrdersForPosition.stream()
@@ -188,15 +327,29 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                         new PositionAvgPrice(BigDecimal.ZERO, BigDecimal.ZERO),
                         (acc, p1) -> new PositionAvgPrice(weightedAvg(acc.price(), acc.weight(), p1.price(), p1.weight()), acc.weight().add(p1.weight()))
                 );
-        if (weightedPosition.weight().compareTo(weightedSlOrders.weight()) != 0) {
+        if (weightedPosition.weight().abs().compareTo(weightedSlOrders.weight().abs()) != 0) {
             log.error("position size not equal to stoploss size. position: {}, sl-orders: {}",
                     weightedPosition.weight(), weightedSlOrders.weight());
             throw new IllegalStateException();
         }
-        var openRisk = weightedPosition.price().subtract(weightedSlOrders.price()).multiply(weightedPosition.weight());
-        var commission = weightedPosition.weight().multiply(AVERAGE_COMMISSION);
-        var lockedMoney = weightedPosition.weight().multiply(GO_LEVEL);
-        return openRisk.add(commission).add(lockedMoney);
+
+        // Расчет открытого риска
+        BigDecimal openRisk;
+        if (weightedPosition.weight().signum() > 0) {
+            // LONG позиция: риск = (цена позиции - цена SL) * количество
+            openRisk = weightedPosition.price().subtract(weightedSlOrders.price()).multiply(weightedPosition.weight().abs());
+        } else {
+            // SHORT позиция: риск = (цена SL - цена позиции) * количество
+            openRisk = weightedSlOrders.price().subtract(weightedPosition.price()).multiply(weightedPosition.weight().abs());
+        }
+
+        // Комиссия рассчитывается от GO
+        var commission = go.multiply(AVERAGE_COMMISSION);
+
+        // Заблокированные средства (маржа) рассчитываются от GO
+        var lockedMoney = go.multiply(GO_LEVEL);
+
+        return openRisk.abs().add(commission).add(lockedMoney);
     }
 
     private static BigDecimal weightedAvg(BigDecimal val1, BigDecimal val1Q, BigDecimal val2, BigDecimal val2Q) {

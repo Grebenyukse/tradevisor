@@ -25,7 +25,10 @@ import ru.grnk.tradevisor.trade.dto.TrvPosition;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import static grpc.tradeapi.v1.orders.OrderStatus.ORDER_STATUS_CANCELED;
 
 @Component
 @RequiredArgsConstructor
@@ -40,6 +43,7 @@ public class FinamTradeClient implements TradeClient {
     private final TickersRepository tickersRepository;
     private final LastTickLoader lastTickLoader;
     private final OpenPositionClient openPositionClient;
+    private final Set<OrderStatus> NOT_ACTIVE_ORDER_STATUSES = Set.of(OrderStatus.ORDER_STATUS_CANCELED);
 
     public BearerToken getBearer() {
         TrvFinamProperties finamProperties = tradevisorProperties.integration().finam();
@@ -61,12 +65,15 @@ public class FinamTradeClient implements TradeClient {
         var orders = ordersServiceBlockingStub.withCallCredentials(bearer)
                 .getOrders(OrdersRequest.newBuilder()
                         .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .build());
-        if (orders.getOrdersList().isEmpty()) {
-            return List.of();
-        } else {
-            throw new NotImplementedException();
-        }
+                        .build())
+                .getOrdersList()
+                .stream()
+                .filter(x -> !NOT_ACTIVE_ORDER_STATUSES.contains(x.getStatus()))
+                .map(x -> TrvOrder.builder()
+                        .direction(1)
+                        .build())
+                .toList();
+        return orders;
     }
 
     @Override
@@ -150,7 +157,7 @@ public class FinamTradeClient implements TradeClient {
                                 .setOrderId(o.getOrderId())
                                 .build()))
                 .toList();
-        var notCancelledOrders = cancelResult.stream().filter(o -> o.getStatus() != OrderStatus.ORDER_STATUS_CANCELED)
+        var notCancelledOrders = cancelResult.stream().filter(o -> o.getStatus() != ORDER_STATUS_CANCELED)
                 .toList();
         if (!notCancelledOrders.isEmpty()) {
             log.error("не удалось отменить ордера : {}", notCancelledOrders.toString());
