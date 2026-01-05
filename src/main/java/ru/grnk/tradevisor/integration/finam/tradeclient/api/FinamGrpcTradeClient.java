@@ -71,13 +71,13 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
             return false;
         }
         var asset = getAsset(symbol);
-        var minStep = BigDecimal.valueOf(asset.getMinStep())
+        var minPriceStep = BigDecimal.valueOf(asset.getMinStep())
                 .divide(BigDecimal.TEN.pow(asset.getDecimals()),
                         asset.getDecimals(),
                         RoundingMode.UNNECESSARY);
-        BigDecimal normalizedPriceOpen = roundPrice(priceOpen, minStep, direction);
-        BigDecimal normalizedStopLoss = roundPrice(stopLoss, minStep, direction);
-        BigDecimal normalizedTakeProfit = roundPrice(takeProfit, minStep, direction);
+        BigDecimal normalizedPriceOpen = roundPrice(priceOpen, minPriceStep, direction);
+        BigDecimal normalizedStopLoss = roundPrice(stopLoss, minPriceStep, direction);
+        BigDecimal normalizedTakeProfit = roundPrice(takeProfit, minPriceStep, direction);
         var tradingLot = getTradingLot(symbol, normalizedPriceOpen, normalizedStopLoss, normalizedTakeProfit, direction);
         if (tradingLot.intValue() == 0) {
             log.warn("not enough money to open position. signalId: {} , symbol:{}", signalId, symbol);
@@ -95,24 +95,22 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
      * tick_steps = (price_open - stop_loss) / minimal_price_step
      * tick_price - стоимость шага цены
      * - получить через rts_api если есть, если нет = 1 руб
-     * available_lot = available_money / (go_price * КПУР + ((price_open - sl) / tick_size) * tick_price + avg_commission_rate*go_price*lot_factor)
-     * - go_price = direction= 1 ? tp : weighted_stop_loss (максимальное значение GO для позиции)
+     * available_lot = available_money / (go + ((price_open - sl) / tick_size) * tick_price + avg_commission_rate*go_price*lot_factor)
+     * - go = direction= 1 ? longCollateral : shortCollateral. данные от брокера
      * - lot_factor = количество элементов актива в одном лоте
-     * - КПУР = 0.15 - ставка риска у брокера
      * - avg_commission_rate = 0,05 (5% на объем сделки)
      * - available_money
      * available_money = balance + variance_margin - sum(open_risk + locked_money + commission)
      * - balance = accountRs.getCashList().stream().filter(x -> x.getCurrencyCode().equals("RUB")).findFirst().map(RoundPriceUtils::moneyToBigDecimal).orElseThrow();
      * - variance_margin = вариационная маржа портфеля с момента открытия позиции
      * - sum - сумма по всем теоретическим позициям
-     * - open_risk = ((weighted_price - weighted_sl) / tick_size) * tick_price * quantity
-     * - weighted_price - средневзвешенная цена с учетом выставленных позиций и активных ордеров
+     * - open_risk = ((last_clearing_price - weighted_sl) / tick_size) * tick_price * quantity
+     * - last_clearing_price - цена последнего клиринга
      * - weighted_sl - средневзвешенная цена STOP_LOSS
      * - quantity - размер сделки в лотах
-     * - commission = avg_commission_rate*go_price*lot_factor
-     * - locked_money = go_price * quantity * КПУР
+     * - commission = (open_position_fee + close_position_fee + clearing_fee*position_hold + overnight_fee*average_position_hold)*quantity
+     * - locked_money = quantity * go
      * - quantity - размер позиции в лотах
-     * - go_price =  direction = 1 ? tp : weighted_stop_loss
      * params:
      * BigDecimal priceOpen - нормализованная цена открытия (округлена до ближайшего тика с учетом tick_size)
      * BigDecimal stopLoss - нормализованная цена stop loss (округлена до ближайшего тика с учетом tick_size)
