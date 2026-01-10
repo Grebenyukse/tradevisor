@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.common.repository.jpa.TickersJpa;
+import ru.grnk.tradevisor.common.util.FuturesUtils;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static ru.grnk.tradevisor.common.util.FuturesUtils.EXPIRATION_DATE_COMPARATOR;
 
 @Repository
 @RequiredArgsConstructor
@@ -51,10 +54,10 @@ public class TickersRepository {
                         order by t.ticker
                         """, Tickers.class)
                 .setParameter("spotTickerCode", tickerCode)
-                .setMaxResults(1)  // Вместо LIMIT в JPQL
                 .getResultList()
                 .stream()
-                .findFirst();
+                .filter(FuturesUtils::isFuturesActual)
+                .min(EXPIRATION_DATE_COMPARATOR);
     }
 
     public Tickers getTickerByTickerCode(String tickerCode) {
