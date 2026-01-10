@@ -27,7 +27,7 @@ public class PricesLoaderServiceImpl {
     private final TelegramNotificationService telegramService;
     private final BindTradeFuturesService bindTradeFuturesService;
 
-    @Scheduled(fixedRateString = "${{app.collect.prices.init-tickers.cron}")
+    @Scheduled(fixedRateString = "${app.collect.prices.init-tickers.delay}")
     public void initTickers() {
         loaders
                 .stream()

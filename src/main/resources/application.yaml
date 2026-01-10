@@ -64,7 +64,7 @@ app:
       bybit: true
       yahoofinance: true
       init-tickers:
-        delay:  P1M
+        delay: PT720H
   calculate:
     delay: PT10M
     fibo: true
