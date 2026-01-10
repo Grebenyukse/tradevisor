@@ -63,6 +63,8 @@ app:
       tinkoff: true
       bybit: true
       yahoofinance: true
+      init-tickers:
+        delay:  P1M
   calculate:
     delay: PT10M
     fibo: true

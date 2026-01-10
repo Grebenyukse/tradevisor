@@ -41,6 +41,8 @@ app:
       tinkoff: false
       bybit: false
       yahoofinance: false
+      init-tickers:
+        delay: P1M
   calculate:
     delay: PT10S
     fibo: false

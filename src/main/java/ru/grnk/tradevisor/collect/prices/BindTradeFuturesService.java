@@ -36,7 +36,6 @@ import static ru.grnk.tradevisor.integration.finam.FinamPricesService.TRV_PROVID
 @Slf4j
 public class BindTradeFuturesService {
 
-    public static final String TRV_FUTURES_ASSET_TYPE = "futures";
     public static final String TRV_PROVIDER_TINKOFF = "tinkoff";
     private final InvestApi investApi;
     private final TickersRepository tickersRepository;
@@ -79,8 +78,7 @@ public class BindTradeFuturesService {
                         ? Pair.of(x.getRight().getTicker().substring(0,2) + "!1", x.getRight()) // маппим в бесконечный фьючерс со склеиванием интервалов
                         : x)
                 .forEach(spotTickerCode2tickerCode -> {
-                    var spotTickerCode = spotTickerCode2tickerCode.getLeft(); // потовый инструмент, по которому будет технический анализ
-                    var futureTicker = spotTickerCode2tickerCode.getRight().getTicker(); // фьючерс у которого нужно проставить ссылку на спот
+                    var spotTickerCode = spotTickerCode2tickerCode.getLeft(); // cпотовый инструмент, по которому будет технический анализ
                     var futureTickerCode = spotTickerCode2tickerCode.getRight().getTickerCode(); // uid оригинального фьюча у которого будет размещена ссылка на спот
                     // если спота нет, как например для бесконечных фьючей, то создаем свой.
                     var optTickerByTickerCode = tickersRepository.findTickerByTickerCode(spotTickerCode);

@@ -27,15 +27,20 @@ public class PricesLoaderServiceImpl {
     private final TelegramNotificationService telegramService;
     private final BindTradeFuturesService bindTradeFuturesService;
 
+    @Scheduled(fixedRateString = "${{app.collect.prices.init-tickers.cron}")
+    public void initTickers() {
+        loaders
+                .stream()
+                .sorted(Comparator.comparingInt(PricesLoader::loadOrder))
+                .forEach(PricesLoader::initTickers);
+        bindTradeFuturesService.initTickers();
+    }
+
     @SneakyThrows
     @Scheduled(fixedRateString = "${app.collect.prices.delay}")
     public void doWork() {
         if (tickersRepository.getAllTickersCount() == 0) {
-            loaders
-                    .stream()
-                    .sorted(Comparator.comparingInt(PricesLoader::loadOrder))
-                    .forEach(PricesLoader::initTickers);
-            bindTradeFuturesService.initTickers();
+            initTickers();
         }
         log.info("start collecting prices");
         LocalDateTime startTime = LocalDateTime.now();
