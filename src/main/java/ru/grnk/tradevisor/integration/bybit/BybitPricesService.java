@@ -1,7 +1,12 @@
 package ru.grnk.tradevisor.integration.bybit;
 
+import com.bybit.api.client.domain.CategoryType;
+import com.bybit.api.client.domain.market.MarketInterval;
+import com.bybit.api.client.domain.market.request.MarketDataRequest;
+import com.bybit.api.client.restApi.BybitApiMarketRestClient;
 import com.google.protobuf.Timestamp;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -12,6 +17,8 @@ import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.MarketData;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
+import ru.grnk.tradevisor.common.util.ObjectMapperUtils;
+import ru.grnk.tradevisor.integration.bybit.dto.BybitCandlesResponse;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -30,8 +37,10 @@ public class BybitPricesService implements PricesLoader {
     private final MarketDataRepository marketDataRepository;
     private final TickersRepository tickersRepository;
     private final TradevisorProperties tradevisorProperties;
+    private final BybitApiMarketRestClient marketRestClient;
 
 
+    @SneakyThrows
     @Override
     public void loadPrices(Tickers ticker) {
         var tickerCode = ticker.getTickerCode();
@@ -41,8 +50,17 @@ public class BybitPricesService implements PricesLoader {
         if (intervalInHours < 5) {
             return;
         }
-        var candles = bybitClient.fetchHourlyCandles(tickerCode, startTime.getSeconds(), 500);
-        var res = candles.stream()
+        var response = marketRestClient.getMarketLinesData(MarketDataRequest.builder()
+                .symbol(ticker.getTicker())
+                .category(CategoryType.SPOT)
+                .startTime(startTime.getSeconds())
+                .endTime(endTime.getSeconds())
+                .marketInterval(MarketInterval.FOUR_HOURLY)
+                .limit(500)
+                .build());
+        var parsedResponse = ObjectMapperUtils.readValue(ObjectMapperUtils.writeValue(response), BybitCandlesResponse.class);
+
+        var res = parsedResponse.result().list().stream()
                 .map(x -> from(x, tickerCode))
                 .collect(toList());
         marketDataRepository.batchInsertMarketData(res);
@@ -83,14 +101,14 @@ public class BybitPricesService implements PricesLoader {
                 .build();
     }
 
-    private static MarketData from(BybitMarketdataRs.Candlestick candlestick, String tickerCode) {
+    private static MarketData from(BybitCandlesResponse.Candle candlestick, String tickerCode) {
         return new MarketData(
                 tickerCode,
                 Instant.ofEpochMilli(candlestick.openTime()).atZone(ZoneId.of("Europe/Moscow")).toOffsetDateTime(),
-                candlestick.openPrice(),
-                candlestick.highPrice(),
-                candlestick.lowPrice(),
-                candlestick.closePrice()
+                candlestick.openPrice().floatValue(),
+                candlestick.highPrice().floatValue(),
+                candlestick.lowPrice().floatValue(),
+                candlestick.closePrice().floatValue()
         );
     }
 

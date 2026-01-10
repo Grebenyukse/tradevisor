@@ -12,7 +12,6 @@ import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.common.repository.jpa.TickersJpa;
 import ru.grnk.tradevisor.common.util.FuturesUtils;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;

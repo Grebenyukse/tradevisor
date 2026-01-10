@@ -40,4 +40,9 @@ public class ObjectMapperUtils {
         return objectMapper.readValue(stream, valueType);
     }
 
+    @SneakyThrows
+    public static String writeValue(Object value) {
+        return objectMapper.writeValueAsString(value);
+    }
+
 }

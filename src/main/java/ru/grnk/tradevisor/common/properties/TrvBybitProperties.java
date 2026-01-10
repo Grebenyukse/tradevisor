@@ -5,6 +5,7 @@ public record TrvBybitProperties(
         String key,
         String secret,
         String url,
-        Integer historyMaxDepthDays
+        Integer historyMaxDepthDays,
+        Integer balance
         ) {
 }

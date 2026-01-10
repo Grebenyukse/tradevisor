@@ -1,9 +1,7 @@
 package ru.grnk.tradevisor.integration.bybit;
 
-import com.bybit.api.client.config.BybitApiConfig;
 import com.bybit.api.client.domain.CategoryType;
 import com.bybit.api.client.domain.TradeOrderType;
-import com.bybit.api.client.domain.asset.request.AssetDataRequest;
 import com.bybit.api.client.domain.market.request.MarketDataRequest;
 import com.bybit.api.client.domain.trade.Side;
 import com.bybit.api.client.domain.trade.TimeInForce;
@@ -11,18 +9,19 @@ import com.bybit.api.client.domain.trade.request.TradeOrderRequest;
 import com.bybit.api.client.restApi.BybitApiAssetRestClient;
 import com.bybit.api.client.restApi.BybitApiMarketRestClient;
 import com.bybit.api.client.restApi.BybitApiTradeRestClient;
-import com.bybit.api.client.service.BybitApiClientFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
-import ru.grnk.tradevisor.integration.bybit.dto.*;
+import ru.grnk.tradevisor.integration.bybit.dto.CreateOrderResponse;
+import ru.grnk.tradevisor.integration.bybit.dto.InstrumentInfoResponse;
+import ru.grnk.tradevisor.integration.bybit.dto.OpenOrdersResponse;
+import ru.grnk.tradevisor.integration.bybit.dto.PositionResponse;
 import ru.grnk.tradevisor.trade.TradeClient;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
@@ -30,39 +29,20 @@ import ru.grnk.tradevisor.trade.dto.TrvPosition;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static ru.grnk.tradevisor.common.util.RoundPriceUtils.roundPrice;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class BybitTradeClientImpl implements TradeClient {
 
+    public static final int LEVERAGE = 10;
     private final TickersRepository tickersRepository;
     private final TradevisorProperties tradevisorProperties;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Value("${app.integration.bybit.key}")
-    private String apiKey;
-
-    @Value("${app.integration.bybit.secret}")
-    private String apiSecret;
-
-    @Value("${app.integration.bybit.url}")
-    private String baseUrl;
-
-    private BybitApiTradeRestClient tradeRestClient;
-    private BybitApiAssetRestClient assetRestClient;
-    private BybitApiMarketRestClient marketRestClient;
-
-    @PostConstruct
-    public void init() {
-        // Определяем домен (mainnet или testnet) на основе baseUrl
-        String domain = baseUrl.contains("testnet") ? BybitApiConfig.TESTNET_DOMAIN : BybitApiConfig.MAINNET_DOMAIN;
-        boolean debugMode = false; // Включите для отладки
-
-        BybitApiClientFactory factory = BybitApiClientFactory.newInstance(apiKey, apiSecret, domain, debugMode);
-        this.tradeRestClient = factory.newTradeRestClient();
-        this.assetRestClient = factory.newAssetRestClient();
-        this.marketRestClient = factory.newMarketDataRestClient();
-    }
+    private final BybitApiTradeRestClient tradeRestClient;
+    private final BybitApiAssetRestClient assetRestClient;
+    private final BybitApiMarketRestClient marketRestClient;
 
     @Override
     public String provider() {
@@ -70,41 +50,15 @@ public class BybitTradeClientImpl implements TradeClient {
     }
 
     public Float getBalance() {
-        try {
-            AssetDataRequest request = AssetDataRequest.builder()
-                    .accountType(com.bybit.api.client.domain.account.AccountType.UNIFIED)
-                    .coin("USDT")
-                    .build();
-
-            Object response = assetRestClient.getAssetSingleCoinBalance(request);
-            String jsonResponse = objectMapper.writeValueAsString(response);
-            BalanceResponse balanceResponse = objectMapper.readValue(jsonResponse, BalanceResponse.class);
-
-            if (balanceResponse.getResult() != null &&
-                    balanceResponse.getResult().getList() != null &&
-                    !balanceResponse.getResult().getList().isEmpty()) {
-
-                List<BalanceResponse.CoinInfo> coinList = balanceResponse.getResult().getList().get(0).getCoin();
-                if (coinList != null) {
-                    for (BalanceResponse.CoinInfo coinInfo : coinList) {
-                        if ("USDT".equals(coinInfo.getCoin())) {
-                            return Float.valueOf(coinInfo.getWalletBalance());
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error fetching balance", e);
-        }
-        return 0f;
+        return tradevisorProperties.integration().bybit().balance().floatValue();
     }
 
     public String findTickerForSpot(String tickerCode) {
-        return tickerCode;
+        return tickerCode.split("@")[0];
     }
 
-    public Float getMinLotForTicker(String tickerCode) {
-        try {
+    @SneakyThrows
+    public InstrumentInfoResponse getInstrumentInfo(String tickerCode) {
             String symbol = findTickerForSpot(tickerCode);
             CategoryType category = getCategoryForTicker(symbol);
             Object response = marketRestClient.getInstrumentsInfo(MarketDataRequest.builder()
@@ -112,21 +66,7 @@ public class BybitTradeClientImpl implements TradeClient {
                             .symbol(symbol)
                     .build());
             String jsonResponse = objectMapper.writeValueAsString(response);
-            InstrumentInfoResponse instrumentResponse = objectMapper.readValue(jsonResponse, InstrumentInfoResponse.class);
-
-            if (instrumentResponse.getResult() != null &&
-                    instrumentResponse.getResult().getList() != null &&
-                    !instrumentResponse.getResult().getList().isEmpty()) {
-
-                InstrumentInfoResponse.Instrument instrument = instrumentResponse.getResult().getList().get(0);
-                if (instrument.getLotSizeFilter() != null) {
-                    return Float.valueOf(instrument.getLotSizeFilter().getMinOrderQty());
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error fetching min lot for ticker: {}", tickerCode, e);
-        }
-        return 0f;
+            return objectMapper.readValue(jsonResponse, InstrumentInfoResponse.class);
     }
 
     @Override
@@ -231,9 +171,23 @@ public class BybitTradeClientImpl implements TradeClient {
             Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
             Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode())
                     .orElse(spotTicker);
-            String symbol = tradeTicker.getTicker();
-            CategoryType category = getCategoryForTicker(symbol);
-            int tradeLots = calculateTradeLots(signal, tradeTicker, category);
+            float balance = getBalance();
+            int limits = tradevisorProperties.trade().limits(); // риск в процентах от капитала
+            double maxRiskInMoney = balance * limits / 100;
+            var instrumentInfo = getInstrumentInfo(tradeTicker.getTicker());
+            InstrumentInfoResponse.Instrument instrument = instrumentInfo.getResult().getList().get(0);
+            var tickSize = instrument.getPriceFilter().getTickSize();
+            var lotStep = instrument.getLotSizeFilter().getMinOrderQty();
+            var normalizedPriceOpen = roundPrice(signal.getPriceOpen(), new BigDecimal(tickSize), signal.getDirection());
+            var normalizedSL = roundPrice(signal.getStopLoss(), new BigDecimal(tickSize), signal.getDirection());
+            var normalizedTP = roundPrice(signal.getTakeProfit(), new BigDecimal(tickSize), signal.getDirection());
+            double availableLots = (double) balance * LEVERAGE / normalizedPriceOpen.doubleValue();
+            double riskLots =  maxRiskInMoney / normalizedSL.subtract(normalizedPriceOpen).abs().doubleValue();
+            int tradeLots = roundPrice(
+                    (float) Math.min(availableLots, riskLots),
+                    new BigDecimal(lotStep),
+                    1)
+                    .intValue();
             if (tradeLots == 0) {
                 log.warn("Недостаточно средств для открытия позиции. Signal: {}", signal);
                 return false;
@@ -241,7 +195,7 @@ public class BybitTradeClientImpl implements TradeClient {
             String orderId = setOrder(TrvOrder.builder()
                     .tickerCode(tradeTicker.getTicker()) // для выставления позиций используется ticker "без @mic"
                     .direction(signal.getDirection())
-                    .price(BigDecimal.valueOf(Double.valueOf(signal.getPriceOpen())))
+                    .price(normalizedPriceOpen)
                     .lot(tradeLots)
                     .isGtc(true)
                     .build());
@@ -249,27 +203,24 @@ public class BybitTradeClientImpl implements TradeClient {
                 log.error("Не удалось открыть основную позицию. Signal: {}", signal);
                 return false;
             }
-
             // Выставление стоп-лосса
             String stopLossOrderId = setOrder(TrvOrder.builder()
                     .tickerCode(tradeTicker.getTicker())
                     .direction(signal.getDirection() > 0 ? -1 : 1) // Противоположное направление для закрытия
-                    .activation(BigDecimal.valueOf(Double.valueOf(signal.getStopLoss())))
-                    .price(BigDecimal.valueOf(Double.valueOf(signal.getStopLoss())))
+                    .activation(normalizedSL)
+                    .price(normalizedSL)
                     .lot(tradeLots)
                     .isGtc(true)
                     .build());
-
             // Выставление тейк-профита
             String takeProfitOrderId = setOrder(TrvOrder.builder()
                     .tickerCode(tradeTicker.getTicker())
                     .direction(signal.getDirection() > 0 ? -1 : 1) // Противоположное направление для закрытия
-                    .activation(BigDecimal.valueOf(Double.valueOf(signal.getTakeProfit())))
-                    .price(BigDecimal.valueOf(Double.valueOf(signal.getTakeProfit())))
+                    .activation(normalizedTP)
+                    .price(normalizedTP)
                     .lot(tradeLots)
                     .isGtc(true)
                     .build());
-
             return !stopLossOrderId.isEmpty() && !takeProfitOrderId.isEmpty();
         } catch (Exception e) {
             log.error("Error opening position for signal: {}", signal, e);
@@ -304,39 +255,21 @@ public class BybitTradeClientImpl implements TradeClient {
 
     private int calculateTradeLots(Signals signal, Tickers ticker, CategoryType category) {
         float balance = getBalance();
-        // Проверяем, что tradevisorProperties.trade().limits() не null
-        Integer limits = tradevisorProperties.trade().limits();
-        if (limits == null) {
-            limits = 1; // Значение по умолчанию
-        }
+        int limits = tradevisorProperties.trade().limits(); // риск в процентах от капитала
         double maxRiskInMoney = balance * limits / 100;
-        Float minLot = getMinLotForTicker(ticker.getSpotTickerCode() + "@bybit");
-
-        // Проверяем, что minLot не null
-        if (minLot == null || minLot <= 0) {
-            minLot = 1.0f; // Значение по умолчанию
-        }
-
-        if (category == CategoryType.SPOT) {
-            float availableBalance = getBalance();
-            double availableLots = availableBalance / signal.getPriceOpen();
-            double stopLossRisk = Math.abs(signal.getStopLoss() - signal.getPriceOpen());
-            double riskBasedLots = maxRiskInMoney / stopLossRisk;
-            // Используем Math.min чтобы выбрать более консервативное значение
-            double minLots = Math.min(availableLots, riskBasedLots);
-            // Округляем вниз до ближайшего целого кратного minLot
-            return (int) (Math.floor(minLots / minLot) * minLot);
-        } else {
-            // Для деривативов учитываем плечо (упрощённо)
-            float marginPerLot = signal.getPriceOpen() * minLot;
-            double availableLots = balance / marginPerLot;
-            double stopLossRisk = Math.abs(signal.getStopLoss() - signal.getPriceOpen()) * minLot;
-            double riskBasedLots = maxRiskInMoney / stopLossRisk;
-            // Используем Math.min чтобы выбрать более консервативное значение
-            double minLots = Math.min(availableLots, riskBasedLots);
-            // Округляем вниз до ближайшего целого кратного minLot
-            return (int) (Math.floor(minLots / minLot) * minLot);
-        }
+        var instrumentInfo = getInstrumentInfo(ticker.getTicker());
+        InstrumentInfoResponse.Instrument instrument = instrumentInfo.getResult().getList().get(0);
+        var tickSize = instrument.getPriceFilter().getTickSize();
+        var lotStep = instrument.getLotSizeFilter().getMinOrderQty();
+        var normalizedPriceOpen = roundPrice(signal.getPriceOpen(), new BigDecimal(tickSize), signal.getDirection());
+        var normalizedSL = roundPrice(signal.getStopLoss(), new BigDecimal(tickSize), signal.getDirection());
+        double availableLots = (double) balance * LEVERAGE / normalizedPriceOpen.doubleValue();
+        double riskLots =  maxRiskInMoney / normalizedSL.subtract(normalizedPriceOpen).abs().doubleValue();
+        return roundPrice(
+                (float) Math.min(availableLots, riskLots),
+                new BigDecimal(lotStep),
+                1)
+                .intValue();
     }
 
     private TrvOrder convertDtoToTrvOrder(OpenOrdersResponse.Order order) {
