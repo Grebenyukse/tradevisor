@@ -151,7 +151,10 @@ public class FinamTradeClient implements TradeClient {
                 .getOrders(OrdersRequest.newBuilder()
                         .setAccountId(tradevisorProperties.integration().finam().accountId())
                         .build());
-        var cancelResult = orders.getOrdersList().stream().map(o -> ordersServiceBlockingStub
+        var cancelResult = orders.getOrdersList().stream()
+                .filter(o -> o.getStatus() != ORDER_STATUS_CANCELED)
+                .map(o -> ordersServiceBlockingStub
+                        .withCallCredentials(bearer)
                         .cancelOrder(CancelOrderRequest.newBuilder()
                                 .setAccountId(tradevisorProperties.integration().finam().accountId())
                                 .setOrderId(o.getOrderId())

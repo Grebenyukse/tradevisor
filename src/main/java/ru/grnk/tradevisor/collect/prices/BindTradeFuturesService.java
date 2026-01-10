@@ -17,6 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static ru.grnk.tradevisor.collect.prices.Futures2SpotMap.*;
+import static ru.grnk.tradevisor.collect.utils.FlexibleFutureFilter.isAllowedFuture;
 import static ru.grnk.tradevisor.integration.finam.FinamPricesService.TRV_PROVIDER_FINAM;
 
 /**
@@ -43,8 +44,9 @@ public class BindTradeFuturesService {
     @SneakyThrows
     public void initTickers() {
         investApi.getInstrumentsService().getTradableFuturesSync()
+                .stream()
+                .filter(future -> isAllowedFuture(future.getTicker()))
                 .forEach(future -> {
-                    if (future == null) return;
                     future.getBasicAssetPositionUid();
                     if (StringUtils.isEmpty(future.getBasicAssetPositionUid())) {
                         saveFutureWithoutLink(future);
