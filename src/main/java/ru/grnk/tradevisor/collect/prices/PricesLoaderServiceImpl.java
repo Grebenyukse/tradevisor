@@ -1,8 +1,8 @@
 package ru.grnk.tradevisor.collect.prices;
 
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
@@ -12,12 +12,13 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class PricesLoaderServiceImpl {
 
     public static final Integer TICKERS_BATCH_LOAD = 1000;
@@ -26,6 +27,23 @@ public class PricesLoaderServiceImpl {
     private final PriceLoadingErrorHandler errorHandler;
     private final TelegramNotificationService telegramService;
     private final BindTradeFuturesService bindTradeFuturesService;
+    private final Executor priceLoadingExecutor;
+
+    @Autowired
+    public PricesLoaderServiceImpl(TickersRepository tickersRepository,
+                                   List<PricesLoader> loaders,
+                                   PriceLoadingErrorHandler errorHandler,
+                                   TelegramNotificationService telegramService,
+                                   BindTradeFuturesService bindTradeFuturesService,
+                                   @Qualifier("priceLoadingExecutor")
+                                   Executor priceLoadingExecutor) {
+        this.tickersRepository = tickersRepository;
+        this.loaders = loaders;
+        this.errorHandler = errorHandler;
+        this.telegramService = telegramService;
+        this.bindTradeFuturesService = bindTradeFuturesService;
+        this.priceLoadingExecutor = priceLoadingExecutor;
+    }
 
     @Scheduled(fixedRateString = "${app.collect.prices.init-tickers.delay}")
     public void initTickers() {
@@ -36,7 +54,6 @@ public class PricesLoaderServiceImpl {
         bindTradeFuturesService.initTickers();
     }
 
-    @SneakyThrows
     @Scheduled(fixedRateString = "${app.collect.prices.delay}")
     public void doWork() {
         if (tickersRepository.getAllTickersCount() == 0) {
@@ -56,17 +73,7 @@ public class PricesLoaderServiceImpl {
         provider2TickersCount.keySet().forEach(provider -> providerProcessedCount.put(provider, 0));
         telegramService.sendStartMessage(messageId, totalTickersCount, provider2TickersCount, startTime);
         try {
-            Map<String, PricesLoader> providerToLoader = loaders.stream()
-                    .collect(Collectors.toMap(PricesLoader::getProvider, loader -> loader));
-            provider2TickersCount.keySet().parallelStream()
-                    .forEach(provider -> processProvider(
-                            provider,
-                            providerToLoader.get(provider),
-                            provider2TickersCount.get(provider),
-                            providerProcessedCount,
-                            messageId,
-                            startTime
-                    ));
+            processAllProviders(provider2TickersCount, providerProcessedCount, messageId, startTime);
             telegramService.sendFinalMessage(messageId,
                     providerProcessedCount.values().stream().mapToInt(Integer::intValue).sum(),
                     totalTickersCount,
@@ -81,7 +88,28 @@ public class PricesLoaderServiceImpl {
         log.info("historic candles loaded");
     }
 
-       private void processProvider(String provider, PricesLoader loader,
+    private void processAllProviders(Map<String, Integer> provider2TickersCount,
+                                     Map<String, Integer> providerProcessedCount,
+                                     String messageId,
+                                     LocalDateTime startTime) throws InterruptedException {
+        Map<String, PricesLoader> providerToLoader = loaders.stream()
+                .collect(Collectors.toMap(PricesLoader::getProvider, loader -> loader));
+
+        List<CompletableFuture<Void>> futures = provider2TickersCount.keySet().stream()
+                .map(provider -> CompletableFuture.runAsync(() ->
+                        processProvider(
+                                provider,
+                                providerToLoader.get(provider),
+                                provider2TickersCount.get(provider),
+                                providerProcessedCount,
+                                messageId,
+                                startTime
+                        ), priceLoadingExecutor))
+                .toList();
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    }
+
+    private void processProvider(String provider, PricesLoader loader,
                                  Integer totalTickersForProvider,
                                  Map<String, Integer> providerProcessedCount,
                                  String messageId, LocalDateTime startTime) {
@@ -89,6 +117,7 @@ public class PricesLoaderServiceImpl {
             log.warn("No loader found for provider: {}", provider);
             return;
         }
+        log.info("process load prices provider: {}", loader.getProvider());
         int processedForThisProvider = 0;
         long lastUpdate = System.currentTimeMillis();
         do {
@@ -135,7 +164,7 @@ public class PricesLoaderServiceImpl {
         log.info("Provider {} completed with {} tickers processed", provider, processedForThisProvider);
     }
 
-    private static void sleep() {
+    private void sleep() {
         try {
             Thread.sleep(60000); // Ждем минуту перед повторной попыткой
         } catch (InterruptedException ie) {

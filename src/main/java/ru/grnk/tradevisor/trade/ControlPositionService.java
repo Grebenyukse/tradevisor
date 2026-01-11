@@ -163,13 +163,10 @@ public class ControlPositionService {
         List<TrvOrder> orders = client.getOrdersByTicker(ticker.getTickerCode());
         if (position == null) {
             if (orders.size() != 3) {
-                log.warn("позиции нет. сигнал в статусе executed. но ордеров не 3. неверное количество ордеров для" +
-                        " сигнала {}. удаляем все оставшиеся ордера и откатываем сигнал в статус confirmed.", signal.getId());
-                client.deleteOrders(ticker.getTickerCode());
-                signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.CONFIRMED);
-                return;
+                log.warn("позиции нет. сигнал в статусе executed. ordersSize  = {} ", orders.size());
+                //TODO: добавить проверку позиции для каждого клиента отдельно
             }
-            // позиции нет. сигнал в статусе executed. три ордера выставлено. проверяем что сигнал не заэкспарился.
+            // позиции нет. сигнал в статусе executed.ордера выставлены. проверяем что сигнал не заэкспарился.
             var strategy = strategies.stream()
                     .filter(s -> Objects.equals(s.getStrategyUniqueName(), signal.getName()))
                     .findFirst()

@@ -2,10 +2,13 @@ package ru.grnk.tradevisor.integration.bybit;
 
 import com.bybit.api.client.domain.CategoryType;
 import com.bybit.api.client.domain.TradeOrderType;
+import com.bybit.api.client.domain.TriggerBy;
 import com.bybit.api.client.domain.account.AccountType;
 import com.bybit.api.client.domain.account.request.AccountDataRequest;
 import com.bybit.api.client.domain.market.request.MarketDataRequest;
+import com.bybit.api.client.domain.position.TpslMode;
 import com.bybit.api.client.domain.position.request.PositionDataRequest;
+import com.bybit.api.client.domain.trade.PositionIdx;
 import com.bybit.api.client.domain.trade.Side;
 import com.bybit.api.client.domain.trade.TimeInForce;
 import com.bybit.api.client.domain.trade.request.TradeOrderRequest;
@@ -21,13 +24,13 @@ import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.common.util.ObjectMapperUtils;
 import ru.grnk.tradevisor.integration.bybit.dto.*;
-import ru.grnk.tradevisor.integration.finam.dto.Position;
 import ru.grnk.tradevisor.trade.TradeClient;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 import static ru.grnk.tradevisor.common.util.RoundPriceUtils.roundPrice;
 
@@ -41,10 +44,9 @@ public class BybitTradeClientImpl implements TradeClient {
     private final TradevisorProperties tradevisorProperties;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final BybitApiTradeRestClient tradeRestClient;
-    private final BybitApiAssetRestClient assetRestClient;
     private final BybitApiMarketRestClient marketRestClient;
     private final BybitApiAccountRestClient bybitApiAccountRestClient;
-    private final BybitApiPositionRestClient positionRestClient;
+    private final BybitApiPositionRestClient bybitApiPositionRestClient;
 
     @Override
     public String provider() {
@@ -53,7 +55,7 @@ public class BybitTradeClientImpl implements TradeClient {
 
     public Float getBalance() {
         var resp = bybitApiAccountRestClient.getWalletBalance(AccountDataRequest.builder()
-                        .accountType(AccountType.UNIFIED)
+                .accountType(AccountType.UNIFIED)
                 .build());
         var accountInfo = ObjectMapperUtils.readValue(ObjectMapperUtils.writeValue(resp), BybitAccountInfoResponse.class);
         return accountInfo.result().list().stream().findFirst().orElseThrow().totalAvailableBalance().floatValue();
@@ -65,205 +67,114 @@ public class BybitTradeClientImpl implements TradeClient {
 
     @SneakyThrows
     public InstrumentInfoResponse getInstrumentInfo(String tickerCode) {
-            String symbol = findTickerForSpot(tickerCode);
-            CategoryType category = getCategoryForTicker(symbol);
-            Object response = marketRestClient.getInstrumentsInfo(MarketDataRequest.builder()
-                            .category(category)
-                            .symbol(symbol)
-                    .build());
-            String jsonResponse = objectMapper.writeValueAsString(response);
-            return objectMapper.readValue(jsonResponse, InstrumentInfoResponse.class);
+        String symbol = findTickerForSpot(tickerCode);
+        Object response = marketRestClient.getInstrumentsInfo(MarketDataRequest.builder()
+                .category(CategoryType.LINEAR)
+                .symbol(symbol)
+                .build());
+        String jsonResponse = objectMapper.writeValueAsString(response);
+        return objectMapper.readValue(jsonResponse, InstrumentInfoResponse.class);
     }
 
     @Override
     public List<TrvOrder> getOrdersByTicker(String tickerCode) {
-        try {
-            String symbol = findTickerForSpot(tickerCode);
-            CategoryType category = getCategoryForTicker(symbol);
-            TradeOrderRequest request = TradeOrderRequest.builder()
-                    .category(category)
-                    .symbol(symbol)
-                    .build();
-
-            Object response = tradeRestClient.getOpenOrders(request);
-            String jsonResponse = objectMapper.writeValueAsString(response);
-            OpenOrdersResponse ordersResponse = objectMapper.readValue(jsonResponse, OpenOrdersResponse.class);
-
-            if (ordersResponse.getResult() != null &&
-                    ordersResponse.getResult().getList() != null) {
-
-                return ordersResponse.getResult().getList().stream()
-                        .map(this::convertDtoToTrvOrder)
-                        .toList();
-            }
-        } catch (Exception e) {
-            log.error("Error fetching orders for ticker: {}", tickerCode, e);
-        }
-        return List.of();
+        Object response = tradeRestClient.getOpenOrders(TradeOrderRequest.builder()
+                .category(CategoryType.LINEAR)
+                .symbol(findTickerForSpot(tickerCode))
+                .build());
+        OpenOrdersResponse ordersResponse = ObjectMapperUtils.readValue(ObjectMapperUtils.writeValue(response), OpenOrdersResponse.class);
+        return ordersResponse.getResult().getList().stream()
+                .map(this::convertDtoToTrvOrder)
+                .toList();
     }
 
     @Override
     public TrvPosition getAvgPositionByTicker(String tickerCode) {
-        try {
-//            positionRestClient.getPositionInfo(PositionDataRequest.builder().build());
-            String symbol = findTickerForSpot(tickerCode);
-            CategoryType category = getCategoryForTicker(symbol);
-            if (category == CategoryType.SPOT) {
-                // Для спота позиций нет, возвращаем null
-                return null;
-            }
-            // Для деривативов используем эндпоинт позиций
-            Object response = tradeRestClient.getOpenOrders(TradeOrderRequest.builder()
-                            .category(category)
-                            .symbol(symbol)
-                    .build());
-
-            String jsonResponse = objectMapper.writeValueAsString(response);
-            PositionResponse positionResponse = objectMapper.readValue(jsonResponse, PositionResponse.class);
-
-            if (positionResponse.getResult() != null &&
-                    positionResponse.getResult().getList() != null &&
-                    !positionResponse.getResult().getList().isEmpty()) {
-
-                PositionResponse.Position position = positionResponse.getResult().getList().get(0);
-                if (position.getAvgPrice() != null &&
-                        position.getSize() != null &&
-                        position.getSide() != null) {
-
-                    return TrvPosition.builder()
-                            .tickerCode(tickerCode)
-                            .price(BigDecimal.valueOf(Double.parseDouble(position.getAvgPrice())))
-                            .lot(Integer.parseInt(position.getSize()))
-                            .direction("Buy".equalsIgnoreCase(position.getSide()) ? 1 : -1)
-                            .build();
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error fetching position for ticker: {}", tickerCode, e);
-        }
-        return null;
+        var res = bybitApiPositionRestClient.getPositionInfo(PositionDataRequest.builder()
+                .baseCoin(tickerCode.split("USDT")[0])
+                .settleCoin("USDT")
+                .category(CategoryType.LINEAR)
+                .build());
+        var positions = ObjectMapperUtils.readValue(ObjectMapperUtils.writeValue(res), PositionResponse.class);
+        return positions.result().list().stream()
+                .filter(x -> Objects.equals(x.symbol(), tickerCode.split("@")[0]))
+                .findFirst()
+                .map(p -> TrvPosition.builder()
+                        .tickerCode(tickerCode)
+                        .price(p.avgPrice())
+                        .lot(p.size().intValue())
+                        .direction("Buy".equalsIgnoreCase(p.side()) ? 1 : -1)
+                        .build())
+                .orElse(null);
     }
 
-    public String setOrder(TrvOrder order) {
-        try {
-            var requestBuilder = TradeOrderRequest.builder()
-                    .category(getCategoryForTicker(order.tickerCode()))
-                    .symbol(order.tickerCode())
-                    .side(order.direction() > 0 ? Side.BUY : Side.SELL)
-                    .orderType(TradeOrderType.LIMIT)
-                    .qty(String.valueOf(order.lot()))
-                    .price(String.valueOf(order.price()))
-                    .timeInForce(TimeInForce.GOOD_TILL_CANCEL);
-            if (order.activation() != null && order.activation().doubleValue() > 0) {
-                requestBuilder.triggerPrice(order.activation().toString());
-                requestBuilder.triggerDirection(order.direction() > 0 ? 2 : 1);
-            }
-            TradeOrderRequest request = requestBuilder.build();
-            Object response = tradeRestClient.createOrder(request);
-            String jsonResponse = objectMapper.writeValueAsString(response);
-            CreateOrderResponse orderResponse = objectMapper.readValue(jsonResponse, CreateOrderResponse.class);
-            if (orderResponse.getResult() != null && orderResponse.getResult().getOrderId() != null) {
-                return orderResponse.getResult().getOrderId();
-            }
-            throw new IllegalStateException("нет orderId");
-        } catch (Exception e) {
-            log.error("Error setting order", e);
-            throw new RuntimeException(e);
-        }
-    }
-    private boolean isAllowedTicker(String tickerCode) {
-        var value = tickerCode.split("@")[0];
-        return value.endsWith("USDC") || value.endsWith("USDT");
-    }
-
+    @SneakyThrows
     @Override
     public boolean openPosition(Signals signal) {
-        try {
-            if (!isAllowedTicker(signal.getTickerCode())) {
-                throw new IllegalStateException("unavailable ticker to trade. " + signal);
-            }
-            Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
-            Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode())
-                    .orElse(spotTicker);
-            float balance = getBalance();
-            int limits = tradevisorProperties.trade().limits(); // риск в процентах от капитала
-            double maxRiskInMoney = balance * limits / 100;
-            var instrumentInfo = getInstrumentInfo(tradeTicker.getTicker());
-            InstrumentInfoResponse.Instrument instrument = instrumentInfo.getResult().getList().get(0);
-            var tickSize = instrument.getPriceFilter().getTickSize();
-            var lotStep = instrument.getLotSizeFilter().getMinOrderQty();
-            var normalizedPriceOpen = roundPrice(signal.getPriceOpen(), new BigDecimal(tickSize), signal.getDirection());
-            var normalizedSL = roundPrice(signal.getStopLoss(), new BigDecimal(tickSize), signal.getDirection());
-            var normalizedTP = roundPrice(signal.getTakeProfit(), new BigDecimal(tickSize), signal.getDirection());
-            double availableLots = (double) balance * LEVERAGE / normalizedPriceOpen.doubleValue();
-            double riskLots =  maxRiskInMoney / normalizedSL.subtract(normalizedPriceOpen).abs().doubleValue();
-            int tradeLots = roundPrice(
-                    (float) Math.min(availableLots, riskLots),
-                    new BigDecimal(lotStep),
-                    1)
-                    .intValue();
-            if (tradeLots == 0) {
-                log.warn("Недостаточно средств для открытия позиции. Signal: {}", signal);
-                return false;
-            }
-            String orderId = setOrder(TrvOrder.builder()
-                    .tickerCode(tradeTicker.getTicker()) // для выставления позиций используется ticker "без @mic"
-                    .direction(signal.getDirection())
-                    .price(normalizedPriceOpen)
-                    .lot(tradeLots)
-                    .isGtc(true)
-                    .build());
-            if (orderId.isEmpty()) {
-                log.error("Не удалось открыть основную позицию. Signal: {}", signal);
-                return false;
-            }
-            // Выставление стоп-лосса
-            String stopLossOrderId = setOrder(TrvOrder.builder()
-                    .tickerCode(tradeTicker.getTicker())
-                    .direction(signal.getDirection() > 0 ? -1 : 1) // Противоположное направление для закрытия
-                    .activation(normalizedSL)
-                    .price(normalizedSL)
-                    .lot(tradeLots)
-                    .isGtc(true)
-                    .build());
-            // Выставление тейк-профита
-            String takeProfitOrderId = setOrder(TrvOrder.builder()
-                    .tickerCode(tradeTicker.getTicker())
-                    .direction(signal.getDirection() > 0 ? -1 : 1) // Противоположное направление для закрытия
-                    .activation(normalizedTP)
-                    .price(normalizedTP)
-                    .lot(tradeLots)
-                    .isGtc(true)
-                    .build());
-            return !stopLossOrderId.isEmpty() && !takeProfitOrderId.isEmpty();
-        } catch (Exception e) {
-            log.error("Error opening position for signal: {}", signal, e);
+        Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
+        Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode())
+                .orElse(spotTicker);
+        float balance = getBalance();
+        int limits = tradevisorProperties.trade().limits(); // риск в процентах от капитала
+        double maxRiskInMoney = balance * limits / 100;
+        var instrumentInfo = getInstrumentInfo(tradeTicker.getTicker());
+        InstrumentInfoResponse.Instrument instrument = instrumentInfo.getResult().getList().get(0);
+        var tickSize = instrument.getPriceFilter().getTickSize();
+        var lotStep = instrument.getLotSizeFilter().getMinOrderQty();
+        var normalizedPriceOpen = roundPrice(signal.getPriceOpen(), new BigDecimal(tickSize), signal.getDirection());
+        var normalizedSL = roundPrice(signal.getStopLoss(), new BigDecimal(tickSize), signal.getDirection());
+        var normalizedTP = roundPrice(signal.getTakeProfit(), new BigDecimal(tickSize), signal.getDirection());
+        double availableLots = (double) balance * LEVERAGE / normalizedPriceOpen.doubleValue();
+        double riskLots = maxRiskInMoney / normalizedSL.subtract(normalizedPriceOpen).abs().doubleValue();
+        int tradeLots = roundPrice(
+                (float) Math.min(availableLots, riskLots),
+                new BigDecimal(lotStep),
+                1)
+                .intValue();
+        if (tradeLots == 0) {
+            log.warn("Недостаточно средств для открытия позиции. Signal: {}", signal);
             return false;
         }
+        var request = TradeOrderRequest.builder()
+                .category(CategoryType.LINEAR)
+                .symbol(signal.getTickerCode().split("@")[0])
+                .side(signal.getDirection() > 0 ? Side.BUY : Side.SELL)
+                .orderType(TradeOrderType.LIMIT)
+                .qty(String.valueOf(tradeLots))
+                .price(String.valueOf(normalizedPriceOpen))
+                .timeInForce(TimeInForce.GOOD_TILL_CANCEL)
+                .takeProfit(String.valueOf(normalizedTP))
+                .stopLoss(String.valueOf(normalizedSL))
+                .tpOrderType(TradeOrderType.LIMIT)
+                .slOrderType(TradeOrderType.LIMIT)
+                .tpLimitPrice(String.valueOf(normalizedTP))
+                .slLimitPrice(String.valueOf(normalizedSL))
+                .tpslMode(TpslMode.PARTIAL.name())
+                .tpTriggerBy(TriggerBy.MARK_PRICE)
+                .slTriggerBy(TriggerBy.MARK_PRICE)
+                .positionIdx(PositionIdx.ONE_WAY_MODE)
+                .build();
+        Object response = tradeRestClient.createOrder(request);
+        String jsonResponse = objectMapper.writeValueAsString(response);
+        CreateOrderResponse orderResponse = objectMapper.readValue(jsonResponse, CreateOrderResponse.class);
+        if (orderResponse.getResult() != null && orderResponse.getResult().getOrderId() != null) {
+            log.info("order has been set. signal: {} orderId: {}", signal, orderResponse.getResult().getOrderId());
+            return true;
+        }
+        throw new IllegalStateException("нет orderId");
     }
 
     @Override
     public void deleteOrders(String tickerCode) {
         try {
             String symbol = findTickerForSpot(tickerCode);
-            CategoryType category = getCategoryForTicker(symbol);
             TradeOrderRequest request = TradeOrderRequest.builder()
-                    .category(category)
+                    .category(CategoryType.LINEAR)
                     .symbol(symbol)
                     .build();
             tradeRestClient.cancelAllOrder(request);
         } catch (Exception e) {
             log.error("Error deleting orders for ticker: {}", tickerCode, e);
-        }
-    }
-
-    private CategoryType getCategoryForTicker(String symbol) {
-        if (!symbol.contains("-") && (symbol.endsWith("USDT") || symbol.endsWith("USDC"))) {
-            return CategoryType.SPOT;
-        } else if (symbol.endsWith("USDT") || symbol.endsWith("USDC") || symbol.endsWith("PERP")) {
-            return CategoryType.LINEAR;
-        } else {
-            return CategoryType.INVERSE;
         }
     }
 
@@ -274,12 +185,11 @@ public class BybitTradeClientImpl implements TradeClient {
         boolean isGtc = "GTC".equalsIgnoreCase(order.getTimeInForce());
         String status = order.getOrderStatus() != null ? order.getOrderStatus() : "";
         String tickerCode = order.getSymbol() != null ? order.getSymbol() + "@bybit" : "";
-
         return TrvOrder.builder()
                 .tickerCode(tickerCode)
                 .direction(direction)
                 .price(BigDecimal.valueOf(price))
-                .lot((int)quantity)
+                .lot((int) quantity)
                 .isGtc(isGtc)
                 .status(status)
                 .build();
