@@ -1,6 +1,9 @@
 package ru.grnk.tradevisor.common.repository.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.*;
 
 import java.io.Serializable;
@@ -12,7 +15,6 @@ import java.io.Serializable;
 @Table(name = "tickers", schema = "tradevisor")
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class Tickers implements Serializable {
 
     @Id
@@ -42,4 +44,19 @@ public class Tickers implements Serializable {
 
     @Column(name = "version")
     private Integer version;
+
+    @Override
+    public String toString() {
+        return "Tickers{" +
+                "tickerCode='" + tickerCode + '\'' +
+                ", ticker='" + ticker + '\'' +
+                ", exchange='" + exchange + '\'' +
+                ", spotTickerCode='" + spotTickerCode + '\'' +
+                ", description='" + description + '\'' +
+                ", currency='" + currency + '\'' +
+                ", provider='" + provider + '\'' +
+                ", status='" + status + '\'' +
+                ", version=" + version +
+                '}';
+    }
 }
