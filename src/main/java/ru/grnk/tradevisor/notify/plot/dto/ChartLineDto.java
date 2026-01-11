@@ -14,4 +14,16 @@ public record ChartLineDto(
         String label,
         String color
 ) {
+    @Override
+    public String toString() {
+        return "ChartLineDto{" +
+                "fromPrice=" + fromPrice +
+                ", toPrice=" + toPrice +
+                ", fromUtc=" + fromUtc +
+                ", toUtc=" + toUtc +
+                ", style='" + style + '\'' +
+                ", label='" + label + '\'' +
+                ", color='" + color + '\'' +
+                '}';
+    }
 }

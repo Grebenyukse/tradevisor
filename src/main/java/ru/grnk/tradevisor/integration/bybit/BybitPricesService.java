@@ -3,7 +3,7 @@ package ru.grnk.tradevisor.integration.bybit;
 import com.bybit.api.client.domain.CategoryType;
 import com.bybit.api.client.domain.market.MarketInterval;
 import com.bybit.api.client.domain.market.request.MarketDataRequest;
-import com.bybit.api.client.restApi.BybitApiMarketRestClient;
+import com.bybit.api.client.restApi.*;
 import com.google.protobuf.Timestamp;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -19,6 +19,7 @@ import ru.grnk.tradevisor.common.repository.entity.MarketData;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.common.util.ObjectMapperUtils;
 import ru.grnk.tradevisor.integration.bybit.dto.BybitCandlesResponse;
+import ru.grnk.tradevisor.integration.bybit.dto.BybitTickerLastPricesResponse;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -38,7 +39,9 @@ public class BybitPricesService implements PricesLoader {
     private final TickersRepository tickersRepository;
     private final TradevisorProperties tradevisorProperties;
     private final BybitApiMarketRestClient marketRestClient;
-
+    private final BybitApiAssetRestClient assetRestClient;
+    private final BybitApiUserRestClient bybitApiUserRestClient;
+    private final BybitApiAccountRestClient bybitApiAccountRestClient;
 
     @SneakyThrows
     @Override
@@ -71,12 +74,14 @@ public class BybitPricesService implements PricesLoader {
         return "bybit";
     }
 
+    @SneakyThrows
     @Override
     public void initTickers() {
         log.info("start loading tickers for bybit");
         var tickers = bybitClient.fetchAllTickers();
         tickers.stream()
                 .map(BybitPricesService::from)
+                .filter(x -> x.getTicker().endsWith("USDT")) // торгуем только прямые инструменты
                 .forEach(tickersRepository::saveInstrument);
     }
 
@@ -94,7 +99,7 @@ public class BybitPricesService implements PricesLoader {
         return Tickers.builder()
                 .ticker(bybitTicker.symbol())
                 .tickerCode(bybitTicker.symbol() + "@" + "bybit")
-                .currency(bybitTicker.baseCoin())
+                .currency(bybitTicker.quoteCoin())
                 .exchange("bybit")
                 .description(bybitTicker.status())
                 .provider("bybit")

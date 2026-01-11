@@ -1,9 +1,7 @@
 package ru.grnk.tradevisor.integration.bybit;
 
 import com.bybit.api.client.config.BybitApiConfig;
-import com.bybit.api.client.restApi.BybitApiAssetRestClient;
-import com.bybit.api.client.restApi.BybitApiMarketRestClient;
-import com.bybit.api.client.restApi.BybitApiTradeRestClient;
+import com.bybit.api.client.restApi.*;
 import com.bybit.api.client.service.BybitApiClientFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,5 +32,20 @@ public class BybitConfiguration {
     @Bean
     public BybitApiMarketRestClient bybitApiMarketRestClient(BybitApiClientFactory factory) {
         return factory.newMarketDataRestClient();
+    }
+
+    @Bean
+    public BybitApiAccountRestClient bybitApiAccountRestClient(BybitApiClientFactory factory) {
+        return factory.newAccountRestClient();
+    }
+
+    @Bean
+    public BybitApiUserRestClient bybitApiUserRestClient(BybitApiClientFactory factory) {
+        return factory.newUserRestClient();
+    }
+
+    @Bean
+    public BybitApiPositionRestClient bybitApiPositionRestClient(BybitApiClientFactory factory) {
+        return factory.newPositionRestClient();
     }
 }

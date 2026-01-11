@@ -2,13 +2,14 @@ package ru.grnk.tradevisor.integration.bybit;
 
 import com.bybit.api.client.domain.CategoryType;
 import com.bybit.api.client.domain.TradeOrderType;
+import com.bybit.api.client.domain.account.AccountType;
+import com.bybit.api.client.domain.account.request.AccountDataRequest;
 import com.bybit.api.client.domain.market.request.MarketDataRequest;
+import com.bybit.api.client.domain.position.request.PositionDataRequest;
 import com.bybit.api.client.domain.trade.Side;
 import com.bybit.api.client.domain.trade.TimeInForce;
 import com.bybit.api.client.domain.trade.request.TradeOrderRequest;
-import com.bybit.api.client.restApi.BybitApiAssetRestClient;
-import com.bybit.api.client.restApi.BybitApiMarketRestClient;
-import com.bybit.api.client.restApi.BybitApiTradeRestClient;
+import com.bybit.api.client.restApi.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -18,10 +19,9 @@ import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
-import ru.grnk.tradevisor.integration.bybit.dto.CreateOrderResponse;
-import ru.grnk.tradevisor.integration.bybit.dto.InstrumentInfoResponse;
-import ru.grnk.tradevisor.integration.bybit.dto.OpenOrdersResponse;
-import ru.grnk.tradevisor.integration.bybit.dto.PositionResponse;
+import ru.grnk.tradevisor.common.util.ObjectMapperUtils;
+import ru.grnk.tradevisor.integration.bybit.dto.*;
+import ru.grnk.tradevisor.integration.finam.dto.Position;
 import ru.grnk.tradevisor.trade.TradeClient;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
@@ -43,6 +43,8 @@ public class BybitTradeClientImpl implements TradeClient {
     private final BybitApiTradeRestClient tradeRestClient;
     private final BybitApiAssetRestClient assetRestClient;
     private final BybitApiMarketRestClient marketRestClient;
+    private final BybitApiAccountRestClient bybitApiAccountRestClient;
+    private final BybitApiPositionRestClient positionRestClient;
 
     @Override
     public String provider() {
@@ -50,7 +52,11 @@ public class BybitTradeClientImpl implements TradeClient {
     }
 
     public Float getBalance() {
-        return tradevisorProperties.integration().bybit().balance().floatValue();
+        var resp = bybitApiAccountRestClient.getWalletBalance(AccountDataRequest.builder()
+                        .accountType(AccountType.UNIFIED)
+                .build());
+        var accountInfo = ObjectMapperUtils.readValue(ObjectMapperUtils.writeValue(resp), BybitAccountInfoResponse.class);
+        return accountInfo.result().list().stream().findFirst().orElseThrow().totalAvailableBalance().floatValue();
     }
 
     public String findTickerForSpot(String tickerCode) {
@@ -99,6 +105,7 @@ public class BybitTradeClientImpl implements TradeClient {
     @Override
     public TrvPosition getAvgPositionByTicker(String tickerCode) {
         try {
+//            positionRestClient.getPositionInfo(PositionDataRequest.builder().build());
             String symbol = findTickerForSpot(tickerCode);
             CategoryType category = getCategoryForTicker(symbol);
             if (category == CategoryType.SPOT) {
@@ -164,10 +171,17 @@ public class BybitTradeClientImpl implements TradeClient {
             throw new RuntimeException(e);
         }
     }
+    private boolean isAllowedTicker(String tickerCode) {
+        var value = tickerCode.split("@")[0];
+        return value.endsWith("USDC") || value.endsWith("USDT");
+    }
 
     @Override
     public boolean openPosition(Signals signal) {
         try {
+            if (!isAllowedTicker(signal.getTickerCode())) {
+                throw new IllegalStateException("unavailable ticker to trade. " + signal);
+            }
             Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
             Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode())
                     .orElse(spotTicker);
@@ -244,32 +258,13 @@ public class BybitTradeClientImpl implements TradeClient {
     }
 
     private CategoryType getCategoryForTicker(String symbol) {
-        if (symbol.endsWith("USDT") && !symbol.contains("-")) {
+        if (!symbol.contains("-") && (symbol.endsWith("USDT") || symbol.endsWith("USDC"))) {
             return CategoryType.SPOT;
-        } else if (symbol.endsWith("USDT") || symbol.endsWith("PERP")) {
+        } else if (symbol.endsWith("USDT") || symbol.endsWith("USDC") || symbol.endsWith("PERP")) {
             return CategoryType.LINEAR;
         } else {
             return CategoryType.INVERSE;
         }
-    }
-
-    private int calculateTradeLots(Signals signal, Tickers ticker, CategoryType category) {
-        float balance = getBalance();
-        int limits = tradevisorProperties.trade().limits(); // риск в процентах от капитала
-        double maxRiskInMoney = balance * limits / 100;
-        var instrumentInfo = getInstrumentInfo(ticker.getTicker());
-        InstrumentInfoResponse.Instrument instrument = instrumentInfo.getResult().getList().get(0);
-        var tickSize = instrument.getPriceFilter().getTickSize();
-        var lotStep = instrument.getLotSizeFilter().getMinOrderQty();
-        var normalizedPriceOpen = roundPrice(signal.getPriceOpen(), new BigDecimal(tickSize), signal.getDirection());
-        var normalizedSL = roundPrice(signal.getStopLoss(), new BigDecimal(tickSize), signal.getDirection());
-        double availableLots = (double) balance * LEVERAGE / normalizedPriceOpen.doubleValue();
-        double riskLots =  maxRiskInMoney / normalizedSL.subtract(normalizedPriceOpen).abs().doubleValue();
-        return roundPrice(
-                (float) Math.min(availableLots, riskLots),
-                new BigDecimal(lotStep),
-                1)
-                .intValue();
     }
 
     private TrvOrder convertDtoToTrvOrder(OpenOrdersResponse.Order order) {

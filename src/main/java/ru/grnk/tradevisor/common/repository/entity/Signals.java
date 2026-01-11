@@ -16,7 +16,6 @@ import java.util.List;
 @Table(name = "signals", schema = "tradevisor")
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class Signals implements Serializable {
 
     @Id
@@ -58,4 +57,28 @@ public class Signals implements Serializable {
     @ColumnTransformer(write = "?::jsonb")
     private List<ChartLineDto> strategyProps;
 
+
+    @Override
+    public String toString() {
+        return "Signals{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", tickerCode='" + tickerCode + '\'' +
+                ", direction=" + direction +
+                ", priceOpen=" + priceOpen +
+                ", stopLoss=" + stopLoss +
+                ", takeProfit=" + takeProfit +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", status='" + status + '\'' +
+                ", strategyProps=" + (strategyProps != null ?
+                "[" + strategyProps.stream()
+                        .map(dto -> dto != null ? dto.toString() : "null")
+                        .limit(3)
+                        .collect(java.util.stream.Collectors.joining(", ")) +
+                        (strategyProps.size() > 3 ? ", ... and " + (strategyProps.size() - 3) + " more" : "") +
+                        "]" : "null") +
+                '}';
+    }
 }
