@@ -70,7 +70,7 @@ app:
     fibo: true
     bars_required_to_calculate_fibo: 150
     gap: false
-    min_touches_count: 1
+    min_touches_count: 2
     batch-size: 1000
   trade:
     delay: PT1M
