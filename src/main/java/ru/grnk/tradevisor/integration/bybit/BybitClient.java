@@ -21,7 +21,7 @@ public class BybitClient {
         var baseUrl = tradevisorProperties.integration().bybit().url();
         String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .path("/v5/market/instruments-info")
-                .queryParam("category", "spot")
+                .queryParam("category", "linear")
                 .toUriString();
         BybitTickerRs resp = restTemplate.getForObject(url, BybitTickerRs.class);
         if (resp == null || resp.retCode() != 0) {
