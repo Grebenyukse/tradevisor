@@ -1,0 +1,32 @@
+# Build artifacts
+build/
+target/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+
+# Git files
+.git/
+.gitignore
+
+# Log files
+*.log
+
+# Environment files
+.env
+
+# Test files
+src/test/
+
+# Gradle
+.gradle/
+!gradle/
+!gradlew
+!gradlew.bat
+
+# Documentation
+README.md
+readme.md
