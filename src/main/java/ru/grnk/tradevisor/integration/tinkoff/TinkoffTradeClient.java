@@ -46,7 +46,9 @@ public class TinkoffTradeClient implements TradeClient {
     private final AtomicReference<String> tradingAccountId = new AtomicReference<>();
 
     private void init() {
-        if (tradingAccountId.get() != null) return;
+        if (tradingAccountId.get() != null) {
+            throw new IllegalStateException("no trading account id defined");
+        }
         var accountsResponse = investApi.getUserService().getAccountsSync(AccountStatus.ACCOUNT_STATUS_OPEN);
         String accountId = accountsResponse.stream()
                 .filter(acc -> acc.getType() == AccountType.ACCOUNT_TYPE_TINKOFF)
@@ -177,6 +179,10 @@ public class TinkoffTradeClient implements TradeClient {
                 .stream()
                 .findFirst()
                 .orElseThrow();
+        if (tInstrument.getForQualInvestorFlag()) {
+            log.warn("for qualified investors only. Manual execution only. signal: {}", signal);
+            return false;
+        }
         return switch (tInstrument.getInstrumentKind()) {
             case INSTRUMENT_TYPE_FUTURES -> openFuturePosition(signal);
             case INSTRUMENT_TYPE_SHARE -> openSharePosition(signal);

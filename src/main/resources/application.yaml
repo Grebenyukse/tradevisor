@@ -138,7 +138,6 @@ app:
       mt5-python-client-url: http://localhost:8001
       open-position-client: grpc # mt5py для открытия через metatrader5, grpc для открытие через finam api
     bybit:
-      balance: 1000
       enabled: true
       key: ${BYBIT_KEY}
       secret: ${BYBIT_SECRET}

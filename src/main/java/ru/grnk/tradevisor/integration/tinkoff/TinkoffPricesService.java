@@ -11,11 +11,15 @@ import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
-import ru.tinkoff.piapi.contract.v1.*;
+import ru.tinkoff.piapi.contract.v1.CandleInterval;
+import ru.tinkoff.piapi.contract.v1.HistoricCandle;
+import ru.tinkoff.piapi.contract.v1.LastPrice;
+import ru.tinkoff.piapi.contract.v1.Share;
 import ru.tinkoff.piapi.core.InvestApi;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static ru.grnk.tradevisor.collect.prices.BindTradeFuturesService.TRV_PROVIDER_TINKOFF;
 import static ru.grnk.tradevisor.integration.tinkoff.FutureUtils.isNearestFutureCode;
@@ -26,7 +30,6 @@ import static ru.grnk.tradevisor.integration.tinkoff.FutureUtils.isNearestFuture
 @ConditionalOnProperty(value = "app.collect.prices.tinkoff")
 public class TinkoffPricesService implements PricesLoader {
 
-    public static final String TRV_ASSET_TYPE_SHARES = "shares";
     public static final int ENDLESS_FUTURES_CODE = 4;
     private final InvestApi investApi;
     private final MarketDataRepository marketDataRepository;
@@ -37,8 +40,10 @@ public class TinkoffPricesService implements PricesLoader {
     @SneakyThrows
     @Override
     public void initTickers() {
-//        торговать на тиньке очень дорого из-за высоких коммиссий. используем удобное API для биндинга spot-futures.
-//        загружаем только те споты, по которым есть фьючи. фьючи будут загружаться под провайдером - финам.
+        investApi.getInstrumentsService().getAllShares().get(10, TimeUnit.SECONDS).stream()
+                .filter(Share::getForQualInvestorFlag)
+                .map(TinkoffPricesService::from)
+                .forEach(tickersRepository::saveInstrument);
         bindTradeFuturesService.initTickers();
     }
 
@@ -135,17 +140,6 @@ public class TinkoffPricesService implements PricesLoader {
                 .description(share.getName())
                 .exchange(share.getExchange())
                 .currency(share.getCurrency())
-                .provider(TRV_PROVIDER_TINKOFF)
-                .build();
-    }
-
-    private static Tickers from(Currency currency) {
-        return Tickers.builder()
-                .tickerCode(currency.getUid())
-                .ticker(currency.getTicker())
-                .description(currency.getName())
-                .exchange(currency.getExchange())
-                .currency(currency.getCurrency())
                 .provider(TRV_PROVIDER_TINKOFF)
                 .build();
     }

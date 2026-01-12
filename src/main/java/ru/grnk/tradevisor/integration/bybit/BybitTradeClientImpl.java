@@ -126,11 +126,10 @@ public class BybitTradeClientImpl implements TradeClient {
         var normalizedTP = roundPrice(signal.getTakeProfit(), new BigDecimal(tickSize), signal.getDirection());
         double availableLots = (double) balance * LEVERAGE / normalizedPriceOpen.doubleValue();
         double riskLots = maxRiskInMoney / normalizedSL.subtract(normalizedPriceOpen).abs().doubleValue();
-        int tradeLots = roundPrice(
+        double tradeLots = roundPrice(
                 (float) Math.min(availableLots, riskLots),
                 new BigDecimal(lotStep),
-                1)
-                .intValue();
+                1).doubleValue();
         if (tradeLots == 0) {
             log.warn("Недостаточно средств для открытия позиции. Signal: {}", signal);
             return false;
