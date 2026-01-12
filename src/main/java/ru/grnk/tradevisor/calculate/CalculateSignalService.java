@@ -99,7 +99,10 @@ public class CalculateSignalService {
                     var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode(), 30);
                     strategies.forEach(s -> {
                         var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
-                        if (candles.size() < s.barsRequiredToCalcStrategy()) return;
+                        if (candles.size() < s.barsRequiredToCalcStrategy()) {
+                            log.debug("not enough bars to calc strategy fibo. requires: {}. candles.size: {}. ticker: {}", s.barsRequiredToCalcStrategy(), candles.size(), t.getTicker());
+                            return;
+                        }
                         if (candles.stream().max(Comparator.comparing(MarketData::getTime))
                                 .map(MarketData::getTime)
                                 .filter(MarketDataValidator::isActualTimeValid)

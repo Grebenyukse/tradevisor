@@ -1,6 +1,7 @@
 package ru.grnk.tradevisor.integration.finam;
 
 import com.google.type.Decimal;
+import grpc.tradeapi.v1.Side;
 import grpc.tradeapi.v1.accounts.AccountsServiceGrpc;
 import grpc.tradeapi.v1.accounts.GetAccountRequest;
 import grpc.tradeapi.v1.auth.AuthRequest;
@@ -8,7 +9,6 @@ import grpc.tradeapi.v1.auth.AuthServiceGrpc;
 import grpc.tradeapi.v1.orders.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import ru.grnk.tradevisor.collect.prices.LastTickLoader;
@@ -69,8 +69,10 @@ public class FinamTradeClient implements TradeClient {
                 .getOrdersList()
                 .stream()
                 .filter(x -> !NOT_ACTIVE_ORDER_STATUSES.contains(x.getStatus()))
+                .filter(x -> x.getOrder().getSymbol().equals(tickerCode))
                 .map(x -> TrvOrder.builder()
-                        .direction(1)
+                        .tickerCode(tickerCode)
+                        .direction(x.getOrder().getSide() == Side.SIDE_BUY ? 1: -1)
                         .build())
                 .toList();
         return orders;

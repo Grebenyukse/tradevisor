@@ -55,7 +55,7 @@ public class BybitPricesService implements PricesLoader {
         }
         var response = marketRestClient.getMarketLinesData(MarketDataRequest.builder()
                 .symbol(ticker.getTicker())
-                .category(CategoryType.SPOT)
+                .category(CategoryType.LINEAR)
                 .startTime(startTime.getSeconds())
                 .endTime(endTime.getSeconds())
                 .marketInterval(MarketInterval.FOUR_HOURLY)

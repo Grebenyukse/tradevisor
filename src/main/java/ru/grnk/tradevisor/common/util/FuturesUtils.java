@@ -24,17 +24,7 @@ public class FuturesUtils {
      * @return true если фьючерс актуален, false otherwise
      */
     public static boolean isFuturesActual(Tickers ticker) {
-        return isFuturesActual(ticker.getTickerCode(), LocalDate.now());
-    }
-
-    /**
-     * Проверяет, является ли фьючерс актуальным (до экспирации не меньше 3 недель)
-     *
-     * @param tickerCode код тикера фьючерса
-     * @return true если фьючерс актуален, false otherwise
-     */
-    public static boolean isFuturesActual(String tickerCode) {
-        return isFuturesActual(tickerCode, LocalDate.now());
+        return isFuturesActual(ticker.getTicker(), LocalDate.now());
     }
 
     /**
