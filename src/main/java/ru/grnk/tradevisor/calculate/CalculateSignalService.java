@@ -99,13 +99,14 @@ public class CalculateSignalService {
                     var lastTickTime = marketDataRepository.getLatestTickTime(t.getTickerCode(), 30);
                     strategies.forEach(s -> {
                         var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
+                        if (candles.size() < s.barsRequiredToCalcStrategy()) return;
                         if (candles.stream().max(Comparator.comparing(MarketData::getTime))
                                 .map(MarketData::getTime)
                                 .filter(MarketDataValidator::isActualTimeValid)
                                 .isEmpty()) {
                             log.warn("свечи содержат слишком старые котировки. невозможно использовать для выставления позиции. тикер: {}", t);
+                            return;
                         }
-                        if (candles.size() < s.barsRequiredToCalcStrategy()) return;
                         TrvCalculationResult result = s.calculate(candles);
                         if (result.direction() != TradingDirection.UNKNOWN) {
                             String signalDescription = String.join(". ",

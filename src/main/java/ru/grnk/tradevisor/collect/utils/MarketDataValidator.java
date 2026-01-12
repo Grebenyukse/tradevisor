@@ -21,7 +21,7 @@ public class MarketDataValidator {
         Duration duration = Duration.between(actualTime, referenceTime);
 
         // Если разница больше 6 часов (360 минут), то невалидно
-        return !duration.isNegative() && duration.toHours() <= 6;
+        return !duration.isNegative() && duration.toHours() <= 30;
     }
 
     /**
