@@ -17,4 +17,17 @@ public interface MarketDataJpa extends JpaRepository<MarketData, MarketData.Comp
         ON CONFLICT (ticker_code, time) DO NOTHING
         """, nativeQuery = true)
     void insertIgnore(String tickerCode, OffsetDateTime time, Float open, Float high, Float low, Float close);
+
+    @Modifying
+    @Query(value = """
+    INSERT INTO tradevisor.market_data (ticker_code, time, open, high, low, close)
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+    ON CONFLICT (ticker_code, time) DO UPDATE SET
+        open = EXCLUDED.open,
+        high = EXCLUDED.high,
+        low = EXCLUDED.low,
+        close = EXCLUDED.close
+    """, nativeQuery = true)
+    void insertOverwrite(String tickerCode, OffsetDateTime time, Float open, Float high, Float low, Float close);
+
 }

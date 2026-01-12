@@ -89,7 +89,7 @@ public class MarketDataRepository {
 
     @Transactional
     public void saveMarketData(HistoricCandle candle, String instrument_uid) {
-        marketDataRepo.insertIgnore(instrument_uid,
+        marketDataRepo.insertOverwrite(instrument_uid,
                 timeFrom(candle.getTime()),
                 floatFrom(candle.getOpen()),
                 floatFrom(candle.getHigh()),
@@ -100,7 +100,7 @@ public class MarketDataRepository {
 
     @Transactional
     public void batchInsertMarketData(List<MarketData> records) {
-        records.forEach(x -> marketDataRepo.insertIgnore(
+        records.forEach(x -> marketDataRepo.insertOverwrite(
                 x.getTickerCode(),
                 x.getTime(),
                 x.getOpen(),
@@ -112,7 +112,7 @@ public class MarketDataRepository {
 
     @Transactional
     public void saveMarketData(Bar bar, String instrument_uid) {
-        marketDataRepo.insertIgnore(
+        marketDataRepo.insertOverwrite(
                 instrument_uid,
                 timeFrom(bar.getTimestamp()),
                 floatFrom(bar.getOpen()),

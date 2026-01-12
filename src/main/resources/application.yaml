@@ -146,4 +146,4 @@ app:
     yahoofinance:
       enabled: true
       url: https://query1.finance.yahoo.com
-      history-max-depth-days: 10
+      history-max-depth-days: 100
