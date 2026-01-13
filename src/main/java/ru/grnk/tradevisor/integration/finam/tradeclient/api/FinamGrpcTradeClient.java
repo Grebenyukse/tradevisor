@@ -245,7 +245,9 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                 .getOrders(OrdersRequest.newBuilder()
                         .setAccountId(tradevisorProperties.integration().finam().accountId())
                         .build())
-                .getOrdersList();
+                .getOrdersList()
+                .stream().filter(x -> x.getStatus() != OrderStatus.ORDER_STATUS_CANCELED && x.getStatus() != OrderStatus.ORDER_STATUS_FILLED)
+                .toList();
         var moneyLocked = accountRs.getPositionsList()
                 .stream()
                 .collect(Collectors.groupingBy(Position::getSymbol))
@@ -315,7 +317,11 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
     }
 
     private static BigDecimal weightedAvg(BigDecimal val1, BigDecimal val1Q, BigDecimal val2, BigDecimal val2Q) {
-        return val1.multiply(val1Q).add(val2.multiply(val2Q)).divide(val1Q.add(val2Q), RoundingMode.HALF_EVEN);
+        BigDecimal divisor = val1Q.add(val2Q);
+        if (divisor.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        return val1.multiply(val1Q).add(val2.multiply(val2Q)).divide(divisor, RoundingMode.HALF_EVEN);
     }
 
     private static BigDecimal bigDecimalFromDecimal(Decimal decimal) {
@@ -324,7 +330,9 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
 
     private static String getOrderTypeByClientOrderId(String clientOrderId) {
         var parts = clientOrderId.split(CLIENT_ORDER_ID_SEPARATOR);
-        if (parts.length != 3) throw new IllegalStateException("неверный client orderid: " + clientOrderId);
+        if (parts.length != 3) {
+            throw new IllegalStateException("неверный client orderid: " + clientOrderId);
+        }
         return parts[1];
     }
 

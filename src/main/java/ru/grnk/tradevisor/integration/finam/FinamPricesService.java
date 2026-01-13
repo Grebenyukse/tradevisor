@@ -105,16 +105,39 @@ public class FinamPricesService implements PricesLoader {
 
     @Override
     public float getBidForTicker(String tickerCode) {
-        var res = marketDataServiceBlockingStub
-                .withCallCredentials(getBearer())
-                .lastQuote(QuoteRequest.newBuilder()
-                        .setSymbol(tickerCode)
-                .build());
-        return ofNullable(res)
-                .map(QuoteResponse::getQuote)
-                .map(Quote::getBid)
-                .map(Decimal::getValue)
-                .map(Float::parseFloat)
-                .orElseThrow();
+        int maxRetries = 10;
+        long delayMillis = 10_000; // 10 секунд
+        Exception lastException = null;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                log.info("getBidForTicker before. Attempt {}/{}. Ticker: {}", attempt, maxRetries, tickerCode);
+                var res = marketDataServiceBlockingStub
+                        .withCallCredentials(getBearer())
+                        .lastQuote(QuoteRequest.newBuilder()
+                                .setSymbol(tickerCode)
+                                .build());
+                log.info("getBidForTicker after. Attempt {}/{}. Ticker: {}", attempt, maxRetries, tickerCode);
+                return ofNullable(res)
+                        .map(QuoteResponse::getQuote)
+                        .map(Quote::getBid)
+                        .map(Decimal::getValue)
+                        .map(Float::parseFloat)
+                        .orElseThrow(() -> new RuntimeException("No value present for bid of ticker: " + tickerCode));
+
+            } catch (Exception e) {
+                lastException = e;
+                log.warn("Attempt {}/{} failed for ticker {}: {}", attempt, maxRetries, tickerCode, e.getMessage(), e);
+                if (attempt < maxRetries) {
+                    try {
+                        Thread.sleep(delayMillis);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Interrupted while waiting to retry", ie);
+                    }
+                }
+            }
+        }
+        log.error("All {} attempts failed for ticker {}", maxRetries, tickerCode, lastException);
+        throw new RuntimeException("Failed to get bid for ticker after " + maxRetries + " attempts.", lastException);
     }
 }
