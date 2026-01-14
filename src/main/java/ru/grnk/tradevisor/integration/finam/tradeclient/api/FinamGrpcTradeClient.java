@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import static java.util.Optional.ofNullable;
 import static ru.grnk.tradevisor.common.util.RoundPriceUtils.moneyToBigDecimal;
 import static ru.grnk.tradevisor.common.util.RoundPriceUtils.roundPrice;
+import static ru.grnk.tradevisor.integration.finam.FinamTradeClient.NOT_ACTIVE_ORDER_STATUSES;
 
 
 @Service
@@ -246,7 +247,8 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                         .setAccountId(tradevisorProperties.integration().finam().accountId())
                         .build())
                 .getOrdersList()
-                .stream().filter(x -> x.getStatus() != OrderStatus.ORDER_STATUS_CANCELED && x.getStatus() != OrderStatus.ORDER_STATUS_FILLED)
+                .stream()
+                .filter(x -> !NOT_ACTIVE_ORDER_STATUSES.contains(x.getStatus()))
                 .toList();
         var moneyLocked = accountRs.getPositionsList()
                 .stream()
@@ -254,7 +256,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
                 .values()
                 .stream()
                 .filter(x -> !x.isEmpty())
-                .map(positions -> getRiskForPosition(positions, orders))
+                .map(position -> getRiskForPosition(position, orders))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return balance.subtract(moneyLocked).multiply(DEVIATION).max(BigDecimal.ZERO);
     }
@@ -337,49 +339,63 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
     }
 
     private OrderState placeOpenPositionOrder(String symbol, BigDecimal priceOpen, int direction, int lot, int signalId) {
-        return ordersServiceBlockingStub.withCallCredentials(getBearer())
-                .placeOrder(Order.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .setSymbol(symbol)
-                        .setClientOrderId(getClientOrderId(signalId, CLIENT_ORDER_TYPE_PART_2_ORDER_TYPE_OP))
-                        .setLimitPrice(Decimal.newBuilder().setValue(priceOpen.toString()).build())
-                        .setType(OrderType.ORDER_TYPE_LIMIT)
-                        .setTimeInForce(TimeInForce.TIME_IN_FORCE_DAY)
-                        .setQuantity(Decimal.newBuilder().setValue(String.valueOf(lot)).build())
-                        .setSide(direction > 0 ? Side.SIDE_BUY : Side.SIDE_SELL)
-                        .build());
+        try {
+            return ordersServiceBlockingStub.withCallCredentials(getBearer())
+                    .placeOrder(Order.newBuilder()
+                            .setAccountId(tradevisorProperties.integration().finam().accountId())
+                            .setSymbol(symbol)
+                            .setClientOrderId(getClientOrderId(signalId, CLIENT_ORDER_TYPE_PART_2_ORDER_TYPE_OP))
+                            .setLimitPrice(Decimal.newBuilder().setValue(priceOpen.toString()).build())
+                            .setType(OrderType.ORDER_TYPE_LIMIT)
+                            .setTimeInForce(TimeInForce.TIME_IN_FORCE_DAY)
+                            .setQuantity(Decimal.newBuilder().setValue(String.valueOf(lot)).build())
+                            .setSide(direction > 0 ? Side.SIDE_BUY : Side.SIDE_SELL)
+                            .build());
+        } catch (Exception e) {
+            log.error("ошибка выставления ордера", e);
+            throw new RuntimeException(e);
+        }
     }
 
     private OrderState placeStopLossOrder(String symbol, BigDecimal stopLoss, int direction, int lot, int signalId) {
-        return ordersServiceBlockingStub.withCallCredentials(getBearer())
-                .placeOrder(Order.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .setSymbol(symbol)
-                        .setClientOrderId(getClientOrderId(signalId, CLIENT_ORDER_TYPE_PART_2_ORDER_TYPE_SL))
-                        .setLimitPrice(Decimal.newBuilder().setValue(stopLoss.toString()).build())
-                        .setStopPrice(Decimal.newBuilder().setValue(stopLoss.toString()).build())
-                        .setStopCondition(direction > 0 ? StopCondition.STOP_CONDITION_LAST_DOWN : StopCondition.STOP_CONDITION_LAST_UP)
-                        .setType(OrderType.ORDER_TYPE_STOP_LIMIT)
-                        .setTimeInForce(TimeInForce.TIME_IN_FORCE_GOOD_TILL_CANCEL)
-                        .setQuantity(Decimal.newBuilder().setValue(String.valueOf(lot)).build())
-                        .setSide(direction > 0 ? Side.SIDE_SELL : Side.SIDE_BUY)
-                        .build());
+        try {
+            return ordersServiceBlockingStub.withCallCredentials(getBearer())
+                    .placeOrder(Order.newBuilder()
+                            .setAccountId(tradevisorProperties.integration().finam().accountId())
+                            .setSymbol(symbol)
+                            .setClientOrderId(getClientOrderId(signalId, CLIENT_ORDER_TYPE_PART_2_ORDER_TYPE_SL))
+                            .setLimitPrice(Decimal.newBuilder().setValue(stopLoss.toString()).build())
+                            .setStopPrice(Decimal.newBuilder().setValue(stopLoss.toString()).build())
+                            .setStopCondition(direction > 0 ? StopCondition.STOP_CONDITION_LAST_DOWN : StopCondition.STOP_CONDITION_LAST_UP)
+                            .setType(OrderType.ORDER_TYPE_STOP_LIMIT)
+                            .setQuantity(Decimal.newBuilder().setValue(String.valueOf(lot)).build())
+                            .setSide(direction > 0 ? Side.SIDE_SELL : Side.SIDE_BUY)
+                            .build());
+        } catch (Exception e) {
+            log.error("ошибка выставления ордера SL", e);
+            throw new RuntimeException(e);
+        }
     }
 
     private OrderState placeTakeProfitOrder(String symbol, BigDecimal takeProfit, int direction, int lot, int signalId) {
-        return ordersServiceBlockingStub.withCallCredentials(getBearer())
-                .placeOrder(Order.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .setSymbol(symbol)
-                        .setClientOrderId(getClientOrderId(signalId, CLIENT_ORDER_TYPE_PART_2_ORDER_TYPE_TP))
-                        .setLimitPrice(Decimal.newBuilder().setValue(takeProfit.toString()).build())
-                        .setStopPrice(Decimal.newBuilder().setValue(takeProfit.toString()).build())
-                        .setStopCondition(direction > 0 ? StopCondition.STOP_CONDITION_LAST_UP : StopCondition.STOP_CONDITION_LAST_DOWN)
-                        .setType(OrderType.ORDER_TYPE_STOP_LIMIT)
-                        .setTimeInForce(TimeInForce.TIME_IN_FORCE_GOOD_TILL_CANCEL)
-                        .setQuantity(Decimal.newBuilder().setValue(String.valueOf(lot)).build())
-                        .setSide(direction > 0 ? Side.SIDE_SELL : Side.SIDE_BUY)
-                        .build());
+        try {
+
+            return ordersServiceBlockingStub.withCallCredentials(getBearer())
+                    .placeOrder(Order.newBuilder()
+                            .setAccountId(tradevisorProperties.integration().finam().accountId())
+                            .setSymbol(symbol)
+                            .setClientOrderId(getClientOrderId(signalId, CLIENT_ORDER_TYPE_PART_2_ORDER_TYPE_TP))
+                            .setLimitPrice(Decimal.newBuilder().setValue(takeProfit.toString()).build())
+                            .setStopPrice(Decimal.newBuilder().setValue(takeProfit.toString()).build())
+                            .setStopCondition(direction > 0 ? StopCondition.STOP_CONDITION_LAST_UP : StopCondition.STOP_CONDITION_LAST_DOWN)
+                            .setType(OrderType.ORDER_TYPE_STOP_LIMIT)
+                            .setQuantity(Decimal.newBuilder().setValue(String.valueOf(lot)).build())
+                            .setSide(direction > 0 ? Side.SIDE_SELL : Side.SIDE_BUY)
+                            .build());
+        } catch (Exception e) {
+            log.error("ошибка выставления ордера TP", e);
+            throw new RuntimeException(e);
+        }
     }
 
     private void placeOrders(String symbol,

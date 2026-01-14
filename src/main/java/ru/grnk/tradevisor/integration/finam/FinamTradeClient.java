@@ -43,7 +43,7 @@ public class FinamTradeClient implements TradeClient {
     private final TickersRepository tickersRepository;
     private final LastTickLoader lastTickLoader;
     private final OpenPositionClient openPositionClient;
-    private final Set<OrderStatus> NOT_ACTIVE_ORDER_STATUSES = Set.of(OrderStatus.ORDER_STATUS_CANCELED);
+    public static final Set<OrderStatus> NOT_ACTIVE_ORDER_STATUSES = Set.of(OrderStatus.ORDER_STATUS_CANCELED, OrderStatus.ORDER_STATUS_FILLED);
 
     public BearerToken getBearer() {
         TrvFinamProperties finamProperties = tradevisorProperties.integration().finam();
@@ -80,7 +80,6 @@ public class FinamTradeClient implements TradeClient {
 
     @Override
     public TrvPosition getAvgPositionByTicker(String tickerCode) {
-        Tickers ticker = tickersRepository.getTickerByTickerCode(tickerCode);
         var bearer = getBearer();
         var accountResponse = accountsServiceBlockingStub
                 .withCallCredentials(bearer)
@@ -89,6 +88,7 @@ public class FinamTradeClient implements TradeClient {
                         .build());
         var positions = accountResponse.getPositionsList();
         var positionForSymbol = positions.stream().filter(p -> p.getSymbol().equals(tickerCode))
+                .filter(p -> new BigDecimal(p.getQuantity().getValue()).abs().compareTo(BigDecimal.ZERO) > 0)
                 .findFirst()
                 .orElse(null);
         if (positionForSymbol == null) {
@@ -105,6 +105,7 @@ public class FinamTradeClient implements TradeClient {
                         .build());
         List<OrderState> ordersForTicker = orders.getOrdersList().stream()
                 .filter(o -> o.getOrder().getSymbol().equals(tickerCode))
+                .filter(o -> !NOT_ACTIVE_ORDER_STATUSES.contains(o.getStatus()))
                 .sorted(Comparator.comparing(
                         o -> Float.parseFloat(o.getOrder().getLimitPrice().getValue()),
                         Comparator.reverseOrder()
@@ -122,11 +123,17 @@ public class FinamTradeClient implements TradeClient {
         if (direction > 0) {
             tpOrder = ordersForTicker.get(0);
             slOrder = ordersForTicker.get(1);
-        } else {
+        } else if (ordersForTicker.size() == 2)  {
             tpOrder = ordersForTicker.get(1);
             slOrder = ordersForTicker.get(0);
+        } else {
+            tpOrder = null;
+            slOrder = null;
         }
-
+        if (tpOrder == null || slOrder == null) {
+            log.warn("stop loss или take profit не выставлены. tp: {}. sl: {}", tpOrder, slOrder);
+            throw new IllegalStateException();
+        }
         if (tpOrder.getOrder().getQuantity() != positionForSymbol.getQuantity() ||
                 slOrder.getOrder().getQuantity() != positionForSymbol.getQuantity()) {
             log.error("не совпадает количество лотов в позиции и в ордерах profit. SL: {}. TP: {}. Position: {}",

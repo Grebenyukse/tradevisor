@@ -8,6 +8,7 @@ public record OpenPositionRq(
         Price price_open,
         Price stop_loss,
         Price take_profit,
-        int direction
+        int direction,
+        int quantity
 ) {
 }
