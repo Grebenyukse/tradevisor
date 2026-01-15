@@ -250,6 +250,7 @@ public class FinamMt5PythonClient implements OpenPositionClient {
                 .toList();
         var moneyLocked = accountRs.getPositionsList()
                 .stream()
+                .filter(x -> bigDecimalFromDecimal(x.getQuantity()).abs().compareTo(BigDecimal.ZERO) > 0)
                 .collect(Collectors.groupingBy(Position::getSymbol))
                 .values()
                 .stream()

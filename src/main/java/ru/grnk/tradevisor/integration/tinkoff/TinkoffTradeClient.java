@@ -64,6 +64,16 @@ public class TinkoffTradeClient implements TradeClient {
     }
 
     @Override
+    public void checkPositionStatus(String tickerCode) {
+        log.info("check position status completed");
+    }
+
+    @Override
+    public boolean isPositionOpened(String tickerCode) {
+        return this.getAvgPositionByTicker(tickerCode) != null;
+    }
+
+    @Override
     public String provider() {
         return TRV_PROVIDER_TINKOFF;
     }
@@ -107,7 +117,6 @@ public class TinkoffTradeClient implements TradeClient {
                 .collect(toList());
     }
 
-    @Override
     public TrvPosition getAvgPositionByTicker(String tickerCode) {
         List<TrvOrder> orders = this.getOrdersByTicker(tickerCode);
         BigDecimal tp = orders.stream().filter(x -> x.activation() == null).findFirst().map(TrvOrder::price).orElse(null);

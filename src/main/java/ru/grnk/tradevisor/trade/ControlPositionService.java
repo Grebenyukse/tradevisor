@@ -135,9 +135,8 @@ public class ControlPositionService {
             return;
         }
         // проверяем есть ли открытые позиции по тикеру
-        TrvPosition position = client.getAvgPositionByTicker(ticker.getTickerCode());
-        if (position != null) {
-            log.error("сигнал {} находится в статусе {}, но по нему есть открытая позиция {}", signal, signal.getStatus(), position);
+        if (client.isPositionOpened(ticker.getTickerCode())) {
+            log.error("сигнал {} находится в статусе {}, но по нему есть открытая позиция.", signal, signal.getStatus());
             signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.MANUAL);
             publishSignalsService.publishOrderForManualExecution(signal);
             return;
@@ -159,14 +158,14 @@ public class ControlPositionService {
         var client = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))
                 .findFirst()
                 .orElseThrow();
-        var position = client.getAvgPositionByTicker(ticker.getTickerCode());
-        List<TrvOrder> orders = client.getOrdersByTicker(ticker.getTickerCode());
-        if (position == null) {
-            if (orders.size() != 3) {
-                log.warn("позиции нет. сигнал в статусе executed. ordersSize  = {} ", orders.size());
-                //TODO: добавить проверку позиции для каждого клиента отдельно
+        if (client.isPositionOpened(ticker.getTickerCode())) {
+            try {
+                client.checkPositionStatus(ticker.getTickerCode());
+            } catch (Exception e) {
+                log.warn("ошибка валидации позиции", e);
+                signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.MANUAL);
             }
-            // позиции нет. сигнал в статусе executed.ордера выставлены. проверяем что сигнал не заэкспарился.
+        } else {
             var strategy = strategies.stream()
                     .filter(s -> Objects.equals(s.getStrategyUniqueName(), signal.getName()))
                     .findFirst()
@@ -177,14 +176,6 @@ public class ControlPositionService {
                 log.info("предпосылки торгового сигнала нарушены. удаляем ордера. сигнал переводим в статус cancelled  Signal: {}", signal);
                 client.deleteOrders(ticker.getTickerCode());
                 signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.CANCELLED);
-            }
-        } else {
-            if (orders.size() != 2) {
-                log.warn("позиция выставлена. ожидается 2 ордера но их не 2. значит нет takeProfit или stopLoss." +
-                        " удаляем ордера и перевыставляем sl и tp заново");
-                signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.MANUAL);
-                throw new IllegalStateException("ошибка количества ордеров у открытых позиций," +
-                        " нужно исправить позицию по сигналу signal: " + signal);
             }
         }
     }

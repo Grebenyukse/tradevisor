@@ -49,6 +49,16 @@ public class BybitTradeClientImpl implements TradeClient {
     private final BybitApiPositionRestClient bybitApiPositionRestClient;
 
     @Override
+    public void checkPositionStatus(String tickerCode) {
+        log.info("check position status completed");
+    }
+
+    @Override
+    public boolean isPositionOpened(String tickerCode) {
+        return this.getAvgPositionByTicker(tickerCode) != null;
+    }
+
+    @Override
     public String provider() {
         return "bybit";
     }
@@ -88,7 +98,6 @@ public class BybitTradeClientImpl implements TradeClient {
                 .toList();
     }
 
-    @Override
     public TrvPosition getAvgPositionByTicker(String tickerCode) {
         var res = bybitApiPositionRestClient.getPositionInfo(PositionDataRequest.builder()
                 .baseCoin(tickerCode.split("USDT")[0])
