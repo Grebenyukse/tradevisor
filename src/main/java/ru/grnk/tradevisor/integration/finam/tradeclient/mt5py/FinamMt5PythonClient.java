@@ -1,16 +1,12 @@
 package ru.grnk.tradevisor.integration.finam.tradeclient.mt5py;
 
 import com.google.type.Decimal;
-import grpc.tradeapi.v1.Side;
 import grpc.tradeapi.v1.accounts.AccountsServiceGrpc;
 import grpc.tradeapi.v1.accounts.GetAccountRequest;
 import grpc.tradeapi.v1.accounts.GetAccountResponse;
-import grpc.tradeapi.v1.accounts.Position;
 import grpc.tradeapi.v1.assets.AssetsServiceGrpc;
 import grpc.tradeapi.v1.auth.AuthRequest;
 import grpc.tradeapi.v1.auth.AuthServiceGrpc;
-import grpc.tradeapi.v1.orders.OrderState;
-import grpc.tradeapi.v1.orders.OrdersRequest;
 import grpc.tradeapi.v1.orders.OrdersServiceGrpc;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,12 +29,12 @@ import ru.ttech.piapi.core.helpers.NumberMapper;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 import static ru.grnk.tradevisor.common.util.RoundPriceUtils.moneyToBigDecimal;
 import static ru.grnk.tradevisor.common.util.RoundPriceUtils.roundPrice;
-import static ru.grnk.tradevisor.integration.finam.FinamTradeClient.NOT_ACTIVE_ORDER_STATUSES;
 
 @Service
 @RequiredArgsConstructor
@@ -129,7 +125,7 @@ public class FinamMt5PythonClient implements OpenPositionClient {
                 .findFirst()
                 .map(RoundPriceUtils::moneyToBigDecimal)
                 .orElse(BigDecimal.ZERO);
-        var availableMoney = getAvailableMoney(balance, accountRs);
+        var availableMoney = getAvailableMoney(balance);
         var assetParams = getAssetParams(symbol);
         var asset = getAsset(symbol);
         var priceMinStep = BigDecimal.valueOf(asset.getMinStep())
@@ -238,24 +234,17 @@ public class FinamMt5PythonClient implements OpenPositionClient {
         return availableMoney.divide(totalCostPerLot, RoundingMode.DOWN);
     }
 
-    private BigDecimal getAvailableMoney(BigDecimal balance, GetAccountResponse accountRs) {
-        var bearer = getBearer();
-        List<OrderState> orders = ordersServiceBlockingStub.withCallCredentials(bearer)
-                .getOrders(OrdersRequest.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .build())
-                .getOrdersList()
-                .stream()
-                .filter(x -> !NOT_ACTIVE_ORDER_STATUSES.contains(x.getStatus()))
-                .toList();
-        var moneyLocked = accountRs.getPositionsList()
-                .stream()
-                .filter(x -> bigDecimalFromDecimal(x.getQuantity()).abs().compareTo(BigDecimal.ZERO) > 0)
-                .collect(Collectors.groupingBy(Position::getSymbol))
+    private BigDecimal getAvailableMoney(BigDecimal balance) {
+        var baseUrl = tradevisorProperties.integration().finam().mt5PythonClientUrl();
+        String url = UriComponentsBuilder.fromHttpUrl(baseUrl).path("/orders").toUriString();
+        var resp =  restTemplate.getForObject(url, OrderParamsRs.class);
+        assert resp != null;
+        var moneyLocked = resp.orders().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(OrderParamsRs.Order::symbol))
                 .values()
                 .stream()
-                .filter(x -> !x.isEmpty())
-                .map(position -> getRiskForPosition(position, orders))
+                .map(this::getRiskForPosition)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return balance.subtract(moneyLocked).multiply(DEVIATION).max(BigDecimal.ZERO);
     }
@@ -263,52 +252,38 @@ public class FinamMt5PythonClient implements OpenPositionClient {
     private record PositionAvgPrice(BigDecimal price, BigDecimal weight) {
     }
 
-    private BigDecimal getRiskForPosition(List<Position> positions, List<OrderState> orderStates) {
-        Position anyPosition = positions.stream().findFirst().orElseThrow();
-        var positionQuantity = bigDecimalFromDecimal(anyPosition.getQuantity());
-        var positionSide = positionQuantity.signum() > 0 ? Side.SIDE_BUY : Side.SIDE_SELL;
-        var positionSymbol = anyPosition.getSymbol();
-        var assetParams = getAssetParams(positionSymbol);
-        int direction = positionQuantity.signum();
+    private BigDecimal getRiskForPosition(List<OrderParamsRs.Order> orders) {
+        var anyPosition = orders.stream().findFirst().orElseThrow();
+        var positionQuantity = anyPosition.lot();
+        var positionSymbol = anyPosition.symbol();
+        var assetParams = getAssetParams(positionSymbol.split("@")[0] + "@RTSX");
+        int direction = positionQuantity > 0 ? 1 : -1;
         BigDecimal go = direction == 1 ?
                 moneyToBigDecimal(assetParams.getLongCollateral()) :
                 moneyToBigDecimal(assetParams.getShortCollateral());
         // если купили, то stopLoss - самая малая цена. сортируем по возрастанию и берем первую
         // если продали, то StopLoss - самая большая цена. сортируем по убыванию и берем первую
-        var slOrdersForPosition = orderStates.stream()
-                .filter(o -> o.getOrder().getSymbol().equals(positionSymbol))
+        var slOrdersForPosition = orders.stream()
+                .map(OrderParamsRs.Order::sl)
                 .min((x1, x2) -> {
                     // если купили, то stopLoss - самая малая цена. сортируем по возрастанию и берем первую
                     // если продали, то StopLoss - самая большая цена. сортируем по убыванию и берем первую
-                    var directionMultiplier = x1.getOrder().getSide() == Side.SIDE_BUY ? 1 : -1;
-                    return directionMultiplier * bigDecimalFromDecimal(x1.getOrder().getLimitPrice())
-                            .compareTo(bigDecimalFromDecimal(x2.getOrder().getLimitPrice()));
+                    return direction * x1.compareTo(x2);
                 })
                 .orElseThrow();
-        if (slOrdersForPosition.getOrder().getSide() == positionSide) {
-            throw new IllegalStateException("found stop loss and positions in same direction. Иди проверь все позиции руками. Что происходит?");
-        }
-        if (positions.stream()
-                .map(x -> bigDecimalFromDecimal(x.getQuantity()).signum())
-                .distinct()
-                .count() > 1) {
-            throw new IllegalStateException("found positions for symbol in different directions. GO CHECK THIS.");
-        }
-        var weightedPosition = positions.stream()
-                .map(x -> new PositionAvgPrice(bigDecimalFromDecimal(x.getAveragePrice()), bigDecimalFromDecimal(x.getQuantity())))
+        var weightedPosition = orders.stream()
+                .map(x -> new PositionAvgPrice(BigDecimal.valueOf(x.priceOpen()), BigDecimal.valueOf(x.lot())))
                 .reduce(
                         new PositionAvgPrice(BigDecimal.ZERO, BigDecimal.ZERO),
                         (acc, p1) -> new PositionAvgPrice(weightedAvg(acc.price(), acc.weight(), p1.price(), p1.weight()), acc.weight().add(p1.weight()))
                 );
         // даже если ордеров на стоп несколько используем самую "плохую цену" для оценки сверху.
-        var weightedSlOrders =  new PositionAvgPrice(bigDecimalFromDecimal(slOrdersForPosition.getOrder().getLimitPrice()), weightedPosition.weight());
+        var weightedSlOrders =  new PositionAvgPrice(BigDecimal.valueOf(slOrdersForPosition), weightedPosition.weight());
         BigDecimal openRisk = weightedPosition.price()
                 .subtract(weightedSlOrders.price())
                 .multiply(weightedPosition.weight())
                 .abs();
-        var commission = positionQuantity.multiply(
-                        weightedPosition.price().max(weightedSlOrders.price())
-                )
+        var commission = BigDecimal.valueOf(positionQuantity).multiply(weightedPosition.price().max(weightedSlOrders.price()))
                 .multiply(AVERAGE_COMMISSION);
         var lockedMoney = weightedPosition.weight().multiply(go);
         return openRisk.abs().add(commission).add(lockedMoney);
