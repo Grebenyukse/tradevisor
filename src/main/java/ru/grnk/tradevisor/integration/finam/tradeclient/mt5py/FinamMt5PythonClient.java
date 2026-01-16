@@ -45,8 +45,7 @@ public class FinamMt5PythonClient implements OpenPositionClient {
     private final RestTemplate restTemplate;
     private final TradevisorProperties tradevisorProperties;
     public static final BigDecimal DEVIATION = BigDecimal.valueOf(0.95f);
-    public static final BigDecimal AVERAGE_COMMISSION = BigDecimal.valueOf(0.002f);
-    public static final BigDecimal GO_LEVEL = BigDecimal.valueOf(0.15f);
+    public static final BigDecimal AVERAGE_COMMISSION = BigDecimal.valueOf(0.02f); // go * 10 * 0.002
     private static final BigDecimal RISK_LEVEL = BigDecimal.valueOf(0.02);
     private final RtsService rtsService;
 
@@ -225,9 +224,8 @@ public class FinamMt5PythonClient implements OpenPositionClient {
     }
 
     private BigDecimal calculateAvailableLot(BigDecimal go, BigDecimal riskPerLot, BigDecimal availableMoney) {
-        BigDecimal lockedMarginComponent = go.multiply(GO_LEVEL);
         BigDecimal commissionComponent = go.multiply(AVERAGE_COMMISSION);
-        BigDecimal totalCostPerLot = lockedMarginComponent.add(riskPerLot).add(commissionComponent);
+        BigDecimal totalCostPerLot = go.add(riskPerLot).add(commissionComponent);
         if (totalCostPerLot.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO;
         }

@@ -15,7 +15,6 @@ import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.notify.PublishSignalsService;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
-import ru.grnk.tradevisor.trade.dto.TrvPosition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,7 +103,8 @@ public class ControlPositionService {
         return new SortedSignals(active, toCancel);
     }
 
-    private record SortedSignals(List<Signals> active, List<Signals> toCancel) { }
+    private record SortedSignals(List<Signals> active, List<Signals> toCancel) {
+    }
 
     public void openPosition(Signals signal) {
         Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
@@ -113,7 +113,7 @@ public class ControlPositionService {
                 .findFirst();
         if (clientOptional.isEmpty()) {
             log.warn("провайдер {} для сигнала signal:{} по spot_ticker_code: {} не активен. невозможно выполнить торговую операцию.",
-                   ticker.getProvider(), signal, ticker.getTickerCode());
+                    ticker.getProvider(), signal, ticker.getTickerCode());
             return;
         }
         var client = clientOptional.get();

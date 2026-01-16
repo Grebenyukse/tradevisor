@@ -104,7 +104,8 @@ public class FinamTradeClient implements TradeClient {
                         .setAccountId(tradevisorProperties.integration().finam().accountId())
                         .build());
         var cancelResult = orders.getOrdersList().stream()
-                .filter(o -> o.getStatus() != ORDER_STATUS_CANCELED)
+                .filter(o -> !NOT_ACTIVE_ORDER_STATUSES.contains(o.getStatus()))
+                .filter(o -> o.getOrder().getSymbol().equals(tickerCode))
                 .map(o -> ordersServiceBlockingStub
                         .withCallCredentials(bearer)
                         .cancelOrder(CancelOrderRequest.newBuilder()
@@ -115,7 +116,7 @@ public class FinamTradeClient implements TradeClient {
         var notCancelledOrders = cancelResult.stream().filter(o -> o.getStatus() != ORDER_STATUS_CANCELED)
                 .toList();
         if (!notCancelledOrders.isEmpty()) {
-            log.error("не удалось отменить ордера : {}", notCancelledOrders.toString());
+            log.error("не удалось отменить ордера : {}", notCancelledOrders);
             throw new IllegalStateException();
         }
     }
