@@ -3,7 +3,6 @@ package ru.grnk.tradevisor.integration.finam;
 import com.google.protobuf.Timestamp;
 import com.google.type.Decimal;
 import com.google.type.Interval;
-import grpc.tradeapi.v1.assets.AssetsServiceGrpc;
 import grpc.tradeapi.v1.auth.AuthRequest;
 import grpc.tradeapi.v1.auth.AuthServiceGrpc;
 import grpc.tradeapi.v1.marketdata.*;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.collect.prices.PricesLoader;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.properties.TrvFinamProperties;
-import ru.grnk.tradevisor.common.repository.FinamMetainfoRepository;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
@@ -33,16 +31,14 @@ public class FinamPricesService implements PricesLoader {
     public static final int MIN_TICKER_ALIVE_TIME_INTERVAL_TO_KICK = 720;
     public static final String TRV_PROVIDER_FINAM = "finam";
     private final TradevisorProperties properties;
-    private final AssetsServiceGrpc.AssetsServiceBlockingStub assetsServiceBlockingStub;
     private final AuthServiceGrpc.AuthServiceBlockingStub authServiceBlockingStub;
     private final MarketDataServiceGrpc.MarketDataServiceBlockingStub marketDataServiceBlockingStub;
 
-    private  final FinamMetainfoRepository finamMetainfoRepository;
     private final MarketDataRepository marketDataRepository;
     private final TickersRepository tickersRepository;
 
     public void initTickers() {
-        log.info("skip");
+        log.debug("skip");
     }
 
     public void loadHistoryForSymbol(String tickerCode) {
