@@ -101,7 +101,7 @@ public class YahooFinanceClient {
             long endTime = Instant.now().getEpochSecond();
             String url = String.format(
                     "https://query2.finance.yahoo.com/v8/finance/chart/%s?period1=%d&period2=%d&interval=%s&events=div,splits,capitalGains",
-                    "AAPL", startTime, endTime, interval
+                    symbol, startTime, endTime, interval
             );
             if (crumb != null && !crumb.isEmpty()) {
                 url += "&crumb=" + crumb;

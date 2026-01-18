@@ -70,7 +70,10 @@ app:
     fibo: true
     bars_required_to_calculate_fibo: 150
     gap: false
-    min_touches_count: 2
+    min_touches_count:
+      world: 3
+      rus: 2
+      crypto: 1
     batch-size: 1000
   trade:
     delay: PT1M
