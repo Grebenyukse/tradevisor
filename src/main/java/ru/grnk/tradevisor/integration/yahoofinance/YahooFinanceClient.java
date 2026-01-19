@@ -125,6 +125,10 @@ public class YahooFinanceClient {
             return ObjectMapperUtils.readValue(bodyString, YahooChartResponse.class);
 
         } catch (Exception e ) {
+            if (e.getMessage().contains("404")) {
+                log.info("ticker not foune: {}", symbol);
+                return null;
+            }
             if (e.getMessage().contains("401") || e.getMessage().contains("403")) {
                 log.info("Refreshing crumb and cookies due to auth error");
                 refreshCrumbAndCookies();
