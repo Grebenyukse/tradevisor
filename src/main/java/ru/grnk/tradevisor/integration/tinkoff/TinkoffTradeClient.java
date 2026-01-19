@@ -432,7 +432,7 @@ public class TinkoffTradeClient implements TradeClient {
 
     private int countTradeLotsForGo(TradeSignal signal, String  uid, float go) {
         float balance = this.getBalance();
-        double maxRiskInMoney = balance * tradevisorProperties.trade().limits() / 100;
+        double maxRiskInMoney = balance * tradevisorProperties.trade().limits().world() / 100;
         var maxLotsResp = investApi.getOrdersService().getMaxLotsSync(getTradingAccountId(), uid,
                 quotationFromFloat(signal.priceOpen()));
         int maxLots = signal.direction() > 0
@@ -444,7 +444,7 @@ public class TinkoffTradeClient implements TradeClient {
         return (int) (Math.floor(
                 Math.min(
                         Math.min(availableLots, countedRiskLots),
-                        (double) maxLots * (1 - (double) tradevisorProperties.trade().limits() / 100)
+                        (double) maxLots * (1 - (double) tradevisorProperties.trade().limits().world() / 100)
                 )
         ));
     }

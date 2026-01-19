@@ -124,7 +124,7 @@ public class BybitTradeClientImpl implements TradeClient {
         Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode())
                 .orElse(spotTicker);
         float balance = getBalance();
-        int limits = tradevisorProperties.trade().limits(); // риск в процентах от капитала
+        float limits = tradevisorProperties.trade().limits().crypto(); // риск в процентах от капитала
         double maxRiskInMoney = balance * limits / 100;
         var instrumentInfo = getInstrumentInfo(tradeTicker.getTicker());
         InstrumentInfoResponse.Instrument instrument = instrumentInfo.getResult().getList().get(0);

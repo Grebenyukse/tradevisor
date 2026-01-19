@@ -55,7 +55,10 @@ app:
     batch-size: 1000
   trade:
     delay: PT15M
-    limits: 1
+    limits: # риск в процентах от капитала на одну позицию
+      crypto: 2
+      rus: 0.1
+      world: 0.1
     enabled: false
   notification:
     enabled: false
