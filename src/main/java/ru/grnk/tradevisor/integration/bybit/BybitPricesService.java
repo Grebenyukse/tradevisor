@@ -1,9 +1,11 @@
 package ru.grnk.tradevisor.integration.bybit;
 
 import com.bybit.api.client.domain.CategoryType;
+import com.bybit.api.client.domain.asset.request.AssetDataRequest;
 import com.bybit.api.client.domain.market.MarketInterval;
 import com.bybit.api.client.domain.market.request.MarketDataRequest;
-import com.bybit.api.client.restApi.*;
+import com.bybit.api.client.restApi.BybitApiAssetRestClient;
+import com.bybit.api.client.restApi.BybitApiMarketRestClient;
 import com.google.protobuf.Timestamp;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -19,7 +21,6 @@ import ru.grnk.tradevisor.common.repository.entity.MarketData;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.common.util.ObjectMapperUtils;
 import ru.grnk.tradevisor.integration.bybit.dto.BybitCandlesResponse;
-import ru.grnk.tradevisor.integration.bybit.dto.BybitTickerLastPricesResponse;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -40,13 +41,12 @@ public class BybitPricesService implements PricesLoader {
     private final TradevisorProperties tradevisorProperties;
     private final BybitApiMarketRestClient marketRestClient;
     private final BybitApiAssetRestClient assetRestClient;
-    private final BybitApiUserRestClient bybitApiUserRestClient;
-    private final BybitApiAccountRestClient bybitApiAccountRestClient;
 
     @SneakyThrows
     @Override
     public void loadPrices(Tickers ticker) {
         var tickerCode = ticker.getTickerCode();
+        checkTickerExists(tickerCode);
         var startTime = findStartTime(tickerCode);
         var endTime = convertToTimestamp(ZonedDateTime.now());
         var intervalInHours = (endTime.getSeconds() - startTime.getSeconds()) / 60;
@@ -67,6 +67,18 @@ public class BybitPricesService implements PricesLoader {
                 .map(x -> from(x, tickerCode))
                 .collect(toList());
         marketDataRepository.batchInsertMarketData(res);
+    }
+
+    private boolean checkTickerExists(String tickerCode) {
+        try {
+            assetRestClient.getAssetInfo(AssetDataRequest.builder()
+                    .symbol(tickerCode.split("@")[0])
+                    .build());
+            return true;
+        } catch (Exception e) {
+            log.error("ошибка проверки наличия тикера: {}",tickerCode,  e);
+            return false;
+        }
     }
 
     @Override

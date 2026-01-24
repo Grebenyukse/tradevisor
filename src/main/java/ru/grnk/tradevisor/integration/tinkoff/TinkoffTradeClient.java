@@ -64,6 +64,16 @@ public class TinkoffTradeClient implements TradeClient {
     }
 
     @Override
+    public void checkPositionStatus(String tickerCode) {
+        log.info("check position status completed");
+    }
+
+    @Override
+    public boolean isPositionOpened(String tickerCode) {
+        return this.getAvgPositionByTicker(tickerCode) != null;
+    }
+
+    @Override
     public String provider() {
         return TRV_PROVIDER_TINKOFF;
     }
@@ -107,7 +117,6 @@ public class TinkoffTradeClient implements TradeClient {
                 .collect(toList());
     }
 
-    @Override
     public TrvPosition getAvgPositionByTicker(String tickerCode) {
         List<TrvOrder> orders = this.getOrdersByTicker(tickerCode);
         BigDecimal tp = orders.stream().filter(x -> x.activation() == null).findFirst().map(TrvOrder::price).orElse(null);
@@ -423,7 +432,7 @@ public class TinkoffTradeClient implements TradeClient {
 
     private int countTradeLotsForGo(TradeSignal signal, String  uid, float go) {
         float balance = this.getBalance();
-        double maxRiskInMoney = balance * tradevisorProperties.trade().limits() / 100;
+        double maxRiskInMoney = balance * tradevisorProperties.trade().limits().world() / 100;
         var maxLotsResp = investApi.getOrdersService().getMaxLotsSync(getTradingAccountId(), uid,
                 quotationFromFloat(signal.priceOpen()));
         int maxLots = signal.direction() > 0
@@ -435,7 +444,7 @@ public class TinkoffTradeClient implements TradeClient {
         return (int) (Math.floor(
                 Math.min(
                         Math.min(availableLots, countedRiskLots),
-                        (double) maxLots * (1 - (double) tradevisorProperties.trade().limits() / 100)
+                        (double) maxLots * (1 - (double) tradevisorProperties.trade().limits().world() / 100)
                 )
         ));
     }

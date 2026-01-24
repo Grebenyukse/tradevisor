@@ -49,6 +49,16 @@ public class BybitTradeClientImpl implements TradeClient {
     private final BybitApiPositionRestClient bybitApiPositionRestClient;
 
     @Override
+    public void checkPositionStatus(String tickerCode) {
+        log.info("check position status completed");
+    }
+
+    @Override
+    public boolean isPositionOpened(String tickerCode) {
+        return this.getAvgPositionByTicker(tickerCode) != null;
+    }
+
+    @Override
     public String provider() {
         return "bybit";
     }
@@ -88,7 +98,6 @@ public class BybitTradeClientImpl implements TradeClient {
                 .toList();
     }
 
-    @Override
     public TrvPosition getAvgPositionByTicker(String tickerCode) {
         var res = bybitApiPositionRestClient.getPositionInfo(PositionDataRequest.builder()
                 .baseCoin(tickerCode.split("USDT")[0])
@@ -115,7 +124,7 @@ public class BybitTradeClientImpl implements TradeClient {
         Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode())
                 .orElse(spotTicker);
         float balance = getBalance();
-        int limits = tradevisorProperties.trade().limits(); // риск в процентах от капитала
+        float limits = tradevisorProperties.trade().limits().crypto(); // риск в процентах от капитала
         double maxRiskInMoney = balance * limits / 100;
         var instrumentInfo = getInstrumentInfo(tradeTicker.getTicker());
         InstrumentInfoResponse.Instrument instrument = instrumentInfo.getResult().getList().get(0);

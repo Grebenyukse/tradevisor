@@ -151,7 +151,8 @@ public class TickersRepository {
                 TrvSignalStatus.PUBLISHED.name(),
                 TrvSignalStatus.CONFIRMED.name(),
                 TrvSignalStatus.EXECUTED.name(),
-                TrvSignalStatus.CANCELLED.name()
+                TrvSignalStatus.CANCELLED.name(),
+                TrvSignalStatus.MANUAL.name()
         ));
         return query.getSingleResult().intValue();
     }
@@ -174,7 +175,8 @@ public class TickersRepository {
                 TrvSignalStatus.PUBLISHED.name(),
                 TrvSignalStatus.CONFIRMED.name(),
                 TrvSignalStatus.EXECUTED.name(),
-                TrvSignalStatus.CANCELLED.name()
+                TrvSignalStatus.CANCELLED.name(),
+                TrvSignalStatus.MANUAL.name()
         ));
         query.setFirstResult(offset);
         query.setMaxResults(limit);

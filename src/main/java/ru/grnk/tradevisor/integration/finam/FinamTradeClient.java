@@ -43,7 +43,7 @@ public class FinamTradeClient implements TradeClient {
     private final TickersRepository tickersRepository;
     private final LastTickLoader lastTickLoader;
     private final OpenPositionClient openPositionClient;
-    private final Set<OrderStatus> NOT_ACTIVE_ORDER_STATUSES = Set.of(OrderStatus.ORDER_STATUS_CANCELED);
+    public static final Set<OrderStatus> NOT_ACTIVE_ORDER_STATUSES = Set.of(OrderStatus.ORDER_STATUS_CANCELED, OrderStatus.ORDER_STATUS_FILLED);
 
     public BearerToken getBearer() {
         TrvFinamProperties finamProperties = tradevisorProperties.integration().finam();
@@ -51,6 +51,24 @@ public class FinamTradeClient implements TradeClient {
                 .setSecret(finamProperties.secret())
                 .build());
         return new BearerToken(authRs.getToken());
+    }
+
+    @Override
+    public void checkPositionStatus(String tickerCode) {
+        log.info("check position status completed");
+    }
+
+    @Override
+    public boolean isPositionOpened(String tickerCode) {
+        var bearer = getBearer();
+        var accountResponse = accountsServiceBlockingStub
+                .withCallCredentials(bearer)
+                .getAccount(GetAccountRequest.newBuilder()
+                        .setAccountId(tradevisorProperties.integration().finam().accountId())
+                        .build());
+        var positions = accountResponse.getPositionsList();
+        return positions.stream().filter(p -> p.getSymbol().equals(tickerCode))
+                .anyMatch(p -> new BigDecimal(p.getQuantity().getValue()).abs().compareTo(BigDecimal.ZERO) > 0);
     }
 
     @Override
@@ -79,74 +97,6 @@ public class FinamTradeClient implements TradeClient {
     }
 
     @Override
-    public TrvPosition getAvgPositionByTicker(String tickerCode) {
-        Tickers ticker = tickersRepository.getTickerByTickerCode(tickerCode);
-        var bearer = getBearer();
-        var accountResponse = accountsServiceBlockingStub
-                .withCallCredentials(bearer)
-                .getAccount(GetAccountRequest.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .build());
-        var positions = accountResponse.getPositionsList();
-        var positionForSymbol = positions.stream().filter(p -> p.getSymbol().equals(tickerCode))
-                .findFirst()
-                .orElse(null);
-        if (positionForSymbol == null) {
-            log.info("position for tickercode:{} not found", tickerCode);
-            return null;
-        }
-        var openLots = (int) (Float.parseFloat(positionForSymbol.getQuantity().getValue()));
-        int direction = (int) Math.signum(openLots);
-
-        OrdersResponse orders = ordersServiceBlockingStub
-                .withCallCredentials(bearer)
-                .getOrders(OrdersRequest.newBuilder()
-                        .setAccountId(tradevisorProperties.integration().finam().accountId())
-                        .build());
-        List<OrderState> ordersForTicker = orders.getOrdersList().stream()
-                .filter(o -> o.getOrder().getSymbol().equals(tickerCode))
-                .sorted(Comparator.comparing(
-                        o -> Float.parseFloat(o.getOrder().getLimitPrice().getValue()),
-                        Comparator.reverseOrder()
-                ))
-                .toList();
-        if (ordersForTicker.size() > 2) {
-            log.error("найдено более двух открытых ордеров для одной позиции. Должно быть только 2. " +
-                    "рекомендуется перевыставить ордера. {}", ordersForTicker
-                    .stream()
-                    .map(x -> x.getOrder().getClientOrderId()).collect(Collectors.joining(", ")));
-            throw new IllegalStateException();
-        }
-        OrderState tpOrder;
-        OrderState slOrder;
-        if (direction > 0) {
-            tpOrder = ordersForTicker.get(0);
-            slOrder = ordersForTicker.get(1);
-        } else {
-            tpOrder = ordersForTicker.get(1);
-            slOrder = ordersForTicker.get(0);
-        }
-
-        if (tpOrder.getOrder().getQuantity() != positionForSymbol.getQuantity() ||
-                slOrder.getOrder().getQuantity() != positionForSymbol.getQuantity()) {
-            log.error("не совпадает количество лотов в позиции и в ордерах profit. SL: {}. TP: {}. Position: {}",
-                    slOrder.getOrder().getQuantity(),
-                    tpOrder.getOrder().getQuantity(),
-                    positionForSymbol.getQuantity());
-            throw new IllegalStateException();
-        }
-        return TrvPosition.builder()
-                .tickerCode(tickerCode)
-                .price(toBigDecimal(positionForSymbol.getAveragePrice()))
-                .lot(Math.abs(openLots))
-                .direction(direction)
-                .tp(toBigDecimal(tpOrder.getOrder().getLimitPrice()))
-                .sl(toBigDecimal(slOrder.getOrder().getLimitPrice()))
-                .build();
-    }
-
-
-    @Override
     public void deleteOrders(String tickerCode) {
         var bearer = getBearer();
         OrdersResponse orders = ordersServiceBlockingStub.withCallCredentials(bearer)
@@ -154,7 +104,8 @@ public class FinamTradeClient implements TradeClient {
                         .setAccountId(tradevisorProperties.integration().finam().accountId())
                         .build());
         var cancelResult = orders.getOrdersList().stream()
-                .filter(o -> o.getStatus() != ORDER_STATUS_CANCELED)
+                .filter(o -> !NOT_ACTIVE_ORDER_STATUSES.contains(o.getStatus()))
+                .filter(o -> o.getOrder().getSymbol().equals(tickerCode))
                 .map(o -> ordersServiceBlockingStub
                         .withCallCredentials(bearer)
                         .cancelOrder(CancelOrderRequest.newBuilder()
@@ -165,7 +116,7 @@ public class FinamTradeClient implements TradeClient {
         var notCancelledOrders = cancelResult.stream().filter(o -> o.getStatus() != ORDER_STATUS_CANCELED)
                 .toList();
         if (!notCancelledOrders.isEmpty()) {
-            log.error("не удалось отменить ордера : {}", notCancelledOrders.toString());
+            log.error("не удалось отменить ордера : {}", notCancelledOrders);
             throw new IllegalStateException();
         }
     }

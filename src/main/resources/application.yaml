@@ -70,11 +70,17 @@ app:
     fibo: true
     bars_required_to_calculate_fibo: 150
     gap: false
-    min_touches_count: 2
+    min_touches_count:
+      world: 3
+      rus: 2
+      crypto: 1
     batch-size: 1000
   trade:
     delay: PT1M
-    limits: 1 # риск в процентах от капитала на одну позицию
+    limits:  # риск в процентах от капитала на одну позицию
+      crypto: 2
+      rus: 0.1
+      world: 0.1
     enabled: true
   notification:
     enabled: true
@@ -136,7 +142,7 @@ app:
       account-id: ${FINAM_ACCOUNT_KEY}
       history-max-depth-days: 10
       mt5-python-client-url: http://localhost:8001
-      open-position-client: grpc # mt5py для открытия через metatrader5, grpc для открытие через finam api
+      open-position-client: mt5py # mt5py для открытия через metatrader5, grpc для открытие через finam api
     bybit:
       enabled: true
       key: ${BYBIT_KEY}

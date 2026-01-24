@@ -170,7 +170,7 @@ public class FiboSignalsProducer {
                     priceOpen,
                     true
             );
-            log.info("обнаружен сигнал по стратегии FIBO. {} касания 38.2. {}",analysis.touches382(),
+            log.debug("обнаружен сигнал по стратегии FIBO. {} касания 38.2. {}",analysis.touches382(),
                     getPositionInfo(priceOpen, takeProfit, stopLoss));
             return Optional.of(TrvCalculationResult.builder()
                     .direction(tradingDirection)
@@ -192,7 +192,7 @@ public class FiboSignalsProducer {
                     priceOpen,
                     false
             );
-            log.info("обнаружен сигнал по стратегии FIBO. {} касания 61.8. {}",analysis.touches618(),
+            log.debug("обнаружен сигнал по стратегии FIBO. {} касания 61.8. {}",analysis.touches618(),
                     getPositionInfo(priceOpen, takeProfit, stopLoss));
             return Optional.of(TrvCalculationResult.builder()
                     .direction(tradingDirection)
