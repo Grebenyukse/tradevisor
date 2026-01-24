@@ -51,6 +51,10 @@ jobs:
 
       - name: Deploy to server
         run: |
+          # Create target directory if it doesn't exist
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
+            "mkdir -p /home/${{ secrets.SERVER_USER }}/tradevisor"
+
           # Copy files to server
           scp -o StrictHostKeyChecking=no -r infra/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/tradevisor/
           scp -o StrictHostKeyChecking=no Dockerfile ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/tradevisor/
