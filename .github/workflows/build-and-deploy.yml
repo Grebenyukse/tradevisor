@@ -2,9 +2,9 @@ name: Build and Deploy TradeVisor
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, deploy ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, deploy ]
 
 jobs:
   build-and-test:
@@ -32,7 +32,7 @@ jobs:
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/deploy'
 
     steps:
       - name: Checkout code
