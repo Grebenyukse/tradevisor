@@ -126,11 +126,20 @@ public class TinkoffPricesService implements PricesLoader {
         if (lastTimestamp.isAfter(Instant.now())) {
             return;
         }
+        if (isTickerNotExists(instrumentUuid)) {
+            log.warn("ticker does not exists: {}", instrumentUuid);
+            return;
+        }
         investApi.getMarketDataService()
                 .getCandlesSync(instrumentUuid, lastTimestamp, Instant.now(), CandleInterval.CANDLE_INTERVAL_HOUR)
                 .stream()
                 .filter(HistoricCandle::getIsComplete)
                 .forEach(c -> marketDataRepository.saveMarketData(c, instrumentUuid));
+    }
+
+    private boolean isTickerNotExists(String instrumentUuid) {
+            return investApi.getInstrumentsService()
+                    .findInstrumentSync(instrumentUuid).isEmpty();
     }
 
     private static Tickers from(Share share) {
