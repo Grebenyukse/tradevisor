@@ -1,76 +1,52 @@
-networks:
-  inapp_network:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.19.0.0/24
-          gateway: 172.19.0.1
+version: '3.8'
 
 services:
   postgres:
-    image: 'postgres:12.10'
-    networks:
-      - inapp_network
-    hostname: postgres
-    container_name: postgres
-    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c pg_stat_statements.max=10000 -c max_connections=200 -c wal_level=logical
-    ports:
-      - "5432:5432"
+    image: postgres:16-alpine
     environment:
+      POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_HOST_AUTH_METHOD: trust
-      POSTGRES_DB: postgres
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   tradevisor:
-    image: eclipse-temurin:17-jre-jammy
-    networks:
-      - inapp_network
-    hostname: tradevisor
-    container_name: tradevisor
-    ports:
-      - "8080:8080"
+    image: openjdk:17-jdk-slim
+    volumes:
+      - ./app.jar:/app/app.jar
     env_file:
       - .env
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
+    command: java -jar /app/app.jar
     depends_on:
-      - postgres
-    volumes:
-      - ../app.jar:/app/app.jar
-    working_dir: /app
-    command: ["java", "-jar", "app.jar"]
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '1.0'
+      postgres:
+        condition: service_healthy
 
   nginx:
-    image: nginx:latest
-    networks:
-      - inapp_network
-    hostname: nginx
-    container_name: nginx
+    image: nginx:alpine
     ports:
       - "80:80"
       - "443:443"
-      - "6543:5432"
+      - "5432:5432"
     volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/certs:/etc/nginx/certs
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
     depends_on:
       - tradevisor
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
+      - postgres
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email bugor-p@yandex.ru --agree-tos --no-eff-email -d grebenyukse.ru -d www.grebenyukse.ru --non-interactive
+
+volumes:
+  postgres_data:

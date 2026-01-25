@@ -107,3 +107,10 @@ jobs:
             # Show running containers
             docker ps
           EOF
+          
+          # Установка cron-задачи для автообновления сертификатов
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /home/${{ secrets.SERVER_USER }}/app/infra
+            chmod +x ./scripts/setup-certbot-cron.sh
+            ./scripts/setup-certbot-cron.sh
+          EOF
