@@ -1,11 +1,6 @@
-version: '3.8'
-
 services:
-
   postgres:
     image: 'postgres:12.10'
-    networks:
-      - inapp_network
     hostname: postgres
     container_name: postgres
     command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c pg_stat_statements.max=10000 -c max_connections=200 -c wal_level=logical
@@ -31,8 +26,6 @@ services:
 
   tradevisor:
     image: eclipse-temurin:17-jre-jammy
-    networks:
-      - inapp_network
     hostname: tradevisor
     container_name: tradevisor
     ports:
@@ -58,8 +51,6 @@ services:
 
   nginx:
     image: nginx:latest
-    networks:
-      - inapp_network
     hostname: nginx
     container_name: nginx
     ports:
