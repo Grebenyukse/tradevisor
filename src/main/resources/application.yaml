@@ -46,7 +46,7 @@ spring:
   liquibase:
     changeLog: classpath:changelog/changelog-master.yaml
     enabled: true
-    url: jdbc:postgresql://localhost:5432/postgres    # Add explicit URL
+    url: jdbc:postgresql://postgres:5432/postgres    # Add explicit URL
     user: postgres                                    # Add credentials
     password: password
 
