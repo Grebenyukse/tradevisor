@@ -55,6 +55,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
             "mkdir -p /home/${{ secrets.SERVER_USER }}/app"
           
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
+          "rm -rf /home/${{ secrets.SERVER_USER }}/app/infra/nginx/conf.d/*"
+          
           # Copy built JAR file to server
           scp -o StrictHostKeyChecking=no build/libs/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/app/app.jar
           
