@@ -25,7 +25,7 @@
             <pattern>%d{ISO8601} %-5level [%thread] %logger{36} \(%class{0}.java:%line\) - %msg%n</pattern>
         </encoder>
     </appender>
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="FILE"/>
          <appender-ref ref="CONSOLE"/>
     </root>
