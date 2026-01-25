@@ -101,6 +101,11 @@ jobs:
             # Stop existing containers
             docker compose down
           
+            # Убить процессы на портах 80, 443 и 5432
+            sudo fuser -k 80/tcp || true
+            sudo fuser -k 443/tcp || true
+            sudo fuser -k 5432/tcp || true
+          
             # Start containers with pre-built JAR
             docker compose up -d
           
