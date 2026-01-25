@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="10 seconds">
-
-    <!-- Консольный аппендер -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <charset>UTF-8</charset>
             <pattern>%d{ISO8601} %-5level [%thread] %logger{36} \(%class{0}.java:%line\) - %msg%n</pattern>
         </encoder>
     </appender>
-
-    <!-- Файловый аппендер с ротацией -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/app.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -24,19 +20,13 @@
             <!-- Общий максимальный размер всех архивных файлов -->
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
-
         <encoder>
             <charset>UTF-8</charset>
             <pattern>%d{ISO8601} %-5level [%thread] %logger{36} \(%class{0}.java:%line\) - %msg%n</pattern>
         </encoder>
     </appender>
-
-    <!-- Корневой логгер -->
     <root level="INFO">
-        <!-- Подключение файлового аппендера -->
         <appender-ref ref="FILE"/>
-        <!-- Подключение консольного аппендера (раскомментируйте, если нужно) -->
-        <!-- <appender-ref ref="CONSOLE"/> -->
+         <appender-ref ref="CONSOLE"/>
     </root>
-
 </configuration>
