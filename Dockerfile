@@ -1,7 +1,7 @@
 # Multi-stage build for TradeVisor application
 
 # Stage 1: Build the application
-FROM openjdk:17-jdk-slim AS builder
+FROM eclipse-temurin:17-jdk-jammy AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -22,7 +22,7 @@ COPY src src
 RUN ./gradlew build -x test
 
 # Stage 2: Runtime image
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre-jammy
 
 # Set the working directory
 WORKDIR /app
