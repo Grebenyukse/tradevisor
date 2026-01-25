@@ -101,7 +101,6 @@ public class CalculateSignalService {
                         var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
                         if (candles.size() < s.barsRequiredToCalcStrategy()) {
                             log.debug("not enough bars to calc strategy fibo. requires: {}. candles.size: {}. ticker: {}", s.barsRequiredToCalcStrategy(), candles.size(), t.getTicker());
-//                            return;
                         }
                         if (candles.stream().max(Comparator.comparing(MarketData::getTime))
                                 .map(MarketData::getTime)
