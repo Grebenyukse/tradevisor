@@ -53,15 +53,15 @@ jobs:
         run: |
           # Create target directory if it doesn't exist
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
-            "mkdir -p /home/${{ secrets.SERVER_USER }}/tradevisor"
+            "mkdir -p /home/${{ secrets.SERVER_USER }}/app"
 
           # Copy files to server
-          scp -o StrictHostKeyChecking=no -r infra/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/tradevisor/
-          scp -o StrictHostKeyChecking=no Dockerfile ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/tradevisor/
+          scp -o StrictHostKeyChecking=no -r infra/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/app/
+          scp -o StrictHostKeyChecking=no Dockerfile ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/app/
           
           # Connect to server and deploy
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            cd /home/${{ secrets.SERVER_USER }}/tradevisor
+            cd /home/${{ secrets.SERVER_USER }}/app
           
             # Stop existing containers
             docker compose down
