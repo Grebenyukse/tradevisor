@@ -36,18 +36,29 @@ docker run hello-world
 
 ### Option 1: Manual Deployment
 
-1. Copy the application files to your server:
+1. Build the application JAR file:
    ```bash
-   scp -r infra/ user@your-server:/home/user/tradevisor/
-   scp Dockerfile user@your-server:/home/user/tradevisor/
+   ./gradlew build -x test
    ```
 
-2. Navigate to the infra directory:
+2. Copy the application files to your server:
+   ```bash
+   scp build/libs/*.jar user@your-server:/home/user/tradevisor/app.jar
+   scp -r infra/ user@your-server:/home/user/tradevisor/
+   ```
+
+3. Create a `.env` file on the server with your configuration:
+   ```bash
+   # On the server, create /home/user/tradevisor/infra/.env
+   # with all the required environment variables
+   ```
+
+4. Navigate to the infra directory:
    ```bash
    cd /home/user/tradevisor/infra
    ```
 
-3. Start the services:
+5. Start the services:
    ```bash
    docker compose up -d
    ```
@@ -58,8 +69,16 @@ docker run hello-world
    - `SSH_PRIVATE_KEY`: Private SSH key for accessing the server
    - `SERVER_USER`: Username for SSH access
    - `SERVER_IP`: IP address of your server
+   - All the environment variables from `.env.template` as individual secrets
 
 2. Push changes to the main branch to trigger the deployment workflow.
+
+The workflow will:
+- Build the application JAR file
+- Copy the JAR file to the server
+- Copy infrastructure files to the server
+- Create a `.env` file on the server from the repository secrets
+- Start the containers using Docker Compose
 
 ## Resource Allocation
 

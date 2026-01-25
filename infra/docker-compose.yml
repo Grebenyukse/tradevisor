@@ -32,7 +32,7 @@ services:
           cpus: '0.5'
 
   tradevisor:
-    build: ..
+    image: openjdk:17-jre-slim
     networks:
       - inapp_network
     hostname: tradevisor
@@ -47,6 +47,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
     depends_on:
       - postgres
+    volumes:
+      - ../app.jar:/app/app.jar
+    working_dir: /app
+    command: ["java", "-jar", "app.jar"]
     deploy:
       resources:
         limits:
