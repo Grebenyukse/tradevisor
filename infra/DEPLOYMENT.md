@@ -114,6 +114,13 @@ For enhanced security, you can deploy without creating any `.env` files on the s
    export GIGACHAT_CLIENT_ID=your_gigachat_client_id
    export GIGACHAT_CLIENT_SECRET=your_gigachat_client_secret
    export NEWS_API_KEY=your_news_api_key
+   # Database configuration
+   export SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
+   export SPRING_DATASOURCE_USERNAME=postgres
+   export SPRING_DATASOURCE_PASSWORD=password
+   export LIQUIBASE_URL=jdbc:postgresql://postgres:5432/postgres
+   export LIQUIBASE_USERNAME=postgres
+   export LIQUIBASE_PASSWORD=password
    ```
    
 4. Run the secure deployment script:
@@ -130,7 +137,14 @@ This approach ensures that no sensitive data is stored in files on the server fi
    - `SSH_PRIVATE_KEY`: Private SSH key for accessing the server
    - `SERVER_USER`: Username for SSH access
    - `SERVER_IP`: IP address of your server
-   - All the environment variables from `.env.template` as individual secrets
+   - All the required environment variables as individual secrets:
+     - `CHAT_ID`, `CHAT_TOKEN`, `BASE_URL`, `SUPERGROUP_CHAT_ID`, `POSITIONS_TOPIC_THREAD_ID`,
+       `ORDERS_TOPIC_THREAD_ID`, `RUS_TOPIC_THREAD_ID`, `WORLD_TOPIC_THREAD_ID`, `CRYPTO_TOPIC_THREAD_ID`,
+       `LOGS_TOPIC_THREAD_ID`, `STATISTICS_TOPIC_THREAD_ID`, `ERRORS_TOPIC_THREAD_ID`, `EVENTS_TOPIC_THREAD_ID`,
+       `TINKOFF_INVEST_TOKEN`, `FINAM_API_KEY`, `FINAM_ACCOUNT_KEY`, `BYBIT_KEY`, `BYBIT_SECRET`,
+       `CLOUDRU_API_KEY`, `PROXY_API_KEY`, `DEEPSEEK_KEY`, `GIGACHAT_CLIENT_ID`, `GIGACHAT_CLIENT_SECRET`,
+       `NEWS_API_KEY`, `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`,
+       `LIQUIBASE_URL`, `LIQUIBASE_USERNAME`, `LIQUIBASE_PASSWORD`
 
 2. Push changes to the main branch to trigger the deployment workflow.
 
@@ -193,6 +207,13 @@ export DEEPSEEK_KEY=your_deepseek_key
 export GIGACHAT_CLIENT_ID=your_gigachat_client_id
 export GIGACHAT_CLIENT_SECRET=your_gigachat_client_secret
 export NEWS_API_KEY=your_news_api_key
+# Database configuration
+export SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
+export SPRING_DATASOURCE_USERNAME=postgres
+export SPRING_DATASOURCE_PASSWORD=password
+export LIQUIBASE_URL=jdbc:postgresql://postgres:5432/postgres
+export LIQUIBASE_USERNAME=postgres
+export LIQUIBASE_PASSWORD=password
 ```
 
 Then run the application with:
