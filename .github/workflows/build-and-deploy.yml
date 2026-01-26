@@ -70,49 +70,38 @@ jobs:
           
             # Remove any existing .env file for security
             rm -f .env
-            
+          
             # Make deploy script executable
             chmod +x ./scripts/deploy-secure.sh
-EOF
-
-          # Deploy with environment variables passed directly
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
-            "export CHAT_ID=\"${{ secrets.CHAT_ID }}\" && \
-             export CHAT_TOKEN=\"${{ secrets.CHAT_TOKEN }}\" && \
-             export BASE_URL=\"${{ secrets.BASE_URL }}\" && \
-             export SUPERGROUP_CHAT_ID=\"${{ secrets.SUPERGROUP_CHAT_ID }}\" && \
-             export POSITIONS_TOPIC_THREAD_ID=\"${{ secrets.POSITIONS_TOPIC_THREAD_ID }}\" && \
-             export ORDERS_TOPIC_THREAD_ID=\"${{ secrets.ORDERS_TOPIC_THREAD_ID }}\" && \
-             export RUS_TOPIC_THREAD_ID=\"${{ secrets.RUS_TOPIC_THREAD_ID }}\" && \
-             export WORLD_TOPIC_THREAD_ID=\"${{ secrets.WORLD_TOPIC_THREAD_ID }}\" && \
-             export CRYPTO_TOPIC_THREAD_ID=\"${{ secrets.CRYPTO_TOPIC_THREAD_ID }}\" && \
-             export LOGS_TOPIC_THREAD_ID=\"${{ secrets.LOGS_TOPIC_THREAD_ID }}\" && \
-             export STATISTICS_TOPIC_THREAD_ID=\"${{ secrets.STATISTICS_TOPIC_THREAD_ID }}\" && \
-             export ERRORS_TOPIC_THREAD_ID=\"${{ secrets.ERRORS_TOPIC_THREAD_ID }}\" && \
-             export EVENTS_TOPIC_THREAD_ID=\"${{ secrets.EVENTS_TOPIC_THREAD_ID }}\" && \
-             export TINKOFF_INVEST_TOKEN=\"${{ secrets.TINKOFF_INVEST_TOKEN }}\" && \
-             export FINAM_API_KEY=\"${{ secrets.FINAM_API_KEY }}\" && \
-             export FINAM_ACCOUNT_KEY=\"${{ secrets.FINAM_ACCOUNT_KEY }}\" && \
-             export BYBIT_KEY=\"${{ secrets.BYBIT_KEY }}\" && \
-             export BYBIT_SECRET=\"${{ secrets.BYBIT_SECRET }}\" && \
-             export CLOUDRU_API_KEY=\"${{ secrets.CLOUDRU_API_KEY }}\" && \
-             export PROXY_API_KEY=\"${{ secrets.PROXY_API_KEY }}\" && \
-             export DEEPSEEK_KEY=\"${{ secrets.DEEPSEEK_KEY }}\" && \
-             export GIGACHAT_CLIENT_ID=\"${{ secrets.GIGACHAT_CLIENT_ID }}\" && \
-             export GIGACHAT_CLIENT_SECRET=\"${{ secrets.GIGACHAT_CLIENT_SECRET }}\" && \
-             export NEWS_API_KEY=\"${{ secrets.NEWS_API_KEY }}\" && \
-             export SPRING_DATASOURCE_URL=\"${{ secrets.SPRING_DATASOURCE_URL }}\" && \
-             export SPRING_DATASOURCE_USERNAME=\"${{ secrets.SPRING_DATASOURCE_USERNAME }}\" && \
-             export SPRING_DATASOURCE_PASSWORD=\"${{ secrets.SPRING_DATASOURCE_PASSWORD }}\" && \
-             cd /home/${{ secrets.SERVER_USER }}/app/infra && \
-             ./scripts/deploy-secure.sh"
           
-          # Установка cron-задачи для автообновления сертификатов
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            cd /home/${{ secrets.SERVER_USER }}/app/infra
-            chmod +x ./scripts/setup-certbot-cron.sh
-            ./scripts/setup-certbot-cron.sh
-          EOF
+            # Deploy with environment variables passed directly
+            export CHAT_ID="${{ secrets.CHAT_ID }}"
+            export CHAT_TOKEN="${{ secrets.CHAT_TOKEN }}"
+            export BASE_URL="${{ secrets.BASE_URL }}"
+            export SUPERGROUP_CHAT_ID="${{ secrets.SUPERGROUP_CHAT_ID }}"
+            export POSITIONS_TOPIC_THREAD_ID="${{ secrets.POSITIONS_TOPIC_THREAD_ID }}"
+            export ORDERS_TOPIC_THREAD_ID="${{ secrets.ORDERS_TOPIC_THREAD_ID }}"
+            export RUS_TOPIC_THREAD_ID="${{ secrets.RUS_TOPIC_THREAD_ID }}"
+            export WORLD_TOPIC_THREAD_ID="${{ secrets.WORLD_TOPIC_THREAD_ID }}"
+            export CRYPTO_TOPIC_THREAD_ID="${{ secrets.CRYPTO_TOPIC_THREAD_ID }}"
+            export LOGS_TOPIC_THREAD_ID="${{ secrets.LOGS_TOPIC_THREAD_ID }}"
+            export STATISTICS_TOPIC_THREAD_ID="${{ secrets.STATISTICS_TOPIC_THREAD_ID }}"
+            export ERRORS_TOPIC_THREAD_ID="${{ secrets.ERRORS_TOPIC_THREAD_ID }}"
+            export EVENTS_TOPIC_THREAD_ID="${{ secrets.EVENTS_TOPIC_THREAD_ID }}"
+            export TINKOFF_INVEST_TOKEN="${{ secrets.TINKOFF_INVEST_TOKEN }}"
+            export FINAM_API_KEY="${{ secrets.FINAM_API_KEY }}"
+            export FINAM_ACCOUNT_KEY="${{ secrets.FINAM_ACCOUNT_KEY }}"
+            export BYBIT_KEY="${{ secrets.BYBIT_KEY }}"
+            export BYBIT_SECRET="${{ secrets.BYBIT_SECRET }}"
+            export CLOUDRU_API_KEY="${{ secrets.CLOUDRU_API_KEY }}"
+            export PROXY_API_KEY="${{ secrets.PROXY_API_KEY }}"
+            export DEEPSEEK_KEY="${{ secrets.DEEPSEEK_KEY }}"
+            export GIGACHAT_CLIENT_ID="${{ secrets.GIGACHAT_CLIENT_ID }}"
+            export GIGACHAT_CLIENT_SECRET="${{ secrets.GIGACHAT_CLIENT_SECRET }}"
+            export NEWS_API_KEY="${{ secrets.NEWS_API_KEY }}"
+            export SPRING_DATASOURCE_URL="${{ secrets.SPRING_DATASOURCE_URL }}"
+            export SPRING_DATASOURCE_USERNAME="${{ secrets.SPRING_DATASOURCE_USERNAME }}"
+            export SPRING_DATASOURCE_PASSWORD="${{ secrets.SPRING_DATASOURCE_PASSWORD }}"
           
             # Stop existing containers
             docker compose down
