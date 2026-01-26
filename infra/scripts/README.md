@@ -44,9 +44,6 @@ For enhanced security, we provide `deploy-secure.sh` which deploys the applicati
    export SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
    export SPRING_DATASOURCE_USERNAME=postgres
    export SPRING_DATASOURCE_PASSWORD=password
-   export LIQUIBASE_URL=jdbc:postgresql://postgres:5432/postgres
-   export LIQUIBASE_USERNAME=postgres
-   export LIQUIBASE_PASSWORD=password
    ```
 
 2. Run the secure deployment script:
