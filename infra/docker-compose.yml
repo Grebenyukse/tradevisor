@@ -72,11 +72,6 @@ services:
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       
-      # Liquibase Configuration
-      LIQUIBASE_URL: ${LIQUIBASE_URL}
-      LIQUIBASE_USERNAME: ${LIQUIBASE_USERNAME}
-      LIQUIBASE_PASSWORD: ${LIQUIBASE_PASSWORD}
-      
     depends_on:
       - postgres
     volumes:

@@ -118,9 +118,6 @@ For enhanced security, you can deploy without creating any `.env` files on the s
    export SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
    export SPRING_DATASOURCE_USERNAME=postgres
    export SPRING_DATASOURCE_PASSWORD=password
-   export LIQUIBASE_URL=jdbc:postgresql://postgres:5432/postgres
-   export LIQUIBASE_USERNAME=postgres
-   export LIQUIBASE_PASSWORD=password
    ```
    
 4. Run the secure deployment script:
@@ -143,8 +140,7 @@ This approach ensures that no sensitive data is stored in files on the server fi
        `LOGS_TOPIC_THREAD_ID`, `STATISTICS_TOPIC_THREAD_ID`, `ERRORS_TOPIC_THREAD_ID`, `EVENTS_TOPIC_THREAD_ID`,
        `TINKOFF_INVEST_TOKEN`, `FINAM_API_KEY`, `FINAM_ACCOUNT_KEY`, `BYBIT_KEY`, `BYBIT_SECRET`,
        `CLOUDRU_API_KEY`, `PROXY_API_KEY`, `DEEPSEEK_KEY`, `GIGACHAT_CLIENT_ID`, `GIGACHAT_CLIENT_SECRET`,
-       `NEWS_API_KEY`, `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`,
-       `LIQUIBASE_URL`, `LIQUIBASE_USERNAME`, `LIQUIBASE_PASSWORD`
+       `NEWS_API_KEY`, `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
 
 2. Push changes to the main branch to trigger the deployment workflow.
 
@@ -211,9 +207,6 @@ export NEWS_API_KEY=your_news_api_key
 export SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
 export SPRING_DATASOURCE_USERNAME=postgres
 export SPRING_DATASOURCE_PASSWORD=password
-export LIQUIBASE_URL=jdbc:postgresql://postgres:5432/postgres
-export LIQUIBASE_USERNAME=postgres
-export LIQUIBASE_PASSWORD=password
 ```
 
 Then run the application with:

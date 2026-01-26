@@ -104,9 +104,6 @@ EOF
              export SPRING_DATASOURCE_URL=\"${{ secrets.SPRING_DATASOURCE_URL }}\" && \
              export SPRING_DATASOURCE_USERNAME=\"${{ secrets.SPRING_DATASOURCE_USERNAME }}\" && \
              export SPRING_DATASOURCE_PASSWORD=\"${{ secrets.SPRING_DATASOURCE_PASSWORD }}\" && \
-             export LIQUIBASE_URL=\"${{ secrets.LIQUIBASE_URL }}\" && \
-             export LIQUIBASE_USERNAME=\"${{ secrets.LIQUIBASE_USERNAME }}\" && \
-             export LIQUIBASE_PASSWORD=\"${{ secrets.LIQUIBASE_PASSWORD }}\" && \
              cd /home/${{ secrets.SERVER_USER }}/app/infra && \
              ./scripts/deploy-secure.sh"
           
