@@ -47,10 +47,16 @@ docker run hello-world
    scp -r infra/ user@your-server:/home/user/tradevisor/
    ```
 
-3. Create a `.env` file on the server with your configuration:
+3. Set environment variables directly (recommended for security):
    ```bash
-   # On the server, create /home/user/tradevisor/infra/.env
-   # with all the required environment variables
+   # Export all required environment variables
+   export CHAT_ID=your_chat_id
+   export CHAT_TOKEN=your_bot_token
+   export BASE_URL=https://yourdomain.com
+   # ... (export all other required variables)
+   
+   # Then run the secure deployment script
+   ./scripts/deploy-secure.sh
    ```
 
 4. Navigate to the infra directory:
@@ -63,7 +69,62 @@ docker run hello-world
    docker compose up -d
    ```
 
-### Option 2: GitHub Actions Deployment
+### Option 2: Secure Manual Deployment (Recommended)
+
+For enhanced security, you can deploy without creating any `.env` files on the server:
+
+1. Build the application JAR file:
+   ```bash
+   ./gradlew build -x test
+   ```
+   
+2. Copy the application files to your server:
+   ```bash
+   scp build/libs/*.jar user@your-server:/home/user/tradevisor/app.jar
+   scp -r infra/ user@your-server:/home/user/tradevisor/
+   ```
+   
+3. SSH into your server and set all environment variables:
+   ```bash
+   ssh user@your-server
+   cd /home/user/tradevisor/infra
+   
+   # Export all required environment variables
+   export CHAT_ID=your_chat_id
+   export CHAT_TOKEN=your_bot_token
+   export BASE_URL=https://yourdomain.com
+   export SUPERGROUP_CHAT_ID=your_supergroup_id
+   export POSITIONS_TOPIC_THREAD_ID=positions_thread_id
+   export ORDERS_TOPIC_THREAD_ID=orders_thread_id
+   export RUS_TOPIC_THREAD_ID=rus_thread_id
+   export WORLD_TOPIC_THREAD_ID=world_thread_id
+   export CRYPTO_TOPIC_THREAD_ID=crypto_thread_id
+   export LOGS_TOPIC_THREAD_ID=logs_thread_id
+   export STATISTICS_TOPIC_THREAD_ID=statistics_thread_id
+   export ERRORS_TOPIC_THREAD_ID=errors_thread_id
+   export EVENTS_TOPIC_THREAD_ID=events_thread_id
+   export TINKOFF_INVEST_TOKEN=your_tinkoff_token
+   export FINAM_API_KEY=your_finam_api_key
+   export FINAM_ACCOUNT_KEY=your_finam_account_id
+   export BYBIT_KEY=your_bybit_key
+   export BYBIT_SECRET=your_bybit_secret
+   export CLOUDRU_API_KEY=your_cloudru_key
+   export PROXY_API_KEY=your_proxy_key
+   export DEEPSEEK_KEY=your_deepseek_key
+   export GIGACHAT_CLIENT_ID=your_gigachat_client_id
+   export GIGACHAT_CLIENT_SECRET=your_gigachat_client_secret
+   export NEWS_API_KEY=your_news_api_key
+   ```
+   
+4. Run the secure deployment script:
+   ```bash
+   chmod +x ./scripts/deploy-secure.sh
+   ./scripts/deploy-secure.sh
+   ```
+
+This approach ensures that no sensitive data is stored in files on the server filesystem.
+
+### Option 3: GitHub Actions Deployment
 
 1. Set up the following secrets in your GitHub repository:
    - `SSH_PRIVATE_KEY`: Private SSH key for accessing the server
@@ -77,8 +138,10 @@ The workflow will:
 - Build the application JAR file
 - Copy the JAR file to the server
 - Copy infrastructure files to the server
-- Create a `.env` file on the server from the repository secrets
-- Start the containers using Docker Compose
+- Pass environment variables directly to Docker containers (without creating .env files)
+- Start the containers using Docker Compose with secure environment variable handling
+
+This approach ensures that no sensitive data is stored in files on the server filesystem. All secrets are passed directly to the Docker containers through environment variables.
 
 ## Resource Allocation
 
@@ -102,28 +165,42 @@ To enable SSL, you need to provide your certificates:
 
 ## Environment Variables
 
-The application requires several environment variables for integrations. These should be set in the `infra/.env` file:
+The application requires several environment variables for integrations. For security reasons, these should be passed directly to Docker containers rather than stored in files:
 
+```bash
+# Export all required environment variables
+export CHAT_ID=your_chat_id
+export CHAT_TOKEN=your_bot_token
+export BASE_URL=https://yourdomain.com
+export SUPERGROUP_CHAT_ID=your_supergroup_id
+export POSITIONS_TOPIC_THREAD_ID=positions_thread_id
+export ORDERS_TOPIC_THREAD_ID=orders_thread_id
+export RUS_TOPIC_THREAD_ID=rus_thread_id
+export WORLD_TOPIC_THREAD_ID=world_thread_id
+export CRYPTO_TOPIC_THREAD_ID=crypto_thread_id
+export LOGS_TOPIC_THREAD_ID=logs_thread_id
+export STATISTICS_TOPIC_THREAD_ID=statistics_thread_id
+export ERRORS_TOPIC_THREAD_ID=errors_thread_id
+export EVENTS_TOPIC_THREAD_ID=events_thread_id
+export TINKOFF_INVEST_TOKEN=your_tinkoff_token
+export FINAM_API_KEY=your_finam_api_key
+export FINAM_ACCOUNT_KEY=your_finam_account_id
+export BYBIT_KEY=your_bybit_key
+export BYBIT_SECRET=your_bybit_secret
+export CLOUDRU_API_KEY=your_cloudru_key
+export PROXY_API_KEY=your_proxy_key
+export DEEPSEEK_KEY=your_deepseek_key
+export GIGACHAT_CLIENT_ID=your_gigachat_client_id
+export GIGACHAT_CLIENT_SECRET=your_gigachat_client_secret
+export NEWS_API_KEY=your_news_api_key
 ```
-# Telegram
-CHAT_ID=your_chat_id
-CHAT_TOKEN=your_bot_token
-BASE_URL=https://yourdomain.com
 
-# Tinkoff
-TINKOFF_INVEST_TOKEN=your_tinkoff_token
-
-# Finam
-FINAM_API_KEY=your_finam_api_key
-FINAM_ACCOUNT_KEY=your_finam_account_id
-
-# Bybit
-BYBIT_KEY=your_bybit_key
-BYBIT_SECRET=your_bybit_secret
-
-# AI Services (optional)
-CLOUDRU_API_KEY=your_cloudru_key
+Then run the application with:
+```bash
+docker compose up -d
 ```
+
+This approach ensures that no sensitive data is stored in files on the server filesystem.
 
 ## Monitoring
 
