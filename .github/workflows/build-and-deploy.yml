@@ -78,7 +78,7 @@ jobs:
           export LOGS_TOPIC_THREAD_ID='${{ secrets.LOGS_TOPIC_THREAD_ID }}' && \
           export STATISTICS_TOPIC_THREAD_ID='${{ secrets.STATISTICS_TOPIC_THREAD_ID }}' && \
           export ERRORS_TOPIC_THREAD_ID='${{ secrets.ERRORS_TOPIC_THREAD_ID }}' && \
-          export EVENTS_TOPIC_THREAD_ID='${{ secrets.EVENTS_TOPIC_THREAD_ID }}' && \
+          export EVENTS_THREAD_ID='${{ secrets.EVENTS_THREAD_ID }}' && \
           export TINKOFF_INVEST_TOKEN='${{ secrets.TINKOFF_INVEST_TOKEN }}' && \
           export FINAM_API_KEY='${{ secrets.FINAM_API_KEY }}' && \
           export FINAM_ACCOUNT_KEY='${{ secrets.FINAM_ACCOUNT_KEY }}' && \
@@ -93,6 +93,7 @@ jobs:
           export SPRING_DATASOURCE_URL='${{ secrets.SPRING_DATASOURCE_URL }}' && \
           export SPRING_DATASOURCE_USERNAME='${{ secrets.SPRING_DATASOURCE_USERNAME }}' && \
           export SPRING_DATASOURCE_PASSWORD='${{ secrets.SPRING_DATASOURCE_PASSWORD }}' && \
+          
           cd /home/${{ secrets.SERVER_USER }}/app/infra && \
           rm -f .env && \
           chmod +x ./scripts/deploy-secure.sh && \

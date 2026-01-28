@@ -97,7 +97,7 @@ This application is designed to be deployed using Docker and Docker Compose on a
    export LOGS_TOPIC_THREAD_ID=logs_thread_id
    export STATISTICS_TOPIC_THREAD_ID=statistics_thread_id
    export ERRORS_TOPIC_THREAD_ID=errors_thread_id
-   export EVENTS_TOPIC_THREAD_ID=events_thread_id
+   export EVENTS_THREAD_ID=events_thread_id
    export TINKOFF_INVEST_TOKEN=your_tinkoff_token
    export FINAM_API_KEY=your_finam_api_key
    export FINAM_ACCOUNT_KEY=your_finam_account_id

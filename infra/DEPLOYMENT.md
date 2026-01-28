@@ -102,7 +102,7 @@ For enhanced security, you can deploy without creating any `.env` files on the s
    export LOGS_TOPIC_THREAD_ID=logs_thread_id
    export STATISTICS_TOPIC_THREAD_ID=statistics_thread_id
    export ERRORS_TOPIC_THREAD_ID=errors_thread_id
-   export EVENTS_TOPIC_THREAD_ID=events_thread_id
+   export EVENTS_THREAD_ID=events_thread_id
    export TINKOFF_INVEST_TOKEN=your_tinkoff_token
    export FINAM_API_KEY=your_finam_api_key
    export FINAM_ACCOUNT_KEY=your_finam_account_id
@@ -137,7 +137,7 @@ This approach ensures that no sensitive data is stored in files on the server fi
    - All the required environment variables as individual secrets:
      - `CHAT_ID`, `CHAT_TOKEN`, `BASE_URL`, `SUPERGROUP_CHAT_ID`, `POSITIONS_TOPIC_THREAD_ID`,
        `ORDERS_TOPIC_THREAD_ID`, `RUS_TOPIC_THREAD_ID`, `WORLD_TOPIC_THREAD_ID`, `CRYPTO_TOPIC_THREAD_ID`,
-       `LOGS_TOPIC_THREAD_ID`, `STATISTICS_TOPIC_THREAD_ID`, `ERRORS_TOPIC_THREAD_ID`, `EVENTS_TOPIC_THREAD_ID`,
+       `LOGS_TOPIC_THREAD_ID`, `STATISTICS_TOPIC_THREAD_ID`, `ERRORS_TOPIC_THREAD_ID`, `EVENTS_THREAD_ID`,
        `TINKOFF_INVEST_TOKEN`, `FINAM_API_KEY`, `FINAM_ACCOUNT_KEY`, `BYBIT_KEY`, `BYBIT_SECRET`,
        `CLOUDRU_API_KEY`, `PROXY_API_KEY`, `DEEPSEEK_KEY`, `GIGACHAT_CLIENT_ID`, `GIGACHAT_CLIENT_SECRET`,
        `NEWS_API_KEY`, `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
@@ -191,7 +191,7 @@ export CRYPTO_TOPIC_THREAD_ID=crypto_thread_id
 export LOGS_TOPIC_THREAD_ID=logs_thread_id
 export STATISTICS_TOPIC_THREAD_ID=statistics_thread_id
 export ERRORS_TOPIC_THREAD_ID=errors_thread_id
-export EVENTS_TOPIC_THREAD_ID=events_thread_id
+export EVENTS_THREAD_ID=events_thread_id
 export TINKOFF_INVEST_TOKEN=your_tinkoff_token
 export FINAM_API_KEY=your_finam_api_key
 export FINAM_ACCOUNT_KEY=your_finam_account_id
@@ -269,7 +269,7 @@ If you encounter issues with environment variables not being passed to container
    export LOGS_TOPIC_THREAD_ID=logs_thread_id
    export STATISTICS_TOPIC_THREAD_ID=statistics_thread_id
    export ERRORS_TOPIC_THREAD_ID=errors_thread_id
-   export EVENTS_TOPIC_THREAD_ID=events_thread_id
+   export EVENTS_THREAD_ID=events_thread_id
    export TINKOFF_INVEST_TOKEN=your_tinkoff_token
    export FINAM_API_KEY=your_finam_api_key
    export FINAM_ACCOUNT_KEY=your_finam_account_id
