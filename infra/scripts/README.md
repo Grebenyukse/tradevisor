@@ -50,6 +50,26 @@ For enhanced security, we provide `deploy-secure.sh` which deploys the applicati
    ```bash
    chmod +x deploy-secure.sh
    ./deploy-secure.sh
-   ```
-
-This approach ensures that no sensitive data is stored in files on the server filesystem, reducing the risk of accidental exposure.
+      ```
+   
+   ### Debugging Environment Variables
+   
+   If you encounter issues with environment variables not being passed to containers:
+   
+   1. **Check current environment variables:**
+      ```bash
+      printenv | grep -E "(CHAT_|TINKOFF_|FINAM_|BYBIT_|CLOUDRU_|PROXY_|DEEPSEEK_|GIGACHAT_|NEWS_|SPRING_)"
+      ```
+   
+   2. **Check Docker container environment:**
+      ```bash
+      # Check environment variables inside the running container
+      docker exec tradevisor env | grep -E "(CHAT_|TINKOFF_|FINAM_|BYBIT_|CLOUDRU_|PROXY_|DEEPSEEK_|GIGACHAT_|NEWS_|SPRING_)"
+      ```
+   
+   3. **View container logs for detailed error information:**
+      ```bash
+      docker compose logs tradevisor
+      ```
+   
+   This approach ensures that no sensitive data is stored in files on the server filesystem, reducing the risk of accidental exposure.

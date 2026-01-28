@@ -245,6 +245,61 @@ git pull
 docker compose up -d --build
 ```
 
+### Debugging Environment Variables
+
+If you encounter issues with environment variables not being passed to containers, you can use the following approaches:
+
+1. **Check current environment variables:**
+   ```bash
+   printenv | grep -E "(CHAT_|TINKOFF_|FINAM_|BYBIT_|CLOUDRU_|PROXY_|DEEPSEEK_|GIGACHAT_|NEWS_|SPRING_)"
+   ```
+
+2. **Run with explicit environment variables:**
+   ```bash
+   # Set all required environment variables
+   export CHAT_ID=your_chat_id
+   export CHAT_TOKEN=your_bot_token
+   export BASE_URL=https://yourdomain.com
+   export SUPERGROUP_CHAT_ID=your_supergroup_id
+   export POSITIONS_TOPIC_THREAD_ID=positions_thread_id
+   export ORDERS_TOPIC_THREAD_ID=orders_thread_id
+   export RUS_TOPIC_THREAD_ID=rus_thread_id
+   export WORLD_TOPIC_THREAD_ID=world_thread_id
+   export CRYPTO_TOPIC_THREAD_ID=crypto_thread_id
+   export LOGS_TOPIC_THREAD_ID=logs_thread_id
+   export STATISTICS_TOPIC_THREAD_ID=statistics_thread_id
+   export ERRORS_TOPIC_THREAD_ID=errors_thread_id
+   export EVENTS_TOPIC_THREAD_ID=events_thread_id
+   export TINKOFF_INVEST_TOKEN=your_tinkoff_token
+   export FINAM_API_KEY=your_finam_api_key
+   export FINAM_ACCOUNT_KEY=your_finam_account_id
+   export BYBIT_KEY=your_bybit_key
+   export BYBIT_SECRET=your_bybit_secret
+   export CLOUDRU_API_KEY=your_cloudru_key
+   export PROXY_API_KEY=your_proxy_key
+   export DEEPSEEK_KEY=your_deepseek_key
+   export GIGACHAT_CLIENT_ID=your_gigachat_client_id
+   export GIGACHAT_CLIENT_SECRET=your_gigachat_client_secret
+   export NEWS_API_KEY=your_news_api_key
+   export SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
+   export SPRING_DATASOURCE_USERNAME=postgres
+   export SPRING_DATASOURCE_PASSWORD=password
+   
+   # Then run docker-compose
+   docker compose up -d
+   ```
+
+3. **Check Docker container environment:**
+   ```bash
+   # Check environment variables inside the running container
+   docker exec tradevisor env | grep -E "(CHAT_|TINKOFF_|FINAM_|BYBIT_|CLOUDRU_|PROXY_|DEEPSEEK_|GIGACHAT_|NEWS_|SPRING_)"
+   ```
+
+4. **View container logs for detailed error information:**
+   ```bash
+   docker compose logs tradevisor
+   ```
+
 ### Backup Database
 
 ```bash

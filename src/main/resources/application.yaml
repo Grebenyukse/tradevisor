@@ -58,9 +58,9 @@ app:
       reports: false          # получить точную дату предоставления отчетности, если провайдер это предоставляет
       news: false             # получить новости последних дней, связанные с этим инструментом, если есть
     prices:
-      delay: PT1M
-      finam: true
-      tinkoff: true
+      delay: PT5M
+      finam: false
+      tinkoff: false
       bybit: true
       yahoofinance: true
       init-tickers:
@@ -129,12 +129,12 @@ app:
       url: "https://newsapi.org/v2/top-headlines?category=business"
       page-size: 50
     tinkoff:
-      enabled: true
+      enabled: false
       token: ${TINKOFF_INVEST_TOKEN}
       host: "invest-public-api.tinkoff.ru:443"
       history-max-depth-days: 10
     finam:
-      enabled: true
+      enabled: false
       secret: ${FINAM_API_KEY}
       url: https://api.finam.ru/v1
       host: api.finam.ru
@@ -150,6 +150,6 @@ app:
       url: https://api.bybit.com
       history-max-depth-days: 10
     yahoofinance:
-      enabled: true
+      enabled: false
       url: https://query1.finance.yahoo.com
       history-max-depth-days: 100
