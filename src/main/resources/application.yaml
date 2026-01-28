@@ -129,12 +129,12 @@ app:
       url: "https://newsapi.org/v2/top-headlines?category=business"
       page-size: 50
     tinkoff:
-      enabled: false
+      enabled: true
       token: ${TINKOFF_INVEST_TOKEN}
       host: "invest-public-api.tinkoff.ru:443"
       history-max-depth-days: 10
     finam:
-      enabled: false
+      enabled: true
       secret: ${FINAM_API_KEY}
       url: https://api.finam.ru/v1
       host: api.finam.ru
@@ -150,6 +150,6 @@ app:
       url: https://api.bybit.com
       history-max-depth-days: 10
     yahoofinance:
-      enabled: false
+      enabled: true
       url: https://query1.finance.yahoo.com
       history-max-depth-days: 100
