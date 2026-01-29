@@ -1,32 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration scan="true" scanPeriod="10 seconds">
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <!-- Console Appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>%d{ISO8601} %-5level [%thread] %logger{36} \(%class{0}.java:%line\) - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} %-5level [%thread] %logger{10} - %msg%n</pattern>
         </encoder>
     </appender>
+
+    <!-- File Appender with minimal footprint -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/app.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- Паттерн для имени файла: дата + индекс -->
-            <fileNamePattern>logs/app.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-            <!-- Триггер ротации по размеру файла -->
+            <fileNamePattern>logs/app.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>10MB</maxFileSize>
+                <maxFileSize>1MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
-            <!-- Хранить логи за последние 30 дней -->
-            <maxHistory>30</maxHistory>
-            <!-- Общий максимальный размер всех архивных файлов -->
-            <totalSizeCap>1GB</totalSizeCap>
+            <maxHistory>3</maxHistory>
+            <totalSizeCap>10MB</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>%d{ISO8601} %-5level [%thread] %logger{36} \(%class{0}.java:%line\) - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} %-5level [%thread] %logger{10} - %msg%n</pattern>
         </encoder>
     </appender>
-    <root level="DEBUG">
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
-         <appender-ref ref="CONSOLE"/>
     </root>
 </configuration>
