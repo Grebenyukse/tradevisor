@@ -62,7 +62,10 @@ public class BybitPricesService implements PricesLoader {
                 .limit(500)
                 .build());
         var parsedResponse = ObjectMapperUtils.readValue(ObjectMapperUtils.writeValue(response), BybitCandlesResponse.class);
-
+        if (parsedResponse.result() == null) {
+            log.warn("ticker data not found: {}", ticker);
+            return;
+        }
         var res = parsedResponse.result().list().stream()
                 .map(x -> from(x, tickerCode))
                 .collect(toList());
