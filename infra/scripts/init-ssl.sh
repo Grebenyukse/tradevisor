@@ -18,7 +18,7 @@ if [ -f "$CERT_PATH/fullchain.pem" ]; then
 
     # Generate HTTPS config from template
     echo "📄 Generating HTTPS config from template..."
-    envsubst < "$TEMPLATE_FILE" > "$HTTPS_CONFIG"
+    cp "$TEMPLATE_FILE" "$HTTPS_CONFIG"
 
     # Reload Nginx with HTTPS enabled
     echo "🔁 Reloading Nginx with HTTPS support..."
@@ -55,7 +55,7 @@ else
 
     # Now generate HTTPS config and enable it
     echo "📄 Generating HTTPS config from template..."
-    envsubst < "$TEMPLATE_FILE" > "$HTTPS_CONFIG"
+    cp "$TEMPLATE_FILE" "$HTTPS_CONFIG"
 
     # Reload Nginx with HTTPS support
     echo "🔁 Reloading Nginx with HTTPS support..."
