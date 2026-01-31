@@ -106,6 +106,8 @@ services:
       - postgres
 
   certbot:
+    depends_on:
+      - nginx
     image: certbot/certbot
     volumes:
       - ./data/certbot/conf:/etc/letsencrypt

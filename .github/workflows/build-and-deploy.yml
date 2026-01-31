@@ -103,5 +103,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} \
           "cd /home/${{ secrets.SERVER_USER }}/app/infra && \
           chmod +x ./scripts/ttools.sh && \
+          chmod +x ./scripts/init-ssl.sh && \
+          ./scripts/init-ssl.sh && \
           chmod +x ./scripts/setup-certbot-cron.sh && \
           ./scripts/setup-certbot-cron.sh"
