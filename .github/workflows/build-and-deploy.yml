@@ -104,3 +104,5 @@ jobs:
           "cd /home/${{ secrets.SERVER_USER }}/app/infra && \
           chmod +x ./scripts/setup-certbot-cron.sh && \
           ./scripts/setup-certbot-cron.sh"
+          
+          chmod +x ./scripts/ttools.sh

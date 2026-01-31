@@ -15,6 +15,7 @@ create table if not exists tradevisor.tickers(
 );
 
 -- Исправленное создание внешнего ключа
+drop constraint if exists fk_spot_ticker_code_2_ticker_code;
 alter table tradevisor.tickers
     add constraint fk_spot_ticker_code_2_ticker_code
     foreign key (spot_ticker_code) references tradevisor.tickers (ticker_code);

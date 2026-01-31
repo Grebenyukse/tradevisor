@@ -12,5 +12,6 @@ create table if not exists tradevisor.market_data
     low    real      null,
     close  real      null
 );
+alter table tradevisor.market_data drop constraint if exists market_data_time_ticker_code_pk;
 alter table tradevisor.market_data add constraint market_data_time_ticker_code_pk primary key (time, ticker_code);
 
