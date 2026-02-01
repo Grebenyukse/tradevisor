@@ -47,9 +47,6 @@ services:
     cap_drop:
       - ALL
     user: "70"  # UID пользователя postgres внутри контейнера
-    networks:
-      - backend
-
   tradevisor:
     image: eclipse-temurin:17-jre-jammy
     hostname: tradevisor
@@ -134,8 +131,6 @@ services:
         limits:
           memory: 512M
           cpus: '0.5'
-    networks:
-      - backend
     ports:
       - "80:80"
       - "443:443"
@@ -160,8 +155,6 @@ services:
     command: certonly --webroot --webroot-path=/var/www/certbot --email bugor-p@yandex.ru --agree-tos --no-eff-email -d grebenyukse.ru -d www.grebenyukse.ru --non-interactive
     depends_on:
       - nginx
-    networks:
-      - backend
 
 volumes:
   postgres_data:
