@@ -5,7 +5,7 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>%d{HH:mm:ss} %-5level [%thread] %logger{10} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss, Europe/Moscow} %-5level [%thread] %logger{10} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -13,7 +13,7 @@
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/app.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/app.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>logs/app.%d{yyyy-MM-dd, Europe/Moscow}.%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>1MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
@@ -22,7 +22,7 @@
         </rollingPolicy>
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>%d{HH:mm:ss} %-5level [%thread] %logger{10} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss, Europe/Moscow} %-5level [%thread] %logger{10} - %msg%n</pattern>
         </encoder>
     </appender>
 

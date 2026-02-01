@@ -93,7 +93,7 @@ public abstract class BaseIntegrationTest {
 
     @BeforeEach
     public void logProperties() {
-        log.info("properties: {}", properties.toString());
+//        log.info("properties: {}", properties.toString());
     }
 
     @AfterAll
