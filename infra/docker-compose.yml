@@ -1,35 +1,74 @@
 services:
   postgres:
-    image: 'postgres:12.10'
+    image: postgres:16
     hostname: postgres
     container_name: postgres
-    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c pg_stat_statements.max=10000 -c max_connections=200 -c wal_level=logical
+    command:
+      - postgres
+      - -c
+      - wal_level=minimal
+      - -c
+      - max_wal_senders=0
+      - -c
+      - archive_mode=off
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - pg_stat_statements.max=10000
+      - -c
+      - max_connections=200
     ports:
       - "5433:5432"
     environment:
       POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
       POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      POSTGRES_HOST_AUTH_METHOD: trust
       POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     deploy:
       resources:
         limits:
           memory: 1G
           cpus: '0.5'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U ${SPRING_DATASOURCE_USERNAME}" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    user: "70"  # UID пользователя postgres внутри контейнера
+    networks:
+      - backend
 
   tradevisor:
     image: eclipse-temurin:17-jre-jammy
     hostname: tradevisor
     container_name: tradevisor
+    user: "65534:65534"  # nobody:nogroup
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/logs  # если логи пишутся сюда
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     ports:
       - "8080:8080"
+    depends_on:
+      - postgres
+    volumes:
+      - ../app.jar:/app/app.jar:ro
     environment:
       CHAT_ID: ${CHAT_ID}
       CHAT_TOKEN: ${CHAT_TOKEN}
@@ -44,37 +83,20 @@ services:
       STATISTICS_TOPIC_THREAD_ID: ${STATISTICS_TOPIC_THREAD_ID}
       ERRORS_TOPIC_THREAD_ID: ${ERRORS_TOPIC_THREAD_ID}
       EVENTS_THREAD_ID: ${EVENTS_THREAD_ID}
-
-      # Tinkoff Configuration
       TINKOFF_INVEST_TOKEN: ${TINKOFF_INVEST_TOKEN}
-
-      # Finam Configuration
       FINAM_API_KEY: ${FINAM_API_KEY}
       FINAM_ACCOUNT_KEY: ${FINAM_ACCOUNT_KEY}
-
-      # Bybit Configuration
       BYBIT_KEY: ${BYBIT_KEY}
       BYBIT_SECRET: ${BYBIT_SECRET}
-
-      # AI Services Configuration
       CLOUDRU_API_KEY: ${CLOUDRU_API_KEY}
       PROXY_API_KEY: ${PROXY_API_KEY}
       DEEPSEEK_KEY: ${DEEPSEEK_KEY}
       GIGACHAT_CLIENT_ID: ${GIGACHAT_CLIENT_ID}
       GIGACHAT_CLIENT_SECRET: ${GIGACHAT_CLIENT_SECRET}
-
-      # News API Configuration
       NEWS_API_KEY: ${NEWS_API_KEY}
-
-      # Database Configuration
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-
-    depends_on:
-      - postgres
-    volumes:
-      - ../app.jar:/app/app.jar
     working_dir: /app
     command: ["java", "-jar", "app.jar"]
     deploy:
@@ -82,39 +104,64 @@ services:
         limits:
           memory: 2G
           cpus: '1.0'
-
   nginx:
-    image: nginx:latest
+    image: nginx:1.25-alpine
     hostname: nginx
     container_name: nginx
-    ports:
-      - "80:80"
-      - "443:443"
-      - "5432:5432"  # Expose PostgreSQL proxy on port 5432
+    user: "101:101"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./data/certbot/conf:/etc/letsencrypt:ro
+      - ./data/certbot/www:/var/www/certbot:ro
+      - ./scripts/init-ssl.sh:/init-ssl.sh:ro
+    command: [ "/init-ssl.sh" ]
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '0.5'
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
-      - ./scripts/init-ssl.sh:/init-ssl.sh
-    command: ["/init-ssl.sh"]
+    networks:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+      - "5432:5432"  # Expose PostgreSQL proxy on port 5432
     depends_on:
       - tradevisor
       - postgres
 
   certbot:
-    depends_on:
-      - nginx
     image: certbot/certbot
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     volumes:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
     command: certonly --webroot --webroot-path=/var/www/certbot --email bugor-p@yandex.ru --agree-tos --no-eff-email -d grebenyukse.ru -d www.grebenyukse.ru --non-interactive
+    depends_on:
+      - nginx
+    networks:
+      - backend
 
 volumes:
   postgres_data:
