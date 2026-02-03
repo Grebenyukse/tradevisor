@@ -24,7 +24,7 @@ services:
     environment:
       POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
       POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      POSTGRES_DB: postgres
+      POSTGRES_DB: ${SPRING_DATASOURCE_DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     deploy:
@@ -94,6 +94,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_DATASOURCE_DB_NAME: ${SPRING_DATASOURCE_DB_NAME}
     working_dir: /app
     command: ["java", "-jar", "app.jar"]
     deploy:

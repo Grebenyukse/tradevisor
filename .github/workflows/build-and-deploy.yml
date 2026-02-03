@@ -93,6 +93,7 @@ jobs:
           export SPRING_DATASOURCE_URL='${{ secrets.SPRING_DATASOURCE_URL }}' && \
           export SPRING_DATASOURCE_USERNAME='${{ secrets.SPRING_DATASOURCE_USERNAME }}' && \
           export SPRING_DATASOURCE_PASSWORD='${{ secrets.SPRING_DATASOURCE_PASSWORD }}' && \
+          export SPRING_DATASOURCE_DB_NAME='${{ secrets.SPRING_DATASOURCE_DB_NAME }}' && \
           
           cd /home/${{ secrets.SERVER_USER }}/app/infra && \
           chmod +x ./scripts/init-ssl.sh && \

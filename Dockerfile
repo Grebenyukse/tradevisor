@@ -24,6 +24,10 @@ RUN ./gradlew build -x test
 # Stage 2: Runtime image
 FROM eclipse-temurin:17-jre-jammy
 
+# Создаем директорию для логов и назначаем права
+RUN mkdir -p /app/logs && \
+    chmod 777 /app/logs
+
 # Set the working directory
 WORKDIR /app
 
