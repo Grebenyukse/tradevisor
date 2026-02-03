@@ -38,13 +38,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    tmpfs:
-      - /tmp
-      - /var/run/postgresql
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
   tradevisor:
     image: eclipse-temurin:17-jre-jammy
     hostname: tradevisor
