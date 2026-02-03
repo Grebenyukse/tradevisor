@@ -38,7 +38,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    read_only: true
     tmpfs:
       - /tmp
       - /var/run/postgresql
@@ -46,7 +45,6 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    user: "70"  # UID пользователя postgres внутри контейнера
   tradevisor:
     image: eclipse-temurin:17-jre-jammy
     hostname: tradevisor
