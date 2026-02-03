@@ -20,7 +20,7 @@ services:
       - -c
       - max_connections=200
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
       POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
