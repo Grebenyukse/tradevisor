@@ -40,14 +40,14 @@ spring:
   application:
     name: tradevisor
   datasource:
-    url: jdbc:postgresql://postgresql:5432/${SPRING_DATASOURCE_DB_NAME:postgres}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    url: jdbc:postgresql://postgresql:5432/tradevisor
+    username: trvtrd
     password: ${SPRING_DATASOURCE_PASSWORD:password}
   liquibase:
     changeLog: classpath:changelog/changelog-master.yaml
     enabled: true
-    url: jdbc:postgresql://postgresql:5432/${SPRING_DATASOURCE_DB_NAME:postgres}
-    user: ${SPRING_DATASOURCE_USERNAME:postgres}
+    url: jdbc:postgresql://postgresql:5432/tradevisor
+    user: trvtrd
     password: ${SPRING_DATASOURCE_PASSWORD:password}
 
 app:
