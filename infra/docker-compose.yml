@@ -23,7 +23,7 @@ services:
       - "5433:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: opitoshibokovichtrudnykh
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD_V2}
       POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data

@@ -42,13 +42,13 @@ spring:
   datasource:
     url: jdbc:postgresql://postgresql:5432/postgres
     username: postgres
-    password: opitoshibokovichtrudnykh
+    password: ${SPRING_DATASOURCE_PASSWORD_V2}
   liquibase:
     changeLog: classpath:changelog/changelog-master.yaml
     enabled: true
     url: jdbc:postgresql://postgresql:5432/postgres
     user: postgres
-    password: opitoshibokovichtrudnykh
+    password: ${SPRING_DATASOURCE_PASSWORD_V2}
 
 app:
   collect:                    # сбор информации для анализа
