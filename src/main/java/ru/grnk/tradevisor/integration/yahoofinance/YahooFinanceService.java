@@ -39,7 +39,7 @@ class YahooFinanceService {
             log.info("Loaded {} tickers from JSON file", tickers.size());
             return tickers;
         } catch (Exception e) {
-            log.error("Failed to load tickers from JSON file", e);
+            log.error("Failed attempt to load tickers from JSON file", e);
             throw new IllegalStateException("Failed to load tickers from JSON file", e);
         }
     }
