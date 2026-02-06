@@ -93,7 +93,8 @@ services:
       - ./data/certbot/conf:/etc/letsencrypt:ro
       - ./data/certbot/www:/var/www/certbot:ro
       - ./scripts/init-ssl.sh:/init-ssl.sh:ro
-    command: [ "/init-ssl.sh" ]
+    command: ["sh", "-c", "ls -l /init-ssl.sh && cat /init-ssl.sh"]
+#    command: [ "/init-ssl.sh" ]
     deploy:
       resources:
         limits:
