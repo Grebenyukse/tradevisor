@@ -69,9 +69,7 @@ services:
       GIGACHAT_CLIENT_ID: ${GIGACHAT_CLIENT_ID}
       GIGACHAT_CLIENT_SECRET: ${GIGACHAT_CLIENT_SECRET}
       NEWS_API_KEY: ${NEWS_API_KEY}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD_V2}
+      SPRING_DATASOURCE_PASSWORD_V2: ${SPRING_DATASOURCE_PASSWORD_V2}
     depends_on:
       - postgres
     volumes:
@@ -104,7 +102,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "5433:5432"
     depends_on:
       - certbot
   certbot:
