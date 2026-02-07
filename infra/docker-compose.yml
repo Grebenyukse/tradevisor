@@ -104,7 +104,7 @@ services:
       - "443:443"
       - "5433:5432"
     depends_on:
-      - postgres
+      - certbot
 
   certbot:
     image: certbot/certbot
@@ -112,8 +112,6 @@ services:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
     command: certonly --webroot --webroot-path=/var/www/certbot --email bugor-p@yandex.ru --agree-tos --no-eff-email -d grebenyukse.ru -d www.grebenyukse.ru --non-interactive
-    depends_on:
-      - nginx
 
 volumes:
   postgres_data:
