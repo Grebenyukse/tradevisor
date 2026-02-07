@@ -114,7 +114,8 @@ services:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot
       - ./scripts/certbot-init.sh:/certbot-init.sh
-    command: [ "sh", "/certbot-init.sh" ]
+    entrypoint: ["/bin/sh"]
+    command: ["/certbot-init.sh"]
 
 volumes:
   postgres_data:
