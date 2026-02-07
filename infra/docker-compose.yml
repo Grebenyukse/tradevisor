@@ -88,13 +88,12 @@ services:
     hostname: nginx
     container_name: nginx
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./data/certbot/conf:/etc/letsencrypt:ro
-      - ./data/certbot/www:/var/www/certbot:ro
-      - ./scripts/init-ssl.sh:/init-ssl.sh:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+      - ./scripts/init-ssl.sh:/init-ssl.sh
     command: ["sh", "/init-ssl.sh"]
-#    command: [ "/init-ssl.sh" ]
     deploy:
       resources:
         limits:
