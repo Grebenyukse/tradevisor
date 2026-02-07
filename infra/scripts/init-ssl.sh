@@ -7,75 +7,65 @@ TEMPLATE_FILE="/etc/nginx/conf.d/tradevisor-https.conf.template"
 HTTPS_CONFIG="/etc/nginx/conf.d/tradevisor-https.conf"
 WEBROOT_PATH="/var/www/certbot"
 
-echo "🚀 Starting deployment process..."
+echo "🚀 Starting SSL orchestration..."
 
-# Ensure required directories exist
+# Убедиться, что пути существуют
 mkdir -p "$WEBROOT_PATH"
 mkdir -p "$(dirname "$CERT_PATH")"
 
-# Step 1: Remove any existing HTTPS config to avoid conflicts
-echo "🧹 Cleaning up previous HTTPS config..."
-rm -f "$HTTPS_CONFIG"
+# Функция запуска/перезапуска Nginx
+start_nginx() {
+  if pgrep nginx > /dev/null; then
+    echo "🔁 Reloading Nginx..."
+    nginx -s reload 2>/dev/null || nginx
+  else
+    echo "🟢 Starting Nginx..."
+    nginx
+  fi
+}
 
-# Step 2: Check if certificate already exists
-if [ -f "$CERT_PATH/fullchain.pem" ]; then
-    echo "✅ Certificate found. Enabling HTTPS immediately."
+# Функция инициализации конфигурации
+initialize_config() {
+  echo "🔍 Checking for SSL certificates..."
+  rm -f "$HTTPS_CONFIG"
 
-    # Generate HTTPS config from template
-    echo "📄 Generating HTTPS config from template..."
+  if [ -f "$CERT_PATH/fullchain.pem" ] && [ -f "$CERT_PATH/privkey.pem" ]; then
+    echo "✅ SSL certificates found, enabling HTTPS"
+    # Включаем HTTPS конфиг через копирование template файла
     cp "$TEMPLATE_FILE" "$HTTPS_CONFIG"
+    echo "🔒 HTTPS configuration enabled"
+  else
+    echo "🟡 No SSL certificates found, HTTP only mode"
+  fi
 
-    # Start Nginx if not running
-    if ! pgrep nginx > /dev/null; then
-        echo "🟢 Starting Nginx..."
-        nginx
-    else
-        echo "🔁 Reloading Nginx with HTTPS support..."
-        nginx -s reload
-    fi
+  start_nginx
+}
 
-else
-    echo "⚠️  No certificate found. Obtaining one now..."
+# Инициализация
+initialize_config
 
-    # Remove HTTPS config temporarily
-    rm -f "$HTTPS_CONFIG"
-
-    # Start Nginx with HTTP-only config
-    echo "🟢 Starting Nginx with HTTP only..."
-    nginx || true
-
-    # Give Nginx time to start
-    sleep 3
-
-    # Run Certbot to get the certificate
-    echo "🔐 Running Certbot to obtain certificate..."
-    certbot certonly \
-      --webroot \
-      --webroot-path="$WEBROOT_PATH" \
-      --email bugor-p@yandex.ru \
-      --agree-tos \
-      --no-eff-email \
-      -d grebenyukse.ru \
-      -d www.grebenyukse.ru \
-      --non-interactive
-
-    # Wait until certificate is available
-    echo "⏳ Waiting for certificate to appear..."
-    while [ ! -f "$CERT_PATH/fullchain.pem" ]; do
-        echo "⏳ Still waiting..."
-        sleep 5
-    done
-
-    # Now generate HTTPS config and enable it
-    echo "📄 Generating HTTPS config from template..."
-    cp "$TEMPLATE_FILE" "$HTTPS_CONFIG"
-
-    # Reload Nginx with HTTPS support
-    echo "🔁 Reloading Nginx with HTTPS support..."
-    nginx -s reload
+# Установить inotify-tools
+echo "📦 Installing inotify-tools..."
+if command -v apk >/dev/null 2>&1; then
+  apk add --no-cache inotify-tools > /dev/null 2>&1
+elif command -v apt-get >/dev/null 2>&1; then
+  apt-get update && apt-get install -y inotify-tools > /dev/null 2>&1
+elif command -v yum >/dev/null 2>&1; then
+  yum install -y inotify-tools > /dev/null 2>&1
 fi
 
-echo "✅ Deployment completed successfully!"
+# Настроить cron job для мониторинга изменений сертификатов
+echo "⏰ Setting up cron job for certificate monitoring..."
 
-# Keep container alive
+# Добавить cron job (каждую минуту) - предполагается, что check-certificates.sh уже скопирован в контейнер
+echo "* * * * * /usr/local/bin/check-certificates.sh >> /var/log/certificate-monitor.log 2>&1" | crontab -
+
+# Запустить cron daemon
+echo "🟢 Starting cron daemon..."
+crond
+
+echo "✅ SSL orchestration initialized successfully"
+echo "📋 Cron job scheduled to check certificates every minute"
+
+# Держим контейнер активным
 tail -f /dev/null

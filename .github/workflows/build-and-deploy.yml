@@ -94,6 +94,9 @@ jobs:
           
           cd /home/${{ secrets.SERVER_USER }}/app/infra && \
           chmod +x ./scripts/init-ssl.sh && \
+          chmod +x ./scripts/reload-nginx.sh && \
+          chmod +x ./scripts/check-certificates.sh && \
+          chmod +x ./scripts/certbot-init.sh && \
           rm -f .env && \
           chmod +x ./scripts/deploy-secure.sh && \
           ./scripts/deploy-secure.sh"
