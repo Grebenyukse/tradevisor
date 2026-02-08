@@ -36,6 +36,7 @@ public class FiboSignals implements IStrategy {
                 .build();
         var firstCandle = candles.stream().findFirst().orElse(null);
         if (firstCandle == null) {
+            log.info("first candle is null");
             return defaultNoSignal;
         }
         var tradeTicker = ofNullable(tickersRepository.findTradeTickerByTickerCode(firstCandle.getTickerCode()))

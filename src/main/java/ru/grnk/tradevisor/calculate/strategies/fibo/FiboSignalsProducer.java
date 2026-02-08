@@ -24,6 +24,7 @@ public class FiboSignalsProducer {
     public static Optional<TrvCalculationResult> getFiboSignals(List<MarketData> tickerData, int minTouches) {
         ExtremumResult extremums = findExtremums(tickerData);
         if (extremums.left().index() == extremums.right().index()) {
+            log.info("left extremum is equal to right. no reason to calculate");
             return Optional.empty();
         }
         FiboLevels fiboLevels = calculateFiboLevels(extremums, tickerData);
@@ -170,7 +171,7 @@ public class FiboSignalsProducer {
                     priceOpen,
                     true
             );
-            log.debug("обнаружен сигнал по стратегии FIBO. {} касания 38.2. {}",analysis.touches382(),
+            log.info("обнаружен сигнал по стратегии FIBO. {} касания 38.2. {}",analysis.touches382(),
                     getPositionInfo(priceOpen, takeProfit, stopLoss));
             return Optional.of(TrvCalculationResult.builder()
                     .direction(tradingDirection)
@@ -192,7 +193,7 @@ public class FiboSignalsProducer {
                     priceOpen,
                     false
             );
-            log.debug("обнаружен сигнал по стратегии FIBO. {} касания 61.8. {}",analysis.touches618(),
+            log.info("обнаружен сигнал по стратегии FIBO. {} касания 61.8. {}",analysis.touches618(),
                     getPositionInfo(priceOpen, takeProfit, stopLoss));
             return Optional.of(TrvCalculationResult.builder()
                     .direction(tradingDirection)

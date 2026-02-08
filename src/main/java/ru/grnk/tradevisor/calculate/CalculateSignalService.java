@@ -100,13 +100,13 @@ public class CalculateSignalService {
                     strategies.forEach(s -> {
                         var candles = marketDataRepository.fetchMarketDataForLast(s.barsRequiredToCalcStrategy(), t.getTickerCode());
                         if (candles.size() < s.barsRequiredToCalcStrategy()) {
-                            log.debug("not enough bars to calc strategy fibo. requires: {}. candles.size: {}. ticker: {}", s.barsRequiredToCalcStrategy(), candles.size(), t.getTicker());
+                            log.info("not enough bars to calc strategy fibo. requires: {}. candles.size: {}. ticker: {}", s.barsRequiredToCalcStrategy(), candles.size(), t.getTicker());
                         }
                         if (candles.stream().max(Comparator.comparing(MarketData::getTime))
                                 .map(MarketData::getTime)
                                 .filter(MarketDataValidator::isActualTimeValid)
                                 .isEmpty()) {
-                            log.debug("свечи содержат слишком старые котировки. невозможно использовать для выставления позиции. тикер: {}", t);
+                            log.info("свечи содержат слишком старые котировки. невозможно использовать для выставления позиции. тикер: {}", t);
                             return;
                         }
                         TrvCalculationResult result = s.calculate(candles);
@@ -129,7 +129,7 @@ public class CalculateSignalService {
                         }
                     }
                 } catch (Exception e) {
-                    log.error("Ошибка при обработке тикера {}: {}", t.getTickerCode(), e.getMessage(), e);
+                    log.info("Ошибка при обработке тикера {}: {}", t.getTickerCode(), e.getMessage(), e);
                 }
             }
             offset += batchSize;
