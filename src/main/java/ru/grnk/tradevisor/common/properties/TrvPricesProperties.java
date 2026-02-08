@@ -6,6 +6,7 @@ public record TrvPricesProperties(
         Boolean tinkoff,
         Boolean bybit,
         Boolean yahoofinance,
+        Boolean world,
         InitTickersProperties initTickers
 ) {
 }

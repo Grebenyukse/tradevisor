@@ -63,6 +63,7 @@ app:
       tinkoff: true
       bybit: true
       yahoofinance: true
+      world: false
       init-tickers:
         delay: PT720H
   calculate:

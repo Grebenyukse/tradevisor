@@ -40,10 +40,12 @@ public class TinkoffPricesService implements PricesLoader {
     @SneakyThrows
     @Override
     public void initTickers() {
-        investApi.getInstrumentsService().getAllShares().get(10, TimeUnit.SECONDS).stream()
-                .filter(Share::getForQualInvestorFlag)
-                .map(TinkoffPricesService::from)
-                .forEach(tickersRepository::saveInstrument);
+        if (tradevisorProperties.collect().prices().world()) {
+            investApi.getInstrumentsService().getAllShares().get(10, TimeUnit.SECONDS).stream()
+                    .filter(Share::getForQualInvestorFlag)
+                    .map(TinkoffPricesService::from)
+                    .forEach(tickersRepository::saveInstrument);
+        }
         bindTradeFuturesService.initTickers();
     }
 
