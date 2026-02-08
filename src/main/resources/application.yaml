@@ -89,7 +89,7 @@ app:
     cron: 0 0 0 1 * ?
     retention_days: 30
     enabled: true
-  dintegration:
+  integration:
     cloudru:
       enabled: true
       key: ${CLOUDRU_API_KEY}
