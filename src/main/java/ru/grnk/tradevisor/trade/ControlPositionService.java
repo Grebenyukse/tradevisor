@@ -90,8 +90,15 @@ public class ControlPositionService {
         List<Signals> sorted = signals.stream()
                 .sorted(new SignalComparator())
                 .collect(toList());
-        List<Signals> active = List.of(sorted.get(0));
-        List<Signals> toCancel = sorted.subList(1, sorted.size());
+        List<Signals> active;
+        List<Signals> toCancel;
+        if (isSignalAlive(sorted.getFirst())) {
+            active = List.of(sorted.getFirst());
+            toCancel = sorted.subList(1, sorted.size());
+        } else {
+            active = List.of();
+            toCancel = new ArrayList<>(sorted);
+        }
         return new SortedSignals(active, toCancel);
     }
 
@@ -104,6 +111,22 @@ public class ControlPositionService {
     }
 
     private record SortedSignals(List<Signals> active, List<Signals> toCancel) {
+    }
+
+    private boolean isSignalAlive(Signals signal) {
+        Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
+        Tickers ticker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode()).orElse(spotTicker);
+        var clientOptional = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))
+                .findFirst();
+        if (clientOptional.isEmpty()) {
+            log.error("провайдер {} для сигнала signal:{} по spot_ticker_code: {} не активен. невозможно выполнить торговую операцию.",
+                    ticker.getProvider(), signal, ticker.getTickerCode());
+            throw new IllegalStateException();
+        }
+        var strategy = strategies.stream().filter(s -> Objects.equals(s.getStrategyUniqueName(), signal.getName())).findFirst().orElseThrow();
+        var candles = marketDataRepository.fetchMarketDataForLast(strategy.barsRequiredToCalcStrategy(), signal.getTickerCode());
+        var strategyCalculationResult = strategy.calculate(candles);
+        return strategyCalculationResult.direction().directionCode() == signal.getDirection();
     }
 
     public void openPosition(Signals signal) {
