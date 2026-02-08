@@ -92,8 +92,8 @@ public class ControlPositionService {
                 .collect(toList());
         List<Signals> active;
         List<Signals> toCancel;
-        if (isSignalAlive(sorted.getFirst())) {
-            active = List.of(sorted.getFirst());
+        if (isSignalAlive(sorted.get(0))) {
+            active = List.of(sorted.get(0));
             toCancel = sorted.subList(1, sorted.size());
         } else {
             active = List.of();
