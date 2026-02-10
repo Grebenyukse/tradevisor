@@ -13,6 +13,8 @@ import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.integration.telegram.TelegramMessageService;
 import ru.grnk.tradevisor.notify.plot.PlotService;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Objects;
 
@@ -67,13 +69,18 @@ public class MessagePublisher {
     }
 
     private static String getText(Signals signal, Tickers ticker) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String moscowTime = signal.getCreatedAt()
+                .atZoneSameInstant(ZoneId.of("Europe/Moscow"))
+                .format(formatter);
+        
         return TradingDirection.from(signal.getDirection()).name()
                 + ". \n Ticker: " + ticker.getDescription()
                 + ". \n Ticker Url: " + getTickerBaseUrlForProvider(ticker.getProvider()) + ticker.getTickerCode()
                 + ". \n PriceOpen: " + signal.getPriceOpen()
                 + ". \n TakeProfit: " + signal.getTakeProfit()
                 + ". \n StopLoss: " + signal.getStopLoss()
-                + ". \n ProducedAt: " + signal.getCreatedAt();
+                + ". \n ProducedAt: " + moscowTime;
     }
 
     private static String getTickerBaseUrlForProvider(String provider) {

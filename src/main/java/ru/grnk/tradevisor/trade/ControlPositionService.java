@@ -93,9 +93,11 @@ public class ControlPositionService {
         List<Signals> active;
         List<Signals> toCancel;
         if (isSignalAlive(sorted.get(0))) {
+            log.info("signal is alive");
             active = List.of(sorted.get(0));
             toCancel = sorted.subList(1, sorted.size());
         } else {
+            log.info("signal expired");
             active = List.of();
             toCancel = new ArrayList<>(sorted);
         }
@@ -114,6 +116,7 @@ public class ControlPositionService {
     }
 
     private boolean isSignalAlive(Signals signal) {
+        log.info("check if signal alive: {}", signal);
         Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
         Tickers ticker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode()).orElse(spotTicker);
         var clientOptional = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))

@@ -21,7 +21,8 @@ import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
 
 import java.text.DecimalFormat;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
@@ -61,7 +62,9 @@ public class CalculateSignalService {
         SendMessage startMessage = sendSimpleMessage(chatId, tradevisorProperties.integration().telegram().supergroup().logsThreadId(),
                 "🚀 Начало расчета сигналов...\n" +
                         "📊 Всего тикеров: " + totalTickersCount + "\n" +
-                        "🕐 Время начала: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+                        "🕐 Время начала: " + OffsetDateTime.now()
+                        .atZoneSameInstant(ZoneId.of("Europe/Moscow"))
+                        .format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         String messageId = null;
         try {
             Message msg = telegramApiClient.sendAndGetMessage(startMessage);
@@ -74,7 +77,9 @@ public class CalculateSignalService {
             int processedCount = processTickersWithUpdates(totalTickersCount, chatId, messageId);
             sendTelegramLogMessage("✅ Расчет сигналов завершен!\n" +
                     "📊 Обработано тикеров: " + processedCount + "/" + totalTickersCount + "\n" +
-                    "🕐 Время окончания: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+                    "🕐 Время окончания: " + OffsetDateTime.now()
+                    .atZoneSameInstant(ZoneId.of("Europe/Moscow"))
+                    .format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         } catch (Exception e) {
             String errorMessage = "❌ Ошибка при расчете сигналов: " + e.getMessage();
             log.error(errorMessage, e);
@@ -147,7 +152,9 @@ public class CalculateSignalService {
                             "💼 Текущий тикер: %s\n" +
                             "⏱️ Время: %s",
                     processedCount, totalCount, df.format(percentage),
-                    currentTicker, LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+                    currentTicker, OffsetDateTime.now()
+                            .atZoneSameInstant(ZoneId.of("Europe/Moscow"))
+                            .format(DateTimeFormatter.ofPattern("HH:mm:ss"))
             );
             if (messageId != null) {
                 EditMessageText editMessage = new EditMessageText();
