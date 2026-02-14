@@ -1,6 +1,5 @@
 package ru.grnk.tradevisor.notify.plot;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -23,18 +22,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PlotService {
 
-    public static final int CHART_BARS_NORMAL_COUNT = 600;
     private final TickersRepository tickersRepository;
     private final MarketDataRepository marketDataRepository;
     private final QuickChartService quickChartService;
     private final TradevisorProperties tradevisorProperties;
 
-    private final ObjectMapper om;
-
     @SneakyThrows
     public String saveCandlestickChartToFile(Signals signal, boolean printRequest) {
         List<MarketData> md = marketDataRepository.fetchMarketDataForLast(
-                Math.max(tradevisorProperties.calculate().barsRequiredToCalculateFibo(), CHART_BARS_NORMAL_COUNT),
+                Math.max(tradevisorProperties.calculate().barsRequiredToCalculateFibo(), tradevisorProperties.chart().bartInChartNormalCount()),
                 signal.getTickerCode()
         );
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();

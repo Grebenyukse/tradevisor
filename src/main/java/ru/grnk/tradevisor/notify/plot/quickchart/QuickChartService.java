@@ -167,40 +167,4 @@ public class QuickChartService {
         }
         return res;
     }
-
-    private byte[] download(String chartUrl) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            HttpEntity<?> entity = new HttpEntity<>(headers);
-            ResponseEntity<byte[]> response = restTemplate.exchange(
-                    chartUrl,
-                    HttpMethod.GET,
-                    entity,
-                    byte[].class
-            );
-            if (response.getStatusCode() == HttpStatus.OK) {
-                log.info("График успешно скачен");
-                return response.getBody();
-            } else {
-                log.error("Ошибка загрузки изображения. Код ответа: {}", response.getStatusCode());
-                return null;
-            }
-        } catch (Exception e) {
-            log.error("Ошибка при сохранении графика", e);
-            throw new RuntimeException("Ошибка при сохранении графика", e);
-        }
-    }
-
-    private String saveChartToFile(byte[] chartBytes, String filename) {
-        try {
-            Path imagePath = Paths.get(imageDir, filename);
-            Files.createDirectories(imagePath.getParent());
-            Files.write(imagePath, chartBytes);
-            log.info("График успешно сохранен: {}", imagePath.toAbsolutePath());
-            return imagePath.toString();
-        } catch (IOException e) {
-            log.error("Ошибка при сохранении графика", e);
-            throw new RuntimeException("Ошибка при сохранении графика", e);
-        }
-    }
 }

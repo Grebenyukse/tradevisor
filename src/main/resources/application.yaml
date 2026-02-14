@@ -74,7 +74,7 @@ app:
     min_touches_count:
       world: 3
       rus: 2
-      crypto: 1
+      crypto: 2
     batch-size: 1000
   trade:
     delay: PT1M
@@ -83,6 +83,8 @@ app:
       rus: 0.1
       world: 0.1
     enabled: true
+  chart:
+    bars-in-chart-normal-count: 400
   notification:
     enabled: true
     delay: PT1M
