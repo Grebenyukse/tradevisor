@@ -43,6 +43,8 @@ app:
       yahoofinance: false
       init-tickers:
         delay: P1M
+  chart:
+    bars: 400
   calculate:
     delay: PT10S
     fibo: false

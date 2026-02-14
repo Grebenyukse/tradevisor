@@ -84,7 +84,7 @@ app:
       world: 0.1
     enabled: true
   chart:
-    bars-in-chart-normal-count: 400
+    bars: 400
   notification:
     enabled: true
     delay: PT1M
