@@ -8,6 +8,12 @@ public record TrvCalculateProperties(
         Boolean alwaysBuy,
         Integer barsRequiredToCalculateFibo,
         TrvCalcMinTouchesCount minTouchesCount,
-        Integer batchSize
-) {
+        Integer batchSize,
+        Boolean tenx,
+        Integer barsRequiredToCalculateTenx,
+        Integer tenxLookbackBars,
+        Double  tenxGrowthFactor,
+        Double tenxPriceMultiplier,
+        Double tenxStopLossMultiplier
+){
 }

@@ -71,6 +71,12 @@ app:
     fibo: true
     bars_required_to_calculate_fibo: 150
     gap: false
+    tenx: true
+    bars-required-to-calculate-tenx: 50
+    tenx-lookback-bars: 30
+    tenx-growth-factor: 10.0
+    tenx-price-multiplier: 15.0
+    tenx-stop-loss-multiplier: 10.0
     min_touches_count:
       world: 3
       rus: 2
