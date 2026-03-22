@@ -21,7 +21,7 @@ public class PlotTenxSignalIntegrationTest extends BaseIntegrationTest {
     @DynamicPropertySource
     static void additionalConfig(DynamicPropertyRegistry registry) {
         registry.add("app.integration.bybit.enabled", () -> "true");
-        registry.add("app.integration.telegram.enabled", () -> "true");
+        registry.add("app.integration.telegram.enabled", () -> "false");
         registry.add("app.integration.telegram.re-register", () -> "false");
         registry.add("app.calculate.tenx.bars_required", () -> 150);
         registry.add("app.calculate.tenx.enabled", () -> "true");

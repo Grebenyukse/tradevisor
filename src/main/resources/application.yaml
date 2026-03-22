@@ -119,7 +119,7 @@ app:
       client-id: ${GIGACHAT_CLIENT_ID}
       client-secret: ${GIGACHAT_CLIENT_SECRET}
     telegram:
-      enabled: true
+      enabled: false
       chat-id: ${CHAT_ID}
       chat-token: ${CHAT_TOKEN}
       base-url: ${BASE_URL}
