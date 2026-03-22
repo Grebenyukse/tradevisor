@@ -99,15 +99,6 @@ dependencies {
 
 test {
     useJUnitPlatform()
-    testLogging {
-        events "passed", "skipped", "failed"
-    }
-}
-
-task integrationTest(type: Test) {
-    useJUnitPlatform {
-        includeTags 'integration'
-    }
     environment "TESTCONTAINERS_REUSE_ENABLE", "true"
     environment "TESTCONTAINERS_RYUK_DISABLED", "true"
     testLogging {

@@ -21,6 +21,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
+import ru.grnk.tradevisor.testutils.LoadMarketDataCsv;
 
 import javax.sql.DataSource;
 import java.math.RoundingMode;
@@ -44,7 +45,7 @@ public abstract class BaseIntegrationTest {
 
     private static final int POSTGRES_PORT = 5432;
     protected static final String TEST_TICKER = "TEST_TICKER";
-    protected static final String TEST_EXCHANGE = "TEST_EXCHANGE";
+    protected static final String TEST_EXCHANGE = "bybit";
     protected static final String TEST_TICKER_CODE = TEST_TICKER + "@" + TEST_EXCHANGE;
 
     @Autowired
@@ -55,6 +56,9 @@ public abstract class BaseIntegrationTest {
 
     @Autowired
     protected SignalsRepository signalsRepository;
+
+    @Autowired
+    protected LoadMarketDataCsv loadMarketDataCsv;
 
     protected static DecimalFormat df = new DecimalFormat("#.#####");
 

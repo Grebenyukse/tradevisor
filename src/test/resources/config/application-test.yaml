@@ -42,24 +42,28 @@ app:
       bybit: false
       yahoofinance: false
       init-tickers:
-        delay: P1M
+        delay: PT1M
   chart:
     bars: 400
   calculate:
+    gap:
+      enabled: false
+      bars-required: 10
+    fibo:
+      enabled: false
+      bars-required: 10
+      min_touches_count:
+        world: 3
+        rus: 2
+        crypto: 1
+    tenx:
+      enabled: false
+      bars-required: 50
+      look-back-bars: 30
+      growth-factor: 10.0
+      price-multiplier: 15.0
+      stop-loss-multiplier: 10.0
     delay: PT10S
-    fibo: false
-    bars_required_to_calculate_fibo: 10
-    gap: false
-    tenx: true
-    bars-required-to-calculate-tenx: 50
-    tenx-lookback-bars: 30
-    tenx-growth-factor: 10.0
-    tenx-price-multiplier: 15.0
-    tenx-stop-loss-multiplier: 10.0
-    min_touches_count:
-      world: 3
-      rus: 2
-      crypto: 1
     batch-size: 1000
   trade:
     delay: PT15M
@@ -128,6 +132,7 @@ app:
       account-id: ${FINAM_ACCOUNT_KEY}
       history-max-depth-days: 150
       mt5-python-client-url: http://localhost:8001
+      open-position-client: mt5py # mt5py для открытия через metatrader5,
     bybit:
       enabled: false
       key: ${BYBIT_KEY}

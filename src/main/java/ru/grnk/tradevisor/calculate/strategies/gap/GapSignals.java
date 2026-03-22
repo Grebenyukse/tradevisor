@@ -17,7 +17,7 @@ import java.util.stream.IntStream;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(value = "app.calculate.gap")
+@ConditionalOnProperty(value = "app.calculate.gap.enabled")
 public class GapSignals implements IStrategy {
 
     private static final int MIN_DATA_SIZE = 20;

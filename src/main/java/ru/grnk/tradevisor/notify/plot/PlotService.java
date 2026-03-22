@@ -30,7 +30,7 @@ public class PlotService {
     @SneakyThrows
     public String saveCandlestickChartToFile(Signals signal, boolean printRequest) {
         List<MarketData> md = marketDataRepository.fetchMarketDataForLast(
-                Math.max(tradevisorProperties.calculate().barsRequiredToCalculateFibo(), tradevisorProperties.chart().bars()),
+                tradevisorProperties.chart().bars(),
                 signal.getTickerCode()
         );
         List<OHLCData> ohlcData = md.stream().map(x -> new OHLCData(x.getTime(), x.getOpen(), x.getHigh(), x.getLow(), x.getClose())).toList();

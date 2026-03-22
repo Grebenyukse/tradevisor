@@ -23,7 +23,7 @@ import static ru.grnk.tradevisor.common.util.MathUtils.round;
 @RequiredArgsConstructor
 @Slf4j
 @Component
-@ConditionalOnProperty(value = "app.calculate.tenx")
+@ConditionalOnProperty(value = "app.calculate.tenx.enabled")
 public class TenxSignals implements IStrategy {
 
     private final TradevisorProperties tradevisorProperties;
@@ -31,7 +31,7 @@ public class TenxSignals implements IStrategy {
 
     @Override
     public Integer barsRequiredToCalcStrategy() {
-        return tradevisorProperties.calculate().barsRequiredToCalculateTenx();
+        return tradevisorProperties.calculate().tenx().barsRequired();
     }
 
     @Override
@@ -45,7 +45,7 @@ public class TenxSignals implements IStrategy {
             return defaultNoSignal;
         }
 
-        int lookbackPeriod = tradevisorProperties.calculate().tenxLookbackBars();
+        int lookbackPeriod = tradevisorProperties.calculate().tenx().lookBackBars();
         if (candles.size() < lookbackPeriod) {
             log.warn("Not enough candles for TenX strategy calculation.");
             return defaultNoSignal;
@@ -87,14 +87,14 @@ public class TenxSignals implements IStrategy {
             return defaultNoSignal;
         }
 
-        double growthFactor = tradevisorProperties.calculate().tenxGrowthFactor(); // например, 10.0
-        double priceMultiplier = tradevisorProperties.calculate().tenxPriceMultiplier(); // например, 15.0
-        double slMultiplier = tradevisorProperties.calculate().tenxStopLossMultiplier(); // например, 10.0
+        double growthFactor = tradevisorProperties.calculate().tenx().growthFactor(); // например, 10.0
+        double priceMultiplier = tradevisorProperties.calculate().tenx().priceMultiplier(); // например, 15.0
+        double slMultiplier = tradevisorProperties.calculate().tenx().stopLossMultiplier(); // например, 10.0
 
         double ratio = maxValue / minValue;
 
         if (ratio >= growthFactor) {
-            float priceOpen = (float) (maxValue * priceMultiplier); // Цена входа
+            float priceOpen = (float) (minValue * priceMultiplier); // Цена входа
             float stopLoss = (float) (maxValue * slMultiplier);     // Stop Loss
             float takeProfit = minValue;                           // Take Profit
 

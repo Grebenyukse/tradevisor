@@ -19,14 +19,14 @@ import static ru.grnk.tradevisor.calculate.strategies.fibo.FiboSignalsProducer.g
 @RequiredArgsConstructor
 @Slf4j
 @Component
-@ConditionalOnProperty(value = "app.calculate.fibo")
+@ConditionalOnProperty(value = "app.calculate.fibo.enabled")
 public class FiboSignals implements IStrategy {
     private final TradevisorProperties tradevisorProperties;
     private final TickersRepository tickersRepository;
 
     @Override
     public Integer barsRequiredToCalcStrategy() {
-        return tradevisorProperties.calculate().barsRequiredToCalculateFibo();
+        return tradevisorProperties.calculate().fibo().barsRequired();
     }
 
     @Override
@@ -47,9 +47,9 @@ public class FiboSignals implements IStrategy {
 
     private int getTouchesByTickerProvider(String provider) {
         return switch (provider) {
-            case "bybit" -> tradevisorProperties.calculate().minTouchesCount().crypto();
-            case "finam" -> tradevisorProperties.calculate().minTouchesCount().rus();
-            case "tinkoff", "yahoofinance" -> tradevisorProperties.calculate().minTouchesCount().world();
+            case "bybit" -> tradevisorProperties.calculate().fibo().minTouchesCount().crypto();
+            case "finam" -> tradevisorProperties.calculate().fibo().minTouchesCount().rus();
+            case "tinkoff", "yahoofinance" -> tradevisorProperties.calculate().fibo().minTouchesCount().world();
             default -> throw new IllegalStateException();
         };
     }

@@ -67,20 +67,24 @@ app:
       init-tickers:
         delay: PT720H
   calculate:
+    gap:
+      enabled: false
+      bars-required: 10
+    fibo:
+      enabled: true
+      bars-required: 150
+      min_touches_count:
+        world: 3
+        rus: 2
+        crypto: 2
+    tenx:
+      enabled: true
+      bars-required: 50
+      look-back-bars: 30
+      growth-factor: 10.0
+      price-multiplier: 15.0
+      stop-loss-multiplier: 10.0
     delay: PT10M
-    fibo: true
-    bars_required_to_calculate_fibo: 150
-    gap: false
-    tenx: true
-    bars-required-to-calculate-tenx: 50
-    tenx-lookback-bars: 30
-    tenx-growth-factor: 10.0
-    tenx-price-multiplier: 15.0
-    tenx-stop-loss-multiplier: 10.0
-    min_touches_count:
-      world: 3
-      rus: 2
-      crypto: 2
     batch-size: 1000
   trade:
     delay: PT1M

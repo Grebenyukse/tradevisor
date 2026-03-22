@@ -1,9 +1,11 @@
 package ru.grnk.tradevisor.integration.testconfig;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import jakarta.annotation.PostConstruct;
+import ru.grnk.tradevisor.testutils.LoadMarketDataCsv;
 
 @Configuration
 public class DotenvTestConfig {
@@ -27,4 +29,7 @@ public class DotenvTestConfig {
             System.err.println("Could not load .testenv file: " + e.getMessage());
         }
     }
+
+    @Bean
+    public LoadMarketDataCsv loadMarketDataCsv() {return new LoadMarketDataCsv();}
 }
