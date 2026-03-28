@@ -81,7 +81,7 @@ app:
       enabled: true
       bars-required: 50
       look-back-bars: 30
-      growth-factor: 10.0
+      growth-factor: 5.0
       price-multiplier: 15.0
       stop-loss-multiplier: 10.0
     delay: PT10M
