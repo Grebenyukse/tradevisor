@@ -38,7 +38,6 @@ import static ru.grnk.tradevisor.common.util.RoundPriceUtils.roundPrice;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(name = "app.integration.telegram.enabled", havingValue = "true")
 public class BybitTradeClientImpl implements TradeClient {
 
     public static final int LEVERAGE = 10;

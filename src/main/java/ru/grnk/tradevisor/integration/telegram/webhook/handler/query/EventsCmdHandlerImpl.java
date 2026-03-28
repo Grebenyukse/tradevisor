@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.getSignalIdFromQuery;
-import static ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient.TELEGRAM_MESSAGE_LINK;
+import static ru.grnk.tradevisor.integration.telegram.webhook.impl.TelegramApiClientImpl.TELEGRAM_MESSAGE_LINK;
 
 @Service
 @RequiredArgsConstructor

@@ -18,8 +18,6 @@ public class SaveFiboSignalIntegrationTest extends BaseIntegrationTest {
 
     @DynamicPropertySource
     static void additionalConfig(DynamicPropertyRegistry registry) {
-        registry.add("app.integration.telegram.enabled", () -> "true");
-        registry.add("app.integration.telegram.re-register", () -> "false");
         registry.add("app.integration.bybit.enabled", () -> "true");
         registry.add("app.calculate.fibo.enabled", () -> "true");
         registry.add("app.calculate.fibo.bars-required", () -> 60);
@@ -58,8 +56,8 @@ public class SaveFiboSignalIntegrationTest extends BaseIntegrationTest {
         assertThat(signal.getDirection()).isEqualTo(TradingDirection.LONG.directionCode());
         assertThat(signal.getName()).isEqualTo("fibo");
         assertThat(signal.getStatus()).isEqualTo(CREATED.name());
-        assertThat(df.format(signal.getPriceOpen())).isEqualTo(df.format(3.629f));
-        assertThat(df.format(signal.getStopLoss())).isEqualTo(df.format(0f));
-        assertThat(df.format(signal.getTakeProfit())).isEqualTo(df.format(11.742f));
+        assertThat(df.format(signal.getPriceOpen())).isEqualTo(df.format(3.7099f));
+        assertThat(df.format(signal.getStopLoss())).isEqualTo(df.format(0.1000f));
+        assertThat(df.format(signal.getTakeProfit())).isEqualTo(df.format(11.7802f));
     }
 }

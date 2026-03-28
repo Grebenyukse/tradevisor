@@ -21,8 +21,6 @@ public class PlotFiboSignalIntegrationTest extends BaseIntegrationTest {
     @DynamicPropertySource
     static void additionalConfig(DynamicPropertyRegistry registry) {
         registry.add("app.integration.bybit.enabled", () -> "true");
-        registry.add("app.integration.telegram.enabled", () -> "false");
-        registry.add("app.integration.telegram.re-register", () -> "false");
         registry.add("app.calculate.fibo.bars_required", () -> 150);
         registry.add("app.calculate.fibo.enabled", () -> "true");
         registry.add("app.notification.enabled", () -> "true");

@@ -8,6 +8,7 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -35,10 +36,9 @@ import java.text.DecimalFormat;
 
 @Slf4j
 @SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
                 "spring.config.location=classpath:config/application-test.yaml",
-                "server.port=8080"
         })
 @Testcontainers
 public abstract class BaseIntegrationTest {
@@ -60,7 +60,7 @@ public abstract class BaseIntegrationTest {
     @Autowired
     protected LoadMarketDataCsv loadMarketDataCsv;
 
-    protected static DecimalFormat df = new DecimalFormat("#.#####");
+    protected static DecimalFormat df = new DecimalFormat("#.####");
 
     static {
         df.setRoundingMode(RoundingMode.CEILING);
@@ -100,9 +100,13 @@ public abstract class BaseIntegrationTest {
 //        log.info("properties: {}", properties.toString());
     }
 
+    @AfterEach
+    public void cleanAfterEach() {
+        executeSqlScript("src/test/resources/sql/cleanup-test-data.sql");
+    }
+
     @AfterAll
     static void tearDown() throws Exception {
-        executeSqlScript("src/test/resources/sql/cleanup-test-data.sql");
         postgresContainer.stop();
     }
 

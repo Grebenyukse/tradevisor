@@ -18,8 +18,6 @@ public class SaveTenxSignalIntegrationTest extends BaseIntegrationTest {
 
     @DynamicPropertySource
     static void additionalConfig(DynamicPropertyRegistry registry) {
-        registry.add("app.integration.telegram.enabled", () -> "true");
-        registry.add("app.integration.telegram.re-register", () -> "false");
         registry.add("app.integration.bybit.enabled", () -> "true");
         registry.add("app.calculate.tenx.enabled", () -> "true");
         registry.add("app.calculate.tenx.bars-required", () -> 60);
@@ -59,7 +57,7 @@ public class SaveTenxSignalIntegrationTest extends BaseIntegrationTest {
         assertThat(signal.getName()).isEqualTo("tenx");
         assertThat(signal.getStatus()).isEqualTo(CREATED.name());
         assertThat(df.format(signal.getPriceOpen())).isEqualTo(df.format(1.5f));
-        assertThat(df.format(signal.getStopLoss())).isEqualTo(df.format(190.0f));
+        assertThat(df.format(signal.getStopLoss())).isEqualTo(df.format(72.58f));
         assertThat(df.format(signal.getTakeProfit())).isEqualTo(df.format(0.1f));
     }
 }

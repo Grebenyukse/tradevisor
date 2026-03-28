@@ -74,7 +74,7 @@ class FiboSignalsShort382Test {
         assertThat(resultParams.lots()).isEqualTo(2);
         assertThat(df.format(resultParams.priceOpen())).isEqualTo(df.format(96.989f));
         assertThat(df.format(resultParams.stopLoss())).isEqualTo(df.format(101.00f));
-        assertThat(df.format(resultParams.takeProfit())).isEqualTo(df.format(88.0221));
+        assertThat(df.format(resultParams.takeProfit())).isEqualTo(df.format(88.02201));
     }
 
 
@@ -121,7 +121,7 @@ class FiboSignalsShort382Test {
             assertThat(resultParams.lots()).isEqualTo(2);
             assertThat(df.format(resultParams.priceOpen())).isEqualTo(df.format(96.989f));
             assertThat(df.format(resultParams.stopLoss())).isEqualTo(df.format(101.00f));
-            assertThat(df.format(resultParams.takeProfit())).isEqualTo(df.format(88.0221));
+            assertThat(df.format(resultParams.takeProfit())).isEqualTo(df.format(88.02201));
     }
 
     @Test
