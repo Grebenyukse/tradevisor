@@ -16,3 +16,6 @@ databaseChangeLog:
   - include:
       file: 2023-05-20-trv-3-add-signals.sql
       relativeToChangelogFile: true
+  - include:
+      file: 2026-03-29-trv-4-add-log-table.sql
+      relativeToChangelogFile: true

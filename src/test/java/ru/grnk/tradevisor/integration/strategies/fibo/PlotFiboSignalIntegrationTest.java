@@ -1,20 +1,22 @@
 package ru.grnk.tradevisor.integration.strategies.fibo;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import ru.grnk.tradevisor.calculate.strategies.dto.TradingDirection;
+import ru.grnk.tradevisor.common.repository.entity.MarketData;
 import ru.grnk.tradevisor.integration.BaseIntegrationTest;
 import ru.grnk.tradevisor.integration.testconfig.DotenvTestConfig;
-import ru.grnk.tradevisor.common.repository.entity.MarketData;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static ru.grnk.tradevisor.calculate.signals.TrvSignalStatus.CREATED;
-import static ru.grnk.tradevisor.testutils.TestUtils.*;
+import static ru.grnk.tradevisor.testutils.TestUtils.await;
 
+@Slf4j
 @Import({DotenvTestConfig.class})
 public class PlotFiboSignalIntegrationTest extends BaseIntegrationTest {
 
@@ -28,6 +30,7 @@ public class PlotFiboSignalIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void should_save_signal_fibo() {
+        log.info("test");
         assertThat(signalsRepository.findUnpublishedSignals()).isEmpty();
         List<MarketData> candles = loadMarketDataCsv.loadMarketDataFromCsv();
         marketDataRepository.batchInsertMarketData(candles);

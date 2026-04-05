@@ -12,10 +12,7 @@ import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 public class TradeVisorApplication {
     public static void main(String[] args) {
         // Загрузка переменных из .env
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-        dotenv.entries().forEach(entry ->
-                System.setProperty(entry.getKey(), entry.getValue())
-        );
+        Dotenv.configure().ignoreIfMissing().systemProperties().load();
         SpringApplication.run(TradeVisorApplication.class, args);
     }
 }

@@ -8,7 +8,10 @@
             <pattern>%d{ISO8601} %-5p [%X] [%c{3}] %t %m %n</pattern>
         </encoder>
     </appender>
+
+    <appender name="PG" class="ru.grnk.tradevisor.common.log.PostgresLogAppender"/>
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
+        <appender-ref ref="PG" />
     </root>
 </configuration>

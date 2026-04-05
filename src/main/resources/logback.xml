@@ -25,9 +25,10 @@
             <pattern>%d{HH:mm:ss, Europe/Moscow} %-5level [%thread] %logger{10} - %msg%n</pattern>
         </encoder>
     </appender>
-
+    <appender name="PG" class="ru.grnk.tradevisor.common.log.PostgresLogAppender"/>
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
+        <appender-ref ref="PG"/>
     </root>
 </configuration>

@@ -1,29 +1,24 @@
 package ru.grnk.tradevisor.integration.testconfig;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import jakarta.annotation.PostConstruct;
 import ru.grnk.tradevisor.testutils.LoadMarketDataCsv;
 
 @Configuration
 public class DotenvTestConfig {
-    
+
     @PostConstruct
     public void loadDotEnv() {
         try {
-            Dotenv dotenv = Dotenv.configure()
+            Dotenv.configure()
                 .directory("config")
                 .filename(".testenv")
                 .ignoreIfMissing()
                 .ignoreIfMalformed()
+                .systemProperties()
                 .load();
-            
-            // Set system properties from dotenv
-            dotenv.entries().forEach(e -> 
-                System.setProperty(e.getKey(), e.getValue())
-            );
         } catch (Exception e) {
             // Handle gracefully
             System.err.println("Could not load .testenv file: " + e.getMessage());
@@ -31,5 +26,7 @@ public class DotenvTestConfig {
     }
 
     @Bean
-    public LoadMarketDataCsv loadMarketDataCsv() {return new LoadMarketDataCsv();}
+    public LoadMarketDataCsv loadMarketDataCsv() {
+        return new LoadMarketDataCsv();
+    }
 }

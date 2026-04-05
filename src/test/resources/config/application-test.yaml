@@ -2,7 +2,7 @@ server:
   port: 8080
 
 logging:
-  config: classpath:config/logback.xml
+  config: classpath:config/logback-test.xml
   level:
     ROOT: debug
     org.jooq.Constants.org.jooq.Constants: WARN
@@ -20,7 +20,7 @@ spring:
   application:
     name: tradevisor
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://localhost:5432/testdb
     username: test
     password: test
   liquibase:
