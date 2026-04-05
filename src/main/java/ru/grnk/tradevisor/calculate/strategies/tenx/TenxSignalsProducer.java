@@ -58,7 +58,7 @@ public class TenxSignalsProducer {
         MarketData maxCandle = null;
         float maxValue = -Float.MAX_VALUE;
         int maxIndex = -1;
-        for (int i = minIndex + 1; i >0 ; i--) {
+        for (int i = minIndex - 1; i >=0 ; i--) {
             MarketData candle = candles.get(i);
             if (candle.getHigh() > maxValue) {
                 maxValue = candle.getHigh();

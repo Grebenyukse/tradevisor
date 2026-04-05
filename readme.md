@@ -7,3 +7,8 @@ ssh tradevisor@45.155.205.225
 2.  .\clo.exe publish http 8080
 ## антивирус
 sudo chkrootkit
+
+ssh tradevisor@45.155.205.225
+docker-compose cp tradevisor:/app/logs/app.log /home/tradevisor/app/infra/app.log
+exit;
+scp tradevisor@45.155.205.225:/home/tradevisor/app/infra/app.log ./app.log
