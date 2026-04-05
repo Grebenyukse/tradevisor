@@ -9,9 +9,9 @@
         </encoder>
     </appender>
 
-    <appender name="PG" class="ru.grnk.tradevisor.common.log.PostgresLogAppender"/>
+<!--    <appender name="PG" class="ru.grnk.tradevisor.common.log.PostgresLogAppender"/>-->
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
-        <appender-ref ref="PG" />
+<!--        <appender-ref ref="PG" />-->
     </root>
 </configuration>
