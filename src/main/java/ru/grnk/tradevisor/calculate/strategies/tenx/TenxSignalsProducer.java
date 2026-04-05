@@ -58,7 +58,7 @@ public class TenxSignalsProducer {
         MarketData maxCandle = null;
         float maxValue = -Float.MAX_VALUE;
         int maxIndex = -1;
-        for (int i = minIndex - 1; i >=0 ; i--) {
+        for (int i = minIndex; i >=0 ; i--) {
             MarketData candle = candles.get(i);
             if (candle.getHigh() > maxValue) {
                 maxValue = candle.getHigh();
@@ -68,7 +68,8 @@ public class TenxSignalsProducer {
         }
 
         if (maxCandle == null) {
-            log.warn("Could not determine maximum after the minimum in TenX strategy.");
+            log.warn("Could not determine maximum after the minimum in TenX strategy. minCandle: {}, maxCandle: {}",
+                    minCandle, maxCandle);
             return defaultNoSignal;
         }
 
