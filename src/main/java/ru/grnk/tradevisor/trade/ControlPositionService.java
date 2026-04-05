@@ -124,7 +124,7 @@ public class ControlPositionService {
         if (clientOptional.isEmpty()) {
             log.error("провайдер {} для сигнала signal:{} по spot_ticker_code: {} не активен. невозможно выполнить торговую операцию.",
                     ticker.getProvider(), signal, ticker.getTickerCode());
-            throw new IllegalStateException();
+            return false;
         }
         var strategy = strategies.stream().filter(s -> Objects.equals(s.getStrategyUniqueName(), signal.getName())).findFirst().orElseThrow();
         var candles = marketDataRepository.fetchMarketDataForLast(strategy.barsRequiredToCalcStrategy(), signal.getTickerCode());
