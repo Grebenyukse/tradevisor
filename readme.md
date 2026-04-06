@@ -13,4 +13,5 @@ cd ~/IdeaProjects/tradevisor/logs/
 sudo chkrootkit
 
 # просмотр сигналов в бд
-select id, name, SPLIT_PART(ticker_code, '@', 1), status, direction, price_open, stop_loss, take_profit from tradevisor.signals s ;
+select id, name, SPLIT_PART(ticker_code, '@', 1), SPLIT_PART(ticker_code, '@', 2) 
+exchange, status, direction, price_open, stop_loss, take_profit from tradevisor.signals s order by exchange, name, id ;
