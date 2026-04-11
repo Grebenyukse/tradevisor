@@ -150,6 +150,7 @@ public class TinkoffTradeClient implements TradeClient {
 
     @Override
     public boolean openPosition(Signals rawSignal) {
+        log.info("tinkoff trade client open position for raw signal: {}", rawSignal);
         TradeSignal signal = mapSignalToTradeTicker(rawSignal);
         InstrumentShort tInstrument = investApi.getInstrumentsService()
                 .findInstrumentSync(signal.tickerCode())
@@ -201,6 +202,7 @@ public class TinkoffTradeClient implements TradeClient {
     }
 
         private boolean openFuturePosition(TradeSignal signal) {
+        log.info("tinkoff trade client open future position for signal: {}", signal);
         Future future = investApi.getInstrumentsService().getFutureByUidSync(signal.tickerCode());
         Integer tradeLots = countTradeLots(signal, future);
         if (tradeLots == 0) {
@@ -228,6 +230,7 @@ public class TinkoffTradeClient implements TradeClient {
     }
 
     private boolean openSharePosition(TradeSignal signal) {
+        log.info("tinkoff trade client open share position for signal: {}", signal);
         Share share = investApi.getInstrumentsService().getShareByUidSync(signal.tickerCode());
         if (!share.getBuyAvailableFlag()) {
             log.warn("запрещена покупка актива. signal: {}", signal);
