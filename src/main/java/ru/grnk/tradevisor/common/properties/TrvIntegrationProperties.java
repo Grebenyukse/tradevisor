@@ -9,7 +9,6 @@ public record TrvIntegrationProperties(
         TrvNewsapiProperties newsapi,
         TrvFinamProperties finam,
         TrvBybitProperties bybit,
-        TrvYahoofinanceProperties yahoofinance,
         TrvCloudruApiProperties cloudru
 ) {
 }

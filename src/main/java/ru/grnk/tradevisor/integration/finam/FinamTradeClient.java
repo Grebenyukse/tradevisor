@@ -1,6 +1,5 @@
 package ru.grnk.tradevisor.integration.finam;
 
-import com.google.type.Decimal;
 import grpc.tradeapi.v1.Side;
 import grpc.tradeapi.v1.accounts.AccountsServiceGrpc;
 import grpc.tradeapi.v1.accounts.GetAccountRequest;
@@ -20,13 +19,10 @@ import ru.grnk.tradevisor.common.repository.entity.Tickers;
 import ru.grnk.tradevisor.integration.finam.tradeclient.OpenPositionClient;
 import ru.grnk.tradevisor.trade.TradeClient;
 import ru.grnk.tradevisor.trade.dto.TrvOrder;
-import ru.grnk.tradevisor.trade.dto.TrvPosition;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static grpc.tradeapi.v1.orders.OrderStatus.ORDER_STATUS_CANCELED;
 
@@ -141,19 +137,5 @@ public class FinamTradeClient implements TradeClient {
                 signal.getDirection().intValue(),
                 signal.getId()
         );
-    }
-
-    public static BigDecimal toBigDecimal(Decimal decimal) {
-        if (decimal == null) {
-            return null;
-        }
-        if (decimal.getValue().isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-        try {
-            return new BigDecimal(decimal.getValue());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid decimal format: " + decimal.getValue(), e);
-        }
     }
 }

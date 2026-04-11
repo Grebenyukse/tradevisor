@@ -19,3 +19,9 @@ databaseChangeLog:
   - include:
       file: 2026-03-29-trv-4-add-log-table.sql
       relativeToChangelogFile: true
+  - include:
+      file: 2026-03-29-trv-5-add-lot-column.sql
+      relativeToChangelogFile: true
+  - include:
+      file: 2026-03-29-trv-6-drop-log-table.sql
+      relativeToChangelogFile: true

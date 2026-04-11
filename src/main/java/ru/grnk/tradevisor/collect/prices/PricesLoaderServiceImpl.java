@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -25,7 +26,7 @@ public class PricesLoaderServiceImpl {
     private final TickersRepository tickersRepository;
     private final List<PricesLoader> loaders;
     private final PriceLoadingErrorHandler errorHandler;
-    private final TelegramNotificationService telegramService;
+    private final PricesLoadProgressLogService telegramService;
     private final BindTradeFuturesService bindTradeFuturesService;
     private final Executor priceLoadingExecutor;
 
@@ -33,7 +34,7 @@ public class PricesLoaderServiceImpl {
     public PricesLoaderServiceImpl(TickersRepository tickersRepository,
                                    List<PricesLoader> loaders,
                                    PriceLoadingErrorHandler errorHandler,
-                                   TelegramNotificationService telegramService,
+                                   PricesLoadProgressLogService telegramService,
                                    BindTradeFuturesService bindTradeFuturesService,
                                    @Qualifier("priceLoadingExecutor")
                                    Executor priceLoadingExecutor) {
@@ -59,22 +60,21 @@ public class PricesLoaderServiceImpl {
         if (tickersRepository.getAllTickersCount() == 0) {
             initTickers();
         }
-        log.info("start collecting prices");
+        String messageId  = UUID.randomUUID().toString();
+        log.info("[msgId:{}] 🔄 Загрузка тикеров...", messageId);
         LocalDateTime startTime = LocalDateTime.now();
-        String messageId = telegramService.sendInitialMessage("🔄 Загрузка тикеров...");
         Integer totalTickersCount = tickersRepository.getAllTickersCount();
         if (totalTickersCount == 0) {
-            log.info("Нет тикеров для загрузки");
-            telegramService.updateMessage(messageId, "📭 Нет тикеров для загрузки котировок");
+            log.info("📭 Нет тикеров для загрузки котировок");
             return;
         }
         Map<String, Integer> provider2TickersCount = tickersRepository.getTickersCountByProvider();
         Map<String, Integer> providerProcessedCount = new ConcurrentHashMap<>();
         provider2TickersCount.keySet().forEach(provider -> providerProcessedCount.put(provider, 0));
-        telegramService.sendStartMessage(messageId, totalTickersCount, provider2TickersCount, startTime);
+        telegramService.logStartMessage(messageId, totalTickersCount, provider2TickersCount, startTime);
         try {
             processAllProviders(provider2TickersCount, providerProcessedCount, messageId, startTime);
-            telegramService.sendFinalMessage(messageId,
+            telegramService.logFinalMessage(messageId,
                     providerProcessedCount.values().stream().mapToInt(Integer::intValue).sum(),
                     totalTickersCount,
                     provider2TickersCount,
@@ -82,7 +82,6 @@ public class PricesLoaderServiceImpl {
                     startTime);
         } catch (Exception e) {
             log.error("Ошибка загрузки котировок", e);
-            telegramService.sendErrorMessage(messageId, e);
             throw new RuntimeException("Ошибка загрузки котировок", e);
         }
         log.info("historic candles loaded");
@@ -130,7 +129,7 @@ public class PricesLoaderServiceImpl {
 
                     long now = System.currentTimeMillis();
                     if (now - lastUpdate > 30000) {
-                        telegramService.sendProgressMessage(messageId,
+                        telegramService.logProgressMessage(messageId,
                                 providerProcessedCount.values().stream().mapToInt(Integer::intValue).sum(),
                                 tickersRepository.getAllTickersCount(),
                                 provider,

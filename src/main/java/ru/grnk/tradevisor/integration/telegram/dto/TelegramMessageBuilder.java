@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.integration.telegram;
+package ru.grnk.tradevisor.integration.telegram.dto;
 
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;

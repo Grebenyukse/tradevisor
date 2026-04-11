@@ -18,7 +18,7 @@ import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.MarketData;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
-import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
+import ru.grnk.tradevisor.integration.telegram.api.TelegramApiClient;
 
 import java.text.DecimalFormat;
 import java.time.OffsetDateTime;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.sendSimpleMessage;
+import static ru.grnk.tradevisor.integration.telegram.dto.TelegramMessageBuilder.sendSimpleMessage;
 
 @Service
 @Slf4j

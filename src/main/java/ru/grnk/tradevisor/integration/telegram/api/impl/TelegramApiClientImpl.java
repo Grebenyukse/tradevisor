@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.integration.telegram.webhook.impl;
+package ru.grnk.tradevisor.integration.telegram.api.impl;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +22,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 
 import jakarta.annotation.PostConstruct;
-import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
+import ru.grnk.tradevisor.integration.telegram.api.TelegramApiClient;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;

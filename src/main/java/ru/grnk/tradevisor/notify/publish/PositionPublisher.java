@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.notify;
+package ru.grnk.tradevisor.notify.publish;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -8,43 +8,33 @@ import ru.grnk.tradevisor.common.properties.TradevisorProperties;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
-import ru.grnk.tradevisor.integration.telegram.TelegramMessageService;
 import ru.grnk.tradevisor.notify.plot.PlotService;
 
 import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class OrderPublisher {
+public class PositionPublisher {
 
     private final PlotService plotService;
-    private final TelegramMessageService telegramMessageService;
+    private final NotificationService notificationService;
     private final TickersRepository tickersRepository;
     private final TradevisorProperties tradevisorProperties;
 
     private final static Map<String, String> PROVIDER_TO_BASE_URL = Map.of("finam", "https://trading.finam.ru/profile/");
 
     @Transactional
-    public void publishOrder(Signals signal) {
+    public void publishPosition(Signals signal) {
         String image = plotService.saveCandlestickChartToFile(signal, true);
         if (image == null ) return;
         Tickers ticker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
-        telegramMessageService.sendMessage(image, getTitle(signal, ticker), getText(signal, ticker), signal.getId(),
-                tradevisorProperties.integration().telegram().supergroup().ordersThreadId());
-    }
-
-    @Transactional
-    public void publishManualOrder(Signals signal) {
-        String image = plotService.saveCandlestickChartToFile(signal, true);
-        if (image == null ) return;
-        Tickers ticker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
-        telegramMessageService.sendMessage(image, "MANUAL EXECUTION ONLY. \n" + getTitle(signal, ticker), getText(signal, ticker), signal.getId(),
-                tradevisorProperties.integration().telegram().supergroup().ordersThreadId());
+        notificationService.sendMessage(image, getTitle(signal, ticker), getText(signal, ticker), signal.getId(),
+                tradevisorProperties.integration().telegram().supergroup().positionsThreadId());
     }
 
     private static String getTitle(Signals signal, Tickers ticker) {
         return String.join(". ",
-                "Ордер опубликован",ticker.getTicker(), ticker.getExchange(), ticker.getProvider(),
+                "Позиция опубликована",ticker.getTicker(), ticker.getExchange(), ticker.getProvider(),
                 TradingDirection.from(signal.getDirection()).name()
         );
     }

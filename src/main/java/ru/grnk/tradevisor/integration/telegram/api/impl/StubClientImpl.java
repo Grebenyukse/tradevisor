@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.integration.telegram.webhook.impl;
+package ru.grnk.tradevisor.integration.telegram.api.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -7,7 +7,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
-import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
+import ru.grnk.tradevisor.integration.telegram.api.TelegramApiClient;
 
 
 @Service
@@ -44,11 +44,13 @@ public class StubClientImpl implements TelegramApiClient {
     public Message sendAndGetMessage(SendMessage sendMessage) {
         var msg =  new Message();
         msg.setMessageId(-1);
+        log.info(sendMessage.getText());
         return msg;
     }
 
     @Override
     public boolean sendMessage(SendMessage sendMessage) {
+        log.info(sendMessage.getText());
         return false;
     }
 

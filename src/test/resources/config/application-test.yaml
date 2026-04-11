@@ -40,7 +40,6 @@ app:
       finam: false
       tinkoff: false
       bybit: false
-      yahoofinance: false
       init-tickers:
         delay: PT1M
   chart:
@@ -67,6 +66,10 @@ app:
     batch-size: 1000
   trade:
     delay: PT15M
+    risk-money:
+      crypto: 1000
+      rus: 1000000
+      world: 1
     limits: # риск в процентах от капитала на одну позицию
       crypto: 2
       rus: 0.1
@@ -138,8 +141,4 @@ app:
       key: ${BYBIT_KEY}
       secret: ${BYBIT_SECRET}
       url: https://api.bybit.com
-      history-max-depth-days: 30
-    yahoofinance:
-      enabled: false
-      url: https://query1.finance.yahoo.com
       history-max-depth-days: 30

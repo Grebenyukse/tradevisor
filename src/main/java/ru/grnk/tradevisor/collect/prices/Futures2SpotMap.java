@@ -5,38 +5,32 @@ import java.util.Map;
 import java.util.Set;
 
 public class Futures2SpotMap {
-    public static final Set<String> FINAM_PRELOAD_EXCHANGES_MIC = Set.of("MISX"
-//            ,"XNYS"
-//            ,"XHKG"
-    );
-
     public static final String SKIP_TICKER_MAPPING_VALUE = "NOT_FOR_TRADE";
-
     public static final String JOIN_ENDLESS_FUTURE_MAPPING_VALUE = "JOIN_FUTURES";
     public static final Map<String, String> FUTURES_2_SPOT = new HashMap<String, String>() {{
         put("IBIT", "BTCUSDT@bybit");
         put("BTC", "BTCUSDT@bybit");
         put("ETHA", "ETHUSDT@bybit");
         put("ETH", "ETHUSDT@bybit");
-        put("AUDU", "AUDUSD=X");
-        put("GBPU", "GBPUSD=X");
-        put("ED", "EURUSD=X");
-        put("Eu", "EURRUB=X");
-        put("AED", "RUB=X");
-        put("EURRUBF Евро - Рубль", "EURRUB=X");
-        put("INR", "INRRUB=X");
-        put("R2000", "^RUT");
-        put("BRAZIL", "EWZ");
-        put("DAX", "^GDAXI");
-        put("STOX", "^STOXX50E");
-        put("DJ30", "^DJI");
-        put("NASD", "^IXIC");
-        put("HANG", "^HSI");
-        put("CHINA", "MCHI");
-        put("NIKK", "^N225");
-        put("SOXQ", "SOXQ");
-        put("SPYF", "SPY");
-        put("TLT", "TLT");
+        put("AUDU", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("GBPU", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("ED", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("Eu", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("AED", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("EURRUBF Евро - Рубль", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("INR", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("R2000", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("BRAZIL", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("DAX", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("STOX", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("DJ30", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("NASD", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("HANG", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("CHINA", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("NIKK", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("SOXQ", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("SPYF", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
+        put("TLT", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
         put("ALUM", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
         put("GOLD", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);
         put("GLDRUBF Золото (rub)", JOIN_ENDLESS_FUTURE_MAPPING_VALUE);

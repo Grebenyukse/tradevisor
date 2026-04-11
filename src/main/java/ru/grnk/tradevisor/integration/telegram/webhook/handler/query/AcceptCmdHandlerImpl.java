@@ -6,10 +6,10 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
-import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
+import ru.grnk.tradevisor.integration.telegram.api.TelegramApiClient;
 
-import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.buildReactionMessage;
-import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.getSignalIdFromQuery;
+import static ru.grnk.tradevisor.integration.telegram.dto.TelegramMessageBuilder.buildReactionMessage;
+import static ru.grnk.tradevisor.integration.telegram.dto.TelegramMessageBuilder.getSignalIdFromQuery;
 
 @Service
 @RequiredArgsConstructor

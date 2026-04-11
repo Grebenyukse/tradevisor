@@ -1,10 +1,13 @@
 package ru.grnk.tradevisor.integration.tinkoff;
 
+import jakarta.persistence.Column;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.common.properties.TradevisorProperties;
+import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
@@ -14,14 +17,13 @@ import ru.grnk.tradevisor.trade.dto.TrvOrder;
 import ru.grnk.tradevisor.trade.dto.TrvPosition;
 import ru.tinkoff.piapi.contract.v1.*;
 import ru.tinkoff.piapi.core.InvestApi;
-import ru.tinkoff.piapi.core.models.Money;
 import ru.ttech.piapi.core.helpers.NumberMapper;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -42,6 +44,7 @@ public class TinkoffTradeClient implements TradeClient {
     private final InvestApi investApi;
     private final TradevisorProperties tradevisorProperties;
     private final TickersRepository tickersRepository;
+    private final SignalsRepository signalsRepository;
 
     private final AtomicReference<String> tradingAccountId = new AtomicReference<>();
 
@@ -79,12 +82,7 @@ public class TinkoffTradeClient implements TradeClient {
     }
 
     public Float getBalance() {
-        return investApi.getOperationsService().getWithdrawLimitsSync(tradingAccountId.get()).getMoney()
-                .stream().filter(x -> Objects.equals(x.getCurrency(), "rub"))
-                .findFirst()
-                .map(Money::getValue)
-                .map(BigDecimal::floatValue)
-                .orElseThrow();
+        return tradevisorProperties.trade().riskMoney().rus().floatValue();
     }
 
     @Override
@@ -136,34 +134,6 @@ public class TinkoffTradeClient implements TradeClient {
                 .orElse(null);
     }
 
-    public String setOrder(TrvOrder order) {
-        if (order.activation() == null) {
-            var resp = investApi.getOrdersService().postLimitOrderSync(
-                    order.tickerCode(),
-                    (long) order.lot(),
-                    quotationFromFloat(order.price()),
-                    order.direction() > 0 ? OrderDirection.ORDER_DIRECTION_BUY : OrderDirection.ORDER_DIRECTION_SELL,
-                    getTradingAccountId(),
-                    TimeInForceType.TIME_IN_FORCE_DAY,
-                    UUID.randomUUID().toString()
-            );
-            log.info("Ордер выставлен: {}", resp);
-            return resp.getOrderId();
-        } else {
-            String orderId = investApi.getStopOrdersService().postStopOrderGoodTillCancelSync(
-                    order.tickerCode(),
-                    (long) order.lot(),
-                    quotationFromFloat(order.price()),
-                    quotationFromFloat(order.activation()),
-                    order.direction() > 0 ? StopOrderDirection.STOP_ORDER_DIRECTION_BUY : StopOrderDirection.STOP_ORDER_DIRECTION_SELL,
-                    getTradingAccountId(),
-                    StopOrderType.STOP_ORDER_TYPE_STOP_LIMIT
-            );
-            log.info("Ордер STOP LOSS выставлен. orderId: {}", orderId);
-            return orderId;
-        }
-    }
-
     @Override
     public void deleteOrders(String tickerCode) {
         investApi.getOrdersService().getOrdersSync(getTradingAccountId())
@@ -186,10 +156,6 @@ public class TinkoffTradeClient implements TradeClient {
                 .stream()
                 .findFirst()
                 .orElseThrow();
-        if (tInstrument.getForQualInvestorFlag()) {
-            log.warn("for qualified investors only. Manual execution only. signal: {}", signal);
-            return false;
-        }
         return switch (tInstrument.getInstrumentKind()) {
             case INSTRUMENT_TYPE_FUTURES -> openFuturePosition(signal);
             case INSTRUMENT_TYPE_SHARE -> openSharePosition(signal);
@@ -236,67 +202,29 @@ public class TinkoffTradeClient implements TradeClient {
 
         private boolean openFuturePosition(TradeSignal signal) {
         Future future = investApi.getInstrumentsService().getFutureByUidSync(signal.tickerCode());
-        int tradeLots = countTradeLots(signal, future);
+        Integer tradeLots = countTradeLots(signal, future);
         if (tradeLots == 0) {
             log.warn("недостаточно денег для открытия позиции по фьючерсам. Signal: {}", signal);
             return false;
         }
-        var positionOrderResp = investApi.getOrdersService()
-                .postLimitOrderSync(
-                        signal.tickerCode(),
-                        (long) tradeLots,
-                        quotationFromFloat(signal.priceOpen()),
-                        signal.direction() > 0
-                                ? OrderDirection.ORDER_DIRECTION_BUY
-                                : OrderDirection.ORDER_DIRECTION_SELL,
-                        getTradingAccountId(),
-                        TimeInForceType.TIME_IN_FORCE_DAY,
-                        UUID.randomUUID().toString()
-                );
-        if (!isOrderAccepted(investApi.getOrdersService()
-                .getOrderStateSync(getTradingAccountId(), positionOrderResp.getOrderId())
-                .getExecutionReportStatus())
-        ) {
-            investApi.getOrdersService().cancelOrderSync(getTradingAccountId(), positionOrderResp.getOrderId());
-            return false;
-        }
-        var stopLossOrderId = this.setOrder(TrvOrder.builder()
-                        .lot(tradeLots)
-                        .activation(signal.stopLoss())
-                        .price(signal.stopLoss())
-                        .tickerCode(signal.tickerCode())
-                        .direction(signal.direction() * -1)  // сигнал на закрытие противоположный открытию
-                        .isGtc(true)
-                .build());
-        if (!isStopOrderAccepted(investApi.getStopOrdersService()
-                .getStopOrdersSync(getTradingAccountId())
-                .stream()
-                .filter(o -> o.getStopOrderId().equals(stopLossOrderId))
-                .findFirst()
-                .orElseThrow().getStatus()
-        )) {
-            this.deleteOrders(signal.tickerCode());
-            return false;
-        }
-        var takeProfitOrderId = this.setOrder(TrvOrder.builder()
-                        .lot(tradeLots)
-                        .activation(signal.takeProfit())
-                        .price(signal.takeProfit())
-                        .tickerCode(signal.tickerCode())
-                        .direction(signal.direction() * -1) // сигнал на закрытие противоположный открытию
-                        .isGtc(true)
-                .build());
-        if (!isStopOrderAccepted(investApi.getStopOrdersService()
-                .getStopOrdersSync(getTradingAccountId())
-                .stream()
-                .filter(o -> o.getStopOrderId().equals(takeProfitOrderId))
-                .findFirst()
-                .orElseThrow().getStatus()
-        )) {
-            this.deleteOrders(signal.tickerCode());
-            return false;
-        }
-        return true;
+            float tpTicks = Math.abs(signal.priceOpen().floatValue()- signal.takeProfit().floatValue());
+            float slTicks = Math.abs(signal.priceOpen().floatValue() - signal.stopLoss().floatValue());
+            signalsRepository.saveSignal(Signals.builder()
+                    .tickerCode(signal.tickerCode())
+                    .takeProfit(signal.takeProfit().floatValue())
+                    .stopLoss(signal.stopLoss().floatValue())
+                    .priceOpen(signal.priceOpen().floatValue())
+                    .name(signal.name())
+                    .status(TrvSignalStatus.MANUAL.name())
+                    .description("manual trades signal for:" + signal.id())
+                    .direction(signal.direction())
+                    .updatedAt(OffsetDateTime.now())
+                    .riskLot(tradeLots.floatValue())
+                    .tpTicks(tpTicks)
+                    .slTicks(slTicks)
+                    .tp2SlRatio(tpTicks / slTicks)
+                    .build());
+            return true;
     }
 
     private boolean openSharePosition(TradeSignal signal) {
@@ -309,69 +237,31 @@ public class TinkoffTradeClient implements TradeClient {
             log.warn("запрещена продажа без покрытия. signal: {}", signal);
             return false;
         }
-        int tradeLots = countTradeLots(signal, share);
+        Integer tradeLots = countTradeLots(signal, share);
         if (tradeLots == 0) {
             log.warn("недостаточно денег для открытия позиции. Signal: {}", signal);
             return false;
         }
-        var positionOrderResp = investApi.getOrdersService()
-                .postLimitOrderSync(
-                        signal.tickerCode(),
-                        (long) tradeLots,
-                        quotationFromFloat(signal.priceOpen()),
-                        signal.direction() > 0
-                                ? OrderDirection.ORDER_DIRECTION_BUY
-                                : OrderDirection.ORDER_DIRECTION_SELL,
-                        getTradingAccountId(),
-                        TimeInForceType.TIME_IN_FORCE_DAY,
-                        UUID.randomUUID().toString()
-                );
-        if (!isOrderAccepted(investApi.getOrdersService()
-                .getOrderStateSync(getTradingAccountId(), positionOrderResp.getOrderId())
-                .getExecutionReportStatus())
-        ) {
-            investApi.getOrdersService().cancelOrderSync(getTradingAccountId(), positionOrderResp.getOrderId());
-            return false;
-        }
-        var stopLossOrderId = this.setOrder(TrvOrder.builder()
-                .lot(tradeLots)
-                .activation(signal.stopLoss())
-                .price(signal.stopLoss())
+
+        float tpTicks = Math.abs(signal.priceOpen().floatValue()- signal.takeProfit().floatValue());
+        float slTicks = Math.abs(signal.priceOpen().floatValue() - signal.stopLoss().floatValue());
+        signalsRepository.saveSignal(Signals.builder()
                 .tickerCode(signal.tickerCode())
-                .direction(signal.direction() * -1)  // сигнал на закрытие противоположный открытию
-                .isGtc(true)
+                .takeProfit(signal.takeProfit().floatValue())
+                .stopLoss(signal.stopLoss().floatValue())
+                .priceOpen(signal.priceOpen().floatValue())
+                .name(signal.name())
+                .status(TrvSignalStatus.MANUAL.name())
+                .description("manual trades signal for:" + signal.id())
+                .direction(signal.direction())
+                .updatedAt(OffsetDateTime.now())
+                .riskLot(tradeLots.floatValue())
+                .tpTicks(tpTicks)
+                .slTicks(slTicks)
+                .tp2SlRatio(tpTicks / slTicks)
                 .build());
-        if (!isStopOrderAccepted(investApi.getStopOrdersService()
-                .getStopOrdersSync(getTradingAccountId())
-                .stream()
-                .filter(o -> o.getStopOrderId().equals(stopLossOrderId))
-                .findFirst()
-                .orElseThrow().getStatus()
-        )) {
-            this.deleteOrders(signal.tickerCode());
-            return false;
-        }
-        var takeProfitOrderId = this.setOrder(TrvOrder.builder()
-                .lot(tradeLots)
-                .activation(signal.takeProfit())
-                .price(signal.takeProfit())
-                .tickerCode(signal.tickerCode())
-                .direction(signal.direction() * -1) // сигнал на закрытие противоположный открытию
-                .isGtc(true)
-                .build());
-        if (!isStopOrderAccepted(investApi.getStopOrdersService()
-                .getStopOrdersSync(getTradingAccountId())
-                .stream()
-                .filter(o -> o.getStopOrderId().equals(takeProfitOrderId))
-                .findFirst()
-                .orElseThrow().getStatus()
-        )) {
-            this.deleteOrders(signal.tickerCode());
-            return false;
-        }
         return true;
     }
-
 
     private Quotation quotationFromFloat(BigDecimal value) {
         if (value == null) {
@@ -391,48 +281,23 @@ public class TinkoffTradeClient implements TradeClient {
         return (float) (quotation.getUnits() + NANOS_DIGITS * quotation.getNano());
     }
 
-
-
     private BigDecimal getMinPriceIncrement(String instrumentId) {
         return NumberMapper.quotationToBigDecimal(investApi.getInstrumentsService()
                 .getInstrumentByUIDSync(instrumentId).getInstrument().getMinPriceIncrement());
-    }
-
-    private static BigDecimal mapUnitsAndNanos(long units, int nanos) {
-        if (units == 0 && nanos == 0) {
-            return BigDecimal.ZERO;
-        }
-        return BigDecimal.valueOf(units).add(BigDecimal.valueOf(nanos, 9));
-    }
-
-
-
-    private boolean isOrderAccepted(OrderExecutionReportStatus orderExecutionStatus) {
-        return List.of(OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL,
-                        OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_NEW,
-                        OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_PARTIALLYFILL)
-                .contains(orderExecutionStatus);
-    }
-
-    private boolean isStopOrderAccepted(StopOrderStatusOption status) {
-        return List.of(
-                StopOrderStatusOption.STOP_ORDER_STATUS_ACTIVE,
-                StopOrderStatusOption.STOP_ORDER_STATUS_EXECUTED
-        ).contains(status);
     }
 
     private int countTradeLots(TradeSignal signal, Share share) {
         return countTradeLotsForGo(signal, share.getUid(), 1);
     }
 
-    private int countTradeLots(TradeSignal signal, Future future) {
+    private Integer countTradeLots(TradeSignal signal, Future future) {
         float go = quotationToFloat(signal.direction() > 0 ? future.getDlongMin() : future.getDshortMin());
         return countTradeLotsForGo(signal, future.getUid(), go);
     }
 
     private int countTradeLotsForGo(TradeSignal signal, String  uid, float go) {
         float balance = this.getBalance();
-        double maxRiskInMoney = balance * tradevisorProperties.trade().limits().world() / 100;
+        double maxRiskInMoney = balance * tradevisorProperties.trade().limits().rus() / 100;
         var maxLotsResp = investApi.getOrdersService().getMaxLotsSync(getTradingAccountId(), uid,
                 quotationFromFloat(signal.priceOpen()));
         int maxLots = signal.direction() > 0
@@ -444,7 +309,7 @@ public class TinkoffTradeClient implements TradeClient {
         return (int) (Math.floor(
                 Math.min(
                         Math.min(availableLots, countedRiskLots),
-                        (double) maxLots * (1 - (double) tradevisorProperties.trade().limits().world() / 100)
+                        (double) maxLots * (1 - (double) tradevisorProperties.trade().limits().rus() / 100)
                 )
         ));
     }

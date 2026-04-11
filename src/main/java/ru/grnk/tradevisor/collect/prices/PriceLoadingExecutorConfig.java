@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.common.config;
+package ru.grnk.tradevisor.collect.prices;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

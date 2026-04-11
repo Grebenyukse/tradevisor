@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.notify;
+package ru.grnk.tradevisor.notify.publish;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -10,7 +10,6 @@ import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 import ru.grnk.tradevisor.common.repository.entity.Tickers;
-import ru.grnk.tradevisor.integration.telegram.TelegramMessageService;
 import ru.grnk.tradevisor.notify.plot.PlotService;
 
 import java.time.ZoneId;
@@ -22,11 +21,11 @@ import static java.util.Optional.ofNullable;
 
 @Component
 @RequiredArgsConstructor
-public class MessagePublisher {
+public class  MessagePublisher {
 
     private final SignalsRepository signalsRepository;
     private final PlotService plotService;
-    private final TelegramMessageService telegramMessageService;
+    private final NotificationService notificationService;
     private final TickersRepository tickersRepository;
     private final TradevisorProperties tradevisorProperties;
 
@@ -40,7 +39,7 @@ public class MessagePublisher {
         String image = plotService.saveCandlestickChartToFile(signal, true);
         if (image == null ) return;
         Tickers ticker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
-        telegramMessageService.sendMessage(image, getTitle(signal, ticker), getText(signal, ticker), signal.getId(), getThreadId(ticker));
+        notificationService.sendMessage(image, getTitle(signal, ticker), getText(signal, ticker), signal.getId(), getThreadId(ticker));
         signalsRepository.updateSignalStatus(signal.getId(), TrvSignalStatus.PUBLISHED);
     }
 

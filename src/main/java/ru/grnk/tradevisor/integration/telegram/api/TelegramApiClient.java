@@ -1,4 +1,4 @@
-package ru.grnk.tradevisor.integration.telegram.webhook;
+package ru.grnk.tradevisor.integration.telegram.api;
 
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;

@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.calculate.signals.TrvSignalStatus;
 import ru.grnk.tradevisor.calculate.strategies.IStrategy;
-import ru.grnk.tradevisor.collect.prices.TelegramNotificationService;
 import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
@@ -36,7 +35,6 @@ public class ControlPositionService {
     private final List<TradeClient> tradeClients;
     private final List<IStrategy> strategies;
     private final PublishSignalsService publishSignalsService;
-    private final TelegramNotificationService telegramNotificationService;
 
     @Scheduled(fixedRateString = "${app.trade.delay}")
     public void process() {
@@ -45,7 +43,8 @@ public class ControlPositionService {
                         CREATED.name(),
                         PUBLISHED.name(),
                         CONFIRMED.name(),
-                        EXECUTED.name()
+                        EXECUTED.name(),
+                        MANUAL.name()
                 )
         );
         SortedSignals result = allRelevantSignals.stream()
@@ -74,14 +73,14 @@ public class ControlPositionService {
                             case CONFIRMED:
                                 this.openPosition(s);
                                 return;
+                            case MANUAL:
                             case EXECUTED:
                                 this.controlPosition(s);
                         }
                     }
             );
         } catch (Exception e) {
-            log.error("ошибка открытия или контроля позиции", e);
-            telegramNotificationService.sendControlPositionErrorMessage(e);
+            log.error("❌ Ошибка открытия / контроля позиции.", e);
         }
 
     }
@@ -135,7 +134,12 @@ public class ControlPositionService {
     public void openPosition(Signals signal) {
         Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
         Tickers ticker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode()).orElse(spotTicker);
-        var clientOptional = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))
+        var clientOptional = tradeClients.stream()
+                .filter(tc ->
+                        Objects.equals(ticker.getProvider(), "bybit")
+                            ? Objects.equals(tc.provider(), "bybit")
+                            : Objects.equals(tc.provider(), "tinkoff")
+                    )
                 .findFirst();
         if (clientOptional.isEmpty()) {
             log.warn("провайдер {} для сигнала signal:{} по spot_ticker_code: {} не активен. невозможно выполнить торговую операцию.",

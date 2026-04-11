@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
 
-import jakarta.annotation.PostConstruct;
+import ru.grnk.tradevisor.notify.publish.MessagePublisher;
+import ru.grnk.tradevisor.notify.publish.OrderPublisher;
+import ru.grnk.tradevisor.notify.publish.PositionPublisher;
 
 @Service
 @Slf4j

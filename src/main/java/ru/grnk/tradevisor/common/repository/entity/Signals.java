@@ -57,6 +57,17 @@ public class Signals implements Serializable {
     @ColumnTransformer(write = "?::jsonb")
     private List<ChartLineDto> strategyProps;
 
+    @Column(name = "risk_lot")
+    private Float riskLot;
+
+    @Column(name = "tp_ticks")
+    private Float tpTicks;
+
+    @Column(name = "sl_ticks")
+    private Float slTicks;
+
+    @Column(name = "tp_2_sl_ratio")
+    private Float tp2SlRatio;
 
     @Override
     public String toString() {
@@ -79,6 +90,10 @@ public class Signals implements Serializable {
                         .collect(java.util.stream.Collectors.joining(", ")) +
                         (strategyProps.size() > 3 ? ", ... and " + (strategyProps.size() - 3) + " more" : "") +
                         "]" : "null") +
+                ", riskLot=" + riskLot +
+                ", tpTicks=" + tpTicks +
+                ", slTicks=" + slTicks +
+                ", tp2SlRatio=" + tp2SlRatio +
                 '}';
     }
 }

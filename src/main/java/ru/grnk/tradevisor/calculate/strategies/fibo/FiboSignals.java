@@ -49,7 +49,7 @@ public class FiboSignals implements IStrategy {
         return switch (provider) {
             case "bybit" -> tradevisorProperties.calculate().fibo().minTouchesCount().crypto();
             case "finam" -> tradevisorProperties.calculate().fibo().minTouchesCount().rus();
-            case "tinkoff", "yahoofinance" -> tradevisorProperties.calculate().fibo().minTouchesCount().world();
+            case "tinkoff" -> tradevisorProperties.calculate().fibo().minTouchesCount().world();
             default -> throw new IllegalStateException();
         };
     }

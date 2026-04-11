@@ -8,13 +8,13 @@ import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.entity.MarketData;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
-import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
+import ru.grnk.tradevisor.integration.telegram.api.TelegramApiClient;
 import ru.grnk.tradevisor.notify.plot.PlotService;
 
 import java.util.List;
 import java.util.Objects;
 
-import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.getSignalIdFromQuery;
+import static ru.grnk.tradevisor.integration.telegram.dto.TelegramMessageBuilder.getSignalIdFromQuery;
 
 @Service
 @RequiredArgsConstructor

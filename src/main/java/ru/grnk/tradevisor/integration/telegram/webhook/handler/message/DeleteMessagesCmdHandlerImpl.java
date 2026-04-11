@@ -4,7 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
-import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
+import ru.grnk.tradevisor.integration.telegram.api.TelegramApiClient;
+import ru.grnk.tradevisor.integration.telegram.dto.TelegramMessageBuilder;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +31,7 @@ public class DeleteMessagesCmdHandlerImpl implements TgMessageHandler {
 
         // Отправляем подтверждающее сообщение поверх
         telegramApiClient.sendMessage(
-                ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder
+                TelegramMessageBuilder
                         .sendSimpleMessage(chatId, "Чат очищен")
         );
     }

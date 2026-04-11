@@ -103,6 +103,11 @@ public class SignalsRepository {
     }
 
     @Transactional
+    public void saveSignal(Signals signal) {
+        signalsRepo.saveAndFlush(signal);
+    }
+
+    @Transactional
     public void deleteAllSignals() {
         signalsRepo.deleteAll();
     }

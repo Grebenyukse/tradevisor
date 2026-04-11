@@ -9,9 +9,9 @@ import ru.grnk.tradevisor.common.repository.MarketDataRepository;
 import ru.grnk.tradevisor.common.repository.SignalsRepository;
 import ru.grnk.tradevisor.common.repository.TickersRepository;
 import ru.grnk.tradevisor.common.repository.entity.Signals;
-import ru.grnk.tradevisor.integration.telegram.webhook.TelegramApiClient;
+import ru.grnk.tradevisor.integration.telegram.api.TelegramApiClient;
 
-import static ru.grnk.tradevisor.integration.telegram.TelegramMessageBuilder.*;
+import static ru.grnk.tradevisor.integration.telegram.dto.TelegramMessageBuilder.*;
 
 @Service
 @RequiredArgsConstructor

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import ru.grnk.tradevisor.integration.telegram.api.TelegramApiClient;
 import ru.grnk.tradevisor.integration.telegram.webhook.handler.TelegramBotConsumer;
 
 @Slf4j
