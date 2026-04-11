@@ -17,4 +17,5 @@ select s.id, s.name, SPLIT_PART(s.ticker_code, '@', 1), SPLIT_PART(s.ticker_code
 s.status, s.direction, s.price_open, s.stop_loss, s.take_profit, s.risk_lot, s.tp_ticks, s.sl_ticks, s.tp_2_sl_ratio
 from tradevisor.signals s
 join tradevisor.tickers t on s.ticker_code = t.ticker_code
+where s.status not in ('CANCELLED', 'EXECUTED')
 order by exchange, s.name, s.id ;

@@ -50,7 +50,10 @@ public class FiboSignals implements IStrategy {
             case "bybit" -> tradevisorProperties.calculate().fibo().minTouchesCount().crypto();
             case "finam" -> tradevisorProperties.calculate().fibo().minTouchesCount().rus();
             case "tinkoff" -> tradevisorProperties.calculate().fibo().minTouchesCount().world();
-            default -> throw new IllegalStateException();
+            default -> {
+                log.error("unknown provider: {}",provider);
+                yield 0;
+            }
         };
     }
 
