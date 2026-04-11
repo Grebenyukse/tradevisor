@@ -172,7 +172,7 @@ public class BybitTradeClientImpl implements TradeClient {
             log.info("order has been set. signal: {} orderId: {}", signal, orderResponse.getResult().getOrderId());
             return true;
         }
-        throw new IllegalStateException("нет orderId. signalId: " + signal.getId() + "; orderResponse: " + orderResponse.toString());
+        throw new IllegalStateException("нет orderId. signalId: " + signal.getId() + "; orderResponse: " + jsonResponse);
     }
 
     @Override
