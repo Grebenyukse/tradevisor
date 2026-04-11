@@ -112,7 +112,6 @@ public class CalculateSignalService {
                                 .filter(MarketDataValidator::isActualTimeValid)
                                 .isEmpty()) {
                             log.debug("свечи содержат слишком старые котировки. невозможно использовать для выставления позиции. тикер: {}", t);
-//                            return;
                         }
                         TrvCalculationResult result = s.calculate(candles);
                         if (result.direction() != TradingDirection.UNKNOWN) {
