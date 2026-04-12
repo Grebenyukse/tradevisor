@@ -80,7 +80,7 @@ public class ControlPositionService {
                     }
             );
         } catch (Exception e) {
-            log.error("❌ Ошибка открытия / контроля позиции.", e);
+            log.error("❌ Ошибка открытия или контроля позиции.", e);
         }
 
     }
