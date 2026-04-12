@@ -132,7 +132,8 @@ public class FinamTradeClient implements TradeClient {
                 signal.getStopLoss() * kTradeTicker2SpotTicker,
                 signal.getTakeProfit() * kTradeTicker2SpotTicker,
                 signal.getDirection().intValue(),
-                signal.getId()
+                signal.getId(),
+                signal.getName()
         );
     }
 }

@@ -57,7 +57,7 @@ public class FinamGrpcTradeClient implements OpenPositionClient {
     private final AssetsServiceGrpc.AssetsServiceBlockingStub assetsServiceBlockingStub;
 
     @Override
-    public boolean openPosition(String symbol, float priceOpen, float stopLoss, float takeProfit, int direction, int signalId) {
+    public boolean openPosition(String symbol, float priceOpen, float stopLoss, float takeProfit, int direction, int signalId, String strategyName) {
         var assetParams = getAssetParams(symbol);
         if (!assetParams.getTradeable()) {
             log.warn("symbol is not tradeable: {}", symbol);

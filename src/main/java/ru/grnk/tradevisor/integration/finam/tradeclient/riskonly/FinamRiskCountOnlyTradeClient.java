@@ -42,7 +42,7 @@ public class FinamRiskCountOnlyTradeClient implements OpenPositionClient {
     private final AssetsServiceGrpc.AssetsServiceBlockingStub assetsServiceBlockingStub;
 
     @Override
-    public boolean openPosition(String symbol, float priceOpen, float stopLoss, float takeProfit, int direction, int signalId) {
+    public boolean openPosition(String symbol, float priceOpen, float stopLoss, float takeProfit, int direction, int signalId, String strategyName) {
         var assetParams = getAssetParams(symbol);
         if (!assetParams.getTradeable()) {
             log.warn("symbol is not tradeable: {}", symbol);
@@ -74,7 +74,7 @@ public class FinamRiskCountOnlyTradeClient implements OpenPositionClient {
                 .takeProfit(normalizedTakeProfit.floatValue())
                 .stopLoss(normalizedStopLoss.floatValue())
                 .priceOpen(normalizedPriceOpen.floatValue())
-                .name(null)
+                .name(strategyName)
                 .status(TrvSignalStatus.MANUAL.name())
                 .description("manual trades signal for:" + signalId)
                 .direction(Short.valueOf(String.valueOf(direction)))
