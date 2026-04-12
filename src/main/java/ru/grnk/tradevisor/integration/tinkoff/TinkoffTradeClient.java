@@ -285,6 +285,7 @@ public class TinkoffTradeClient implements TradeClient {
     }
 
     private BigDecimal getMinPriceIncrement(String instrumentId) {
+        log.info("get min price increment for insrument id: {}", instrumentId);
         return NumberMapper.quotationToBigDecimal(investApi.getInstrumentsService()
                 .getInstrumentByUIDSync(instrumentId).getInstrument().getMinPriceIncrement());
     }

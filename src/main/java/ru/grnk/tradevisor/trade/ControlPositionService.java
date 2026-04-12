@@ -134,12 +134,7 @@ public class ControlPositionService {
     public void openPosition(Signals signal) {
         Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
         Tickers ticker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode()).orElse(spotTicker);
-        var clientOptional = tradeClients.stream()
-                .filter(tc ->
-                        Objects.equals(ticker.getProvider(), "bybit")
-                            ? Objects.equals(tc.provider(), "bybit")
-                            : Objects.equals(tc.provider(), "tinkoff")
-                    )
+        var clientOptional = tradeClients.stream().filter(tc -> Objects.equals(tc.provider(), ticker.getProvider()))
                 .findFirst();
         if (clientOptional.isEmpty()) {
             log.warn("провайдер {} для сигнала signal:{} по spot_ticker_code: {} не активен. невозможно выполнить торговую операцию.",

@@ -158,7 +158,7 @@ app:
       account-id: ${FINAM_ACCOUNT_KEY}
       history-max-depth-days: 10
       mt5-python-client-url: http://localhost:8001
-      open-position-client: mt5py # mt5py для открытия через metatrader5, grpc для открытие через finam api
+      open-position-client: riskonly # mt5py для открытия через metatrader5, grpc для открытие через finam api, riskonly для сохранения параметров позиции в pg
     bybit:
       enabled: true
       key: ${BYBIT_KEY}
