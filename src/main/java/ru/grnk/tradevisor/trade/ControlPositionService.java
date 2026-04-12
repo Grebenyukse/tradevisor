@@ -126,7 +126,9 @@ public class ControlPositionService {
                     ticker.getProvider(), signal, ticker.getTickerCode());
             return false;
         }
-        var strategy = strategies.stream().filter(s -> Objects.equals(s.getStrategyUniqueName(), signal.getName())).findFirst().orElseThrow();
+        var strategy = strategies.stream().filter(s -> Objects.equals(s.getStrategyUniqueName(), signal.getName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("невозможно обработать сигнал для " + signal));
         var candles = marketDataRepository.fetchMarketDataForLast(strategy.barsRequiredToCalcStrategy(), signal.getTickerCode());
         var strategyCalculationResult = strategy.calculate(candles);
         return strategyCalculationResult.direction().directionCode() == signal.getDirection();
