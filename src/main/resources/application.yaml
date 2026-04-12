@@ -64,7 +64,7 @@ app:
       bybit: true
       world: false
       init-tickers:
-        delay: PT720H
+        delay: PT10M
   calculate:
     gap:
       enabled: false

@@ -48,6 +48,7 @@ public class PricesLoaderServiceImpl {
 
     @Scheduled(fixedRateString = "${app.collect.prices.init-tickers.delay}")
     public void initTickers() {
+        log.info("start init tickers process");
         loaders
                 .stream()
                 .sorted(Comparator.comparingInt(PricesLoader::loadOrder))
