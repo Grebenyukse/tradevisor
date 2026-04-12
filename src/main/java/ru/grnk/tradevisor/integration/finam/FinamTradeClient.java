@@ -22,6 +22,7 @@ import ru.grnk.tradevisor.trade.dto.TrvOrder;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -123,8 +124,9 @@ public class FinamTradeClient implements TradeClient {
         Tickers signalTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
         Tickers tradeTicker = Optional.ofNullable(tickersRepository.findTradeTickerByTickerCode(signalTicker.getTickerCode()))
                 .orElse(signalTicker);
-        var kTradeTicker2SpotTicker =
-                lastTickLoader.getLastCloseForTicker(tradeTicker.getTickerCode(), tradeTicker.getProvider()) /
+        var kTradeTicker2SpotTicker = Objects.equals(tradeTicker.getTickerCode(), signalTicker.getTickerCode())
+                ? 1
+                : lastTickLoader.getLastCloseForTicker(tradeTicker.getTickerCode(), tradeTicker.getProvider()) /
                 lastTickLoader.getLastCloseForTicker(signalTicker.getTickerCode(), signalTicker.getProvider());
         log.info("open position signal.name: {}", signal.getName());
         return openPositionClient.openPosition(
