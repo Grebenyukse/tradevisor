@@ -66,6 +66,7 @@ public class ControlPositionService {
         try {
             result.active.forEach(
                     s -> {
+                        log.info("signal before processing: {}", s);
                         switch (TrvSignalStatus.valueOf(s.getStatus())) {
                             case CREATED:
                             case PUBLISHED:

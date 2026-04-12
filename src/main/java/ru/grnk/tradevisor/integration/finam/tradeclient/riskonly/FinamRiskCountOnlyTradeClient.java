@@ -69,7 +69,7 @@ public class FinamRiskCountOnlyTradeClient implements OpenPositionClient {
             log.warn("not enough money to open position. signalId: {} , symbol:{}", signalId, symbol);
             return false;
         }
-        signalsRepository.saveSignal(Signals.builder()
+        var signalToSave = Signals.builder()
                 .tickerCode(symbol)
                 .takeProfit(normalizedTakeProfit.floatValue())
                 .stopLoss(normalizedStopLoss.floatValue())
@@ -85,7 +85,9 @@ public class FinamRiskCountOnlyTradeClient implements OpenPositionClient {
                 .tp2SlRatio(normalizedPriceOpen.subtract(normalizedTakeProfit)
                         .divide(normalizedPriceOpen.subtract(normalizedStopLoss), 2, RoundingMode.DOWN)
                         .abs().floatValue())
-                .build());
+                .build();
+        log.info("trying to save signal: {}", signalToSave);
+        signalsRepository.saveSignal(signalToSave);
         return true;
     }
 
