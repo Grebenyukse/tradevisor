@@ -83,7 +83,7 @@ public class FinamRiskCountOnlyTradeClient implements OpenPositionClient {
                 .tpTicks(normalizedPriceOpen.subtract(normalizedTakeProfit).abs().floatValue())
                 .slTicks(normalizedPriceOpen.subtract(normalizedStopLoss).abs().floatValue())
                 .tp2SlRatio(normalizedPriceOpen.subtract(normalizedTakeProfit)
-                        .divide(normalizedPriceOpen.subtract(normalizedStopLoss), RoundingMode.DOWN)
+                        .divide(normalizedPriceOpen.subtract(normalizedStopLoss), 2, RoundingMode.DOWN)
                         .abs().floatValue())
                 .build());
         return true;

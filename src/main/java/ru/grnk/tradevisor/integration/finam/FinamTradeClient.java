@@ -22,6 +22,7 @@ import ru.grnk.tradevisor.trade.dto.TrvOrder;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static grpc.tradeapi.v1.orders.OrderStatus.ORDER_STATUS_CANCELED;
@@ -120,12 +121,8 @@ public class FinamTradeClient implements TradeClient {
     @Override
     public boolean openPosition(Signals signal) {
         Tickers signalTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
-        Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCode(signalTicker.getTickerCode());
-        if (tradeTicker == null) {
-            log.warn("торговый тикер не выставлен. открытие только вручную. SignalId: {}, tickerCode: {}, direction: {}",
-                    signal.getId(), signal.getTickerCode(), signal.getDirection());
-            return false;
-        }
+        Tickers tradeTicker = Optional.ofNullable(tickersRepository.findTradeTickerByTickerCode(signalTicker.getTickerCode()))
+                .orElse(signalTicker);
         var kTradeTicker2SpotTicker =
                 lastTickLoader.getLastCloseForTicker(tradeTicker.getTickerCode(), tradeTicker.getProvider()) /
                 lastTickLoader.getLastCloseForTicker(signalTicker.getTickerCode(), signalTicker.getProvider());

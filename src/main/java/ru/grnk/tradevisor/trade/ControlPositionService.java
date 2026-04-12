@@ -58,6 +58,7 @@ public class ControlPositionService {
                 );
         if (!result.toCancel.isEmpty()) {
             List<Integer> idsToCancel = result.toCancel.stream()
+                    .filter(s -> !Objects.equals(s.getStatus(), MANUAL.name())) // не отменяем автоматически ручные сигналы. профита в этом нет
                     .map(Signals::getId)
                     .collect(toList());
             signalsRepository.cancelExpiredSignals(idsToCancel);
