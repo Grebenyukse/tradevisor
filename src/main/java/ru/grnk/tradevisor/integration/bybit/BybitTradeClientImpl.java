@@ -123,6 +123,7 @@ public class BybitTradeClientImpl implements TradeClient {
     @SneakyThrows
     @Override
     public boolean openPosition(Signals signal) {
+        log.info("попытка открыть позицию для сигнала: {}", signal);
         Tickers spotTicker = tickersRepository.getTickerByTickerCode(signal.getTickerCode());
         Tickers tradeTicker = tickersRepository.findTradeTickerByTickerCodeIfExists(spotTicker.getTickerCode())
                 .orElse(spotTicker);
