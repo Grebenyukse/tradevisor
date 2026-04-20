@@ -11,6 +11,7 @@ import com.bybit.api.client.domain.position.request.PositionDataRequest;
 import com.bybit.api.client.domain.trade.PositionIdx;
 import com.bybit.api.client.domain.trade.Side;
 import com.bybit.api.client.domain.trade.TimeInForce;
+import com.bybit.api.client.domain.trade.request.BatchOrderRequest;
 import com.bybit.api.client.domain.trade.request.TradeOrderRequest;
 import com.bybit.api.client.restApi.BybitApiAccountRestClient;
 import com.bybit.api.client.restApi.BybitApiMarketRestClient;
@@ -147,26 +148,62 @@ public class BybitTradeClientImpl implements TradeClient {
             log.warn("Недостаточно средств для открытия позиции. Signal: {}", signal);
             return false;
         }
-        var request = TradeOrderRequest.builder()
-                .category(CategoryType.LINEAR)
-                .symbol(signal.getTickerCode().split("@")[0])
-                .side(signal.getDirection() > 0 ? Side.BUY : Side.SELL)
-                .orderType(TradeOrderType.LIMIT)
-                .qty(String.valueOf(tradeLots))
-                .price(String.valueOf(normalizedPriceOpen))
-                .timeInForce(TimeInForce.GOOD_TILL_CANCEL)
-                .takeProfit(String.valueOf(normalizedTP))
-                .stopLoss(String.valueOf(normalizedSL))
-                .tpOrderType(TradeOrderType.LIMIT)
-                .slOrderType(TradeOrderType.LIMIT)
-                .tpLimitPrice(String.valueOf(normalizedTP))
-                .slLimitPrice(String.valueOf(normalizedSL))
-                .tpslMode(TpslMode.FULL.name())
-                .tpTriggerBy(TriggerBy.MARK_PRICE)
-                .slTriggerBy(TriggerBy.MARK_PRICE)
-                .positionIdx(PositionIdx.ONE_WAY_MODE)
-                .build();
-        Object response = tradeRestClient.createOrder(request);
+        Object response;
+        if (Objects.equals(signal.getName(), "tenx") && signal.getDirection() < 0) {
+            var request = BatchOrderRequest.builder()
+                    .category(CategoryType.LINEAR)
+                    .request(List.of(
+                            TradeOrderRequest.builder()
+                                    .category(CategoryType.LINEAR)
+                                    .symbol(signal.getTickerCode().split("@")[0])
+                                    .side(Side.SELL)
+                                    .orderType(TradeOrderType.LIMIT)
+                                    .qty(String.valueOf(tradeLots))
+                                    .price(String.valueOf(normalizedPriceOpen))
+                                    .timeInForce(TimeInForce.GOOD_TILL_CANCEL)
+                                    .positionIdx(PositionIdx.ONE_WAY_MODE)
+                                    .slOrderType(TradeOrderType.LIMIT)
+                                    .stopLoss(String.valueOf(normalizedSL))
+                                    .slLimitPrice(String.valueOf(normalizedSL))
+                                    .slTriggerBy(TriggerBy.MARK_PRICE)
+                                    .tpslMode(TpslMode.PARTIAL.name())
+                                    .build(),
+                            // tp
+                            TradeOrderRequest.builder()
+                                    .category(CategoryType.LINEAR)
+                                    .symbol(signal.getTickerCode().split("@")[0])
+                                    .side(Side.BUY)
+                                    .orderType(TradeOrderType.LIMIT)
+                                    .qty(String.valueOf(tradeLots))
+                                    .price(String.valueOf(normalizedTP))
+                                    .timeInForce(TimeInForce.GOOD_TILL_CANCEL)
+                                    .positionIdx(PositionIdx.ONE_WAY_MODE)
+                                    .build()
+                    ))
+                    .build();
+            response = tradeRestClient.createBatchOrder(request);
+        } else {
+            var request = TradeOrderRequest.builder()
+                    .category(CategoryType.LINEAR)
+                    .symbol(signal.getTickerCode().split("@")[0])
+                    .side(signal.getDirection() > 0 ? Side.BUY : Side.SELL)
+                    .orderType(TradeOrderType.LIMIT)
+                    .qty(String.valueOf(tradeLots))
+                    .price(String.valueOf(normalizedPriceOpen))
+                    .timeInForce(TimeInForce.GOOD_TILL_CANCEL)
+                    .takeProfit(String.valueOf(normalizedTP))
+                    .stopLoss(String.valueOf(normalizedSL))
+                    .tpOrderType(TradeOrderType.LIMIT)
+                    .slOrderType(TradeOrderType.LIMIT)
+                    .tpLimitPrice(String.valueOf(normalizedTP))
+                    .slLimitPrice(String.valueOf(normalizedSL))
+                    .tpslMode(TpslMode.PARTIAL.name())
+                    .tpTriggerBy(TriggerBy.MARK_PRICE)
+                    .slTriggerBy(TriggerBy.MARK_PRICE)
+                    .positionIdx(PositionIdx.ONE_WAY_MODE)
+                    .build();
+            response = tradeRestClient.createOrder(request);
+        }
         String jsonResponse = objectMapper.writeValueAsString(response);
         CreateOrderResponse orderResponse = objectMapper.readValue(jsonResponse, CreateOrderResponse.class);
         if (orderResponse.getResult() != null && orderResponse.getResult().getOrderId() != null) {
