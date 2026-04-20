@@ -161,7 +161,7 @@ public class BybitTradeClientImpl implements TradeClient {
                 .slOrderType(TradeOrderType.LIMIT)
                 .tpLimitPrice(String.valueOf(normalizedTP))
                 .slLimitPrice(String.valueOf(normalizedSL))
-                .tpslMode(TpslMode.PARTIAL.name())
+                .tpslMode(TpslMode.FULL.name())
                 .tpTriggerBy(TriggerBy.MARK_PRICE)
                 .slTriggerBy(TriggerBy.MARK_PRICE)
                 .positionIdx(PositionIdx.ONE_WAY_MODE)
