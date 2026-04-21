@@ -22,6 +22,7 @@ public class BybitClient {
         String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .path("/v5/market/instruments-info")
                 .queryParam("category", "linear")
+                .queryParam("limit", "999")
                 .toUriString();
         BybitTickerRs resp = restTemplate.getForObject(url, BybitTickerRs.class);
         if (resp == null || resp.retCode() != 0) {

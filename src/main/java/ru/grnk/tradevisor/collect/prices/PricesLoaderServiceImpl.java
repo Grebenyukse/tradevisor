@@ -27,7 +27,6 @@ public class PricesLoaderServiceImpl {
     private final List<PricesLoader> loaders;
     private final PriceLoadingErrorHandler errorHandler;
     private final PricesLoadProgressLogService telegramService;
-    private final BindTradeFuturesService bindTradeFuturesService;
     private final Executor priceLoadingExecutor;
 
     @Autowired
@@ -35,14 +34,12 @@ public class PricesLoaderServiceImpl {
                                    List<PricesLoader> loaders,
                                    PriceLoadingErrorHandler errorHandler,
                                    PricesLoadProgressLogService telegramService,
-                                   BindTradeFuturesService bindTradeFuturesService,
                                    @Qualifier("priceLoadingExecutor")
                                    Executor priceLoadingExecutor) {
         this.tickersRepository = tickersRepository;
         this.loaders = loaders;
         this.errorHandler = errorHandler;
         this.telegramService = telegramService;
-        this.bindTradeFuturesService = bindTradeFuturesService;
         this.priceLoadingExecutor = priceLoadingExecutor;
     }
 
@@ -53,7 +50,6 @@ public class PricesLoaderServiceImpl {
                 .stream()
                 .sorted(Comparator.comparingInt(PricesLoader::loadOrder))
                 .forEach(PricesLoader::initTickers);
-        bindTradeFuturesService.initTickers();
     }
 
     @Scheduled(fixedRateString = "${app.collect.prices.delay}")
