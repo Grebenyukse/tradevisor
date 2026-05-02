@@ -73,7 +73,7 @@ app:
       bars-required: 10
     fibo:
       enabled: true
-      bars-required: 150
+      bars-required: 250
       min_touches_count:
         world: 3
         rus: 2
