@@ -5,7 +5,8 @@ public record TrvCalculateProperties(
         Integer batchSize,
         GapProperties gap,
         FiboProperties fibo,
-        TenxProperties tenx
+        TenxProperties tenx,
+        ConvergenceProperties convergence
 ){
     public record GapProperties(Boolean enabled, Integer barsRequired) {};
     public record FiboProperties(Boolean enabled,
@@ -18,4 +19,7 @@ public record TrvCalculateProperties(
                                  Double growthFactor,
                                  Double priceMultiplier,
                                  Double stopLossMultiplier) {};
+    public record ConvergenceProperties(Boolean enabled,
+                                        Integer lookBackBars
+                                        ) {}
 }
