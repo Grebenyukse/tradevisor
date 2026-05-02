@@ -40,12 +40,14 @@ spring:
   application:
     name: tradevisor
   datasource:
+#    url: jdbc:postgresql://localhost:5432/postgres
     url: jdbc:postgresql://postgres:5432/postgres
     username: postgres
     password: ${SPRING_DATASOURCE_PASSWORD_V2}
   liquibase:
     changeLog: classpath:changelog/changelog-master.yaml
     enabled: true
+#    url: jdbc:postgresql://localhost:5432/postgres
     url: jdbc:postgresql://postgres:5432/postgres
     user: postgres
     password: ${SPRING_DATASOURCE_PASSWORD_V2}
@@ -85,7 +87,7 @@ app:
       stop-loss-multiplier: 10.0
     convergence:
       enabled: true
-      look-back-bars: 50
+      look-back-bars: 150
     delay: PT10M
     batch-size: 1000
   trade:
