@@ -36,8 +36,10 @@ public class ConvergingChannelStrategyProducer {
             boolean isPeak = true, isTrough = true;
 
             for (int j = 1; j <= window; j++) {
-                if (curr.getHigh() < history.get(i - j).getHigh() || curr.getHigh() < history.get(i + j).getHigh()) isPeak = false;
-                if (curr.getLow() > history.get(i - j).getLow() || curr.getLow() > history.get(i + j).getLow()) isTrough = false;
+                if (curr.getHigh() < history.get(i - j).getHigh() || curr.getHigh() < history.get(i + j).getHigh())
+                    isPeak = false;
+                if (curr.getLow() > history.get(i - j).getLow() || curr.getLow() > history.get(i + j).getLow())
+                    isTrough = false;
             }
 
             // Для регрессии время X должно расти.
@@ -60,9 +62,22 @@ public class ConvergingChannelStrategyProducer {
         double startX = 0;
         double distStart = (regHigh[0] * startX + regHigh[1]) - (regLow[0] * startX + regLow[1]);
         double distEnd = resistance - support;
+        if (distEnd > distStart) return noSignal();
 
-        if (distEnd < distStart) {
-            log.info("Статус: СХОДИТСЯ (Начало: {}, Сейчас: {})%n", distStart, distEnd);
+        // 1. Считаем максимальный исторический размах (для масштаба)
+        double maxH = -1, minL = Double.MAX_VALUE;
+        for (MarketData c : history) {
+            if (c.getHigh() > maxH) maxH = c.getHigh();
+            if (c.getLow() < minL) minL = c.getLow();
+        }
+        double totalRange = maxH - minL; // Весь диапазон "пружины"
+
+        // 2. Считаем текущую ширину канала
+        double currentWidth = resistance - support;
+        double compressionFactor = distStart / currentWidth;
+        boolean isCompressed = currentWidth < (totalRange * 0.15); // Ширина < 15% от общего разброса
+        boolean isVolatilityDropping = compressionFactor > 2.0;    // Канал сузился минимум в 2 раза
+        if (isCompressed && isVolatilityDropping) {
             return TrvCalculationResult.builder()
                     .direction(TradingDirection.LONG)
                     .priceOpen((float) support)
@@ -73,7 +88,7 @@ public class ConvergingChannelStrategyProducer {
                     .description("convergence")
                     .build();
         } else {
-           return noSignal();
+            return noSignal();
         }
     }
 
