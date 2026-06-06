@@ -86,7 +86,7 @@ app:
       price-multiplier: 15.0
       stop-loss-multiplier: 10.0
     convergence:
-      enabled: true
+      enabled: false
       look-back-bars: 150
     delay: PT10M
     batch-size: 1000
